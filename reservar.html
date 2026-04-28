@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reservar turno | Lic. Agustina Villegas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.res-wrap{padding:8rem 5rem 5rem;max-width:980px;margin:0 auto;}
+.res-wrap h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:300;margin:.5rem 0 .5rem;}
+.res-wrap h1 em{font-style:italic;color:var(--rose-dark);}
+.res-wrap>p{font-size:.95rem;color:var(--text-muted);font-weight:300;margin-bottom:2.5rem;line-height:1.7;}
+.steps{display:flex;gap:0;margin-bottom:3rem;border-radius:50px;overflow:hidden;border:1px solid var(--border);}
+.step{flex:1;padding:.6rem;text-align:center;font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);background:var(--white);transition:all .3s;}
+.step.active{background:var(--rose-dark);color:white;}
+.step.done{background:var(--sage-pale);color:var(--sage);}
+/* SERVICE GRID */
+.svc-select-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;}
+.svc-opt{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:1.2rem 1.4rem;cursor:pointer;transition:all .3s;display:flex;align-items:center;gap:1rem;}
+.svc-opt:hover{border-color:var(--rose);transform:translateY(-2px);}
+.svc-opt.selected{border-color:var(--rose-dark);background:var(--blush);}
+.svc-opt-icon{width:40px;height:40px;border-radius:10px;background:var(--sage-pale);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.svc-opt-name{font-size:.9rem;font-weight:500;margin-bottom:.1rem;}
+.svc-opt-dur{font-size:.73rem;color:var(--text-muted);}
+.svc-opt-price{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--rose-dark);margin-left:auto;white-space:nowrap;}
+/* MODALITY SELECTOR (only for nutrition) */
+.modality-row{display:flex;gap:.8rem;margin-bottom:1.5rem;}
+.mod-btn{padding:.6rem 1.4rem;border-radius:50px;border:1px solid var(--border);background:transparent;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text-muted);cursor:pointer;transition:all .3s;}
+.mod-btn.active{background:var(--rose-dark);color:white;border-color:var(--rose-dark);}
+/* CALENDAR */
+.cal-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;}
+.cal-box{background:var(--white);border:1px solid var(--border);border-radius:20px;padding:1.5rem;}
+.cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem;}
+.cal-month{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:400;}
+.cal-nav{background:none;border:1px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:.9rem;transition:all .3s;}
+.cal-nav:hover{background:var(--blush);border-color:var(--rose);}
+.cal-days-header{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:.5rem;}
+.cal-days-header span{font-size:.7rem;color:var(--text-muted);font-weight:500;letter-spacing:.05em;}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:.82rem;cursor:pointer;transition:all .25s;}
+.cal-day.empty,.cal-day.past{color:var(--text-muted);opacity:.4;cursor:not-allowed;pointer-events:none;}
+.cal-day.available:hover{background:var(--blush);color:var(--rose-dark);}
+.cal-day.selected{background:var(--rose-dark);color:white;}
+.cal-day.today{font-weight:600;border:1px solid var(--rose);}
+/* SLOTS */
+.slots-box{background:var(--white);border:1px solid var(--border);border-radius:20px;padding:1.5rem;}
+.slots-title{font-size:.85rem;font-weight:500;margin-bottom:1rem;color:var(--text-mid);}
+.slots-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;max-height:320px;overflow-y:auto;}
+.slot{padding:.55rem;text-align:center;border:1px solid var(--border);border-radius:8px;font-size:.8rem;cursor:pointer;transition:all .25s;}
+.slot:hover{border-color:var(--rose);color:var(--rose-dark);}
+.slot.selected{background:var(--rose-dark);color:white;border-color:var(--rose-dark);}
+.slot.blocked{background:var(--cream2);color:var(--text-muted);opacity:.5;cursor:not-allowed;pointer-events:none;text-decoration:line-through;}
+/* CONFIRM */
+.confirm-box{background:var(--white);border:1px solid var(--border);border-radius:20px;padding:2rem;}
+.confirm-summary{background:var(--sage-pale);border-radius:14px;padding:1.2rem 1.4rem;margin-bottom:1.5rem;border:1px solid var(--sage-light);}
+.confirm-summary h4{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;margin-bottom:.6rem;color:var(--sage);}
+.confirm-row{display:flex;justify-content:space-between;font-size:.84rem;margin-bottom:.3rem;}
+.confirm-row span:first-child{color:var(--text-muted);}
+.confirm-row span:last-child{font-weight:500;}
+.fg{margin-bottom:.9rem;}
+.fg label{display:block;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.35rem;font-weight:500;}
+.fg input,.fg select{width:100%;padding:.7rem .9rem;background:var(--cream);border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);outline:none;transition:border-color .3s;}
+.fg input:focus,.fg select:focus{border-color:var(--rose);}
+.form-row2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;}
+/* SUCCESS */
+.success-box{text-align:center;padding:4rem 2rem;}
+.success-icon{font-size:3.5rem;margin-bottom:1.5rem;}
+.success-box h2{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;margin-bottom:.8rem;}
+.success-box h2 em{font-style:italic;color:var(--rose-dark);}
+.success-box p{font-size:.95rem;color:var(--text-muted);line-height:1.8;max-width:420px;margin:0 auto 2rem;font-weight:300;}
+.success-detail{background:var(--sage-pale);border-radius:16px;padding:1.2rem 1.8rem;display:inline-block;margin-bottom:2rem;text-align:left;min-width:280px;}
+.success-detail p{font-size:.85rem;margin-bottom:.3rem;}
+/* NAV BTNS */
+.nav-btns{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;flex-wrap:wrap;gap:1rem;}
+.btn-back{border:1px solid var(--border);color:var(--text-muted);padding:.8rem 1.8rem;border-radius:50px;background:transparent;font-family:'DM Sans',sans-serif;font-size:.83rem;cursor:pointer;transition:all .3s;}
+.btn-back:hover{border-color:var(--rose);color:var(--rose-dark);}
+@media(max-width:800px){.res-wrap{padding:6rem 1.5rem 4rem;}.svc-select-grid,.cal-grid,.form-row2{grid-template-columns:1fr;}.slots-grid{grid-template-columns:repeat(4,1fr);}}
+</style>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init("eF8R0hxnnAPWRxx6i");</script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init("eF8R0hxnnAPWRxx6i");</script>
+</head>
+<body>
+<nav class="main-nav" id="nav">
+  <a href="index.html" class="nav-logo">Lic. <span>Agustina</span> Villegas</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Inicio</a></li>
+    <li><a href="sobre-mi.html">Sobre mí</a></li>
+    <li><a href="servicios.html">Servicios</a></li>
+    <li><a href="planes.html">Planes</a></li>
+    <li><a href="habito.html">Hábito</a></li>
+    <li><a href="contacto.html">Contacto</a></li>
+  </ul>
+  <button class="hamburger" onclick="document.getElementById('mm').classList.toggle('open')"><span></span><span></span><span></span></button>
+</nav>
+<div class="mobile-menu" id="mm">
+  <a href="index.html">Inicio</a><a href="servicios.html">Servicios</a><a href="contacto.html">Contacto</a>
+</div>
+
+<div class="res-wrap">
+  <span class="section-label">Reservas online</span>
+  <h1>Reservá tu <em>turno</em></h1>
+  <p>Elegí servicio, modalidad, día y horario. Tu turno queda registrado automáticamente.</p>
+
+  <div class="steps">
+    <div class="step active" id="st1">1. Servicio</div>
+    <div class="step" id="st2">2. Fecha & hora</div>
+    <div class="step" id="st3">3. Tus datos</div>
+    <div class="step" id="st4">4. Confirmado</div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div id="panel1">
+    <div class="svc-select-grid">
+      <div class="svc-opt" data-key="plan" onclick="selectSvc(this,'Plan de alimentación',60,'$2.500','nutricion')">
+        <div class="svc-opt-icon">🥗</div><div><div class="svc-opt-name">Plan de alimentación</div><div class="svc-opt-dur">60 min · Online o presencial</div></div><div class="svc-opt-price">$2.500</div>
+      </div>
+      <div class="svc-opt" data-key="consulta" onclick="selectSvc(this,'Primera consulta nutricional',60,'$1.200','nutricion')">
+        <div class="svc-opt-icon">🔍</div><div><div class="svc-opt-name">Primera consulta nutricional</div><div class="svc-opt-dur">60 min · Online o presencial</div></div><div class="svc-opt-price">$1.200</div>
+      </div>
+      <div class="svc-opt" data-key="control" onclick="selectSvc(this,'Consulta de control',45,'$800','nutricion')">
+        <div class="svc-opt-icon">🔄</div><div><div class="svc-opt-name">Consulta de control</div><div class="svc-opt-dur">45 min · Online o presencial</div></div><div class="svc-opt-price">$800</div>
+      </div>
+      <div class="svc-opt" data-key="isak" onclick="selectSvc(this,'Medición ISAK',60,'$1.100','nutricion')">
+        <div class="svc-opt-icon">📏</div><div><div class="svc-opt-name">Medición ISAK</div><div class="svc-opt-dur">60 min · Solo presencial</div></div><div class="svc-opt-price">$1.100</div>
+      </div>
+      <div class="svc-opt" data-key="cuerpo" onclick="selectSvc(this,'Masaje cuerpo completo',60,'$1.100','masaje')">
+        <div class="svc-opt-icon">💆</div><div><div class="svc-opt-name">Masaje cuerpo completo</div><div class="svc-opt-dur">60 min · Presencial</div></div><div class="svc-opt-price">$1.100</div>
+      </div>
+      <div class="svc-opt" data-key="descontrac" onclick="selectSvc(this,'Masaje descontracturante',50,'$890','masaje')">
+        <div class="svc-opt-icon">🧘</div><div><div class="svc-opt-name">Masaje descontracturante</div><div class="svc-opt-dur">50 min · Presencial</div></div><div class="svc-opt-price">$890</div>
+      </div>
+      <div class="svc-opt" data-key="relajante" onclick="selectSvc(this,'Masaje relajante',45,'$800','masaje')">
+        <div class="svc-opt-icon">🌿</div><div><div class="svc-opt-name">Masaje relajante</div><div class="svc-opt-dur">45 min · Presencial</div></div><div class="svc-opt-price">$800</div>
+      </div>
+      <div class="svc-opt" data-key="drenaje" onclick="selectSvc(this,'Drenaje linfático piernas',50,'$750','masaje')">
+        <div class="svc-opt-icon">🦵</div><div><div class="svc-opt-name">Drenaje linfático piernas</div><div class="svc-opt-dur">50 min · Presencial</div></div><div class="svc-opt-price">$750</div>
+      </div>
+      <div class="svc-opt" data-key="deportivo" onclick="selectSvc(this,'Masaje deportivo',50,'$890','masaje')">
+        <div class="svc-opt-icon">🏃</div><div><div class="svc-opt-name">Masaje deportivo</div><div class="svc-opt-dur">50 min · Presencial</div></div><div class="svc-opt-price">$890</div>
+      </div>
+      <div class="svc-opt" data-key="embarazo" onclick="selectSvc(this,'Masaje para embarazadas',45,'$800','masaje')">
+        <div class="svc-opt-icon">🤰</div><div><div class="svc-opt-name">Masaje para embarazadas</div><div class="svc-opt-dur">45 min · Presencial</div></div><div class="svc-opt-price">$800</div>
+      </div>
+    </div>
+    <div class="nav-btns"><span></span><button class="btn-primary" id="btn1" onclick="goStep(2)" disabled>Continuar →</button></div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div id="panel2" style="display:none;">
+    <div id="modality-section" style="display:none;margin-bottom:1.5rem;">
+      <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.8rem;font-weight:500;">¿Cómo querés la consulta?</p>
+      <div class="modality-row">
+        <button class="mod-btn active" id="mod-online" onclick="setModality('online')">💻 Online (videollamada)</button>
+        <button class="mod-btn" id="mod-presencial" onclick="setModality('presencial')">📍 Presencial — Montevideo</button>
+      </div>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-box">
+        <div class="cal-header">
+          <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
+          <div class="cal-month" id="calMonth"></div>
+          <button class="cal-nav" onclick="changeMonth(1)">›</button>
+        </div>
+        <div class="cal-days-header">
+          <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span>
+        </div>
+        <div class="cal-days" id="calDays"></div>
+      </div>
+      <div class="slots-box">
+        <div class="slots-title" id="slotsTitle">Seleccioná un día para ver horarios disponibles</div>
+        <div class="slots-grid" id="slotsGrid"></div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="goStep(1)">← Volver</button>
+      <button class="btn-primary" id="btn2" onclick="goStep(3)" disabled>Continuar →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div id="panel3" style="display:none;">
+    <div class="confirm-box">
+      <div class="confirm-summary">
+        <h4>Tu reserva</h4>
+        <div class="confirm-row"><span>Servicio</span><span id="cs-svc"></span></div>
+        <div class="confirm-row"><span>Modalidad</span><span id="cs-mod"></span></div>
+        <div class="confirm-row"><span>Fecha</span><span id="cs-date"></span></div>
+        <div class="confirm-row"><span>Horario</span><span id="cs-time"></span></div>
+        <div class="confirm-row"><span>Duración</span><span id="cs-dur"></span></div>
+        <div class="confirm-row"><span>Precio</span><span id="cs-price"></span></div>
+      </div>
+      <div class="form-row2">
+        <div class="fg"><label>Nombre</label><input type="text" id="f-name" placeholder="Tu nombre"></div>
+        <div class="fg"><label>Apellido</label><input type="text" id="f-last" placeholder="Tu apellido"></div>
+      </div>
+      <div class="fg"><label>Email</label><input type="email" id="f-email" placeholder="tu@email.com"></div>
+      <div class="fg"><label>WhatsApp</label><input type="tel" id="f-phone" placeholder="+598 09X XXX XXX"></div>
+      <div class="fg"><label>Consulta o mensaje adicional (opcional)</label><input type="text" id="f-notes" placeholder="Alguna consulta o indicación especial..."></div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="goStep(2)">← Volver</button>
+      <button class="btn-primary" onclick="confirmBooking()">Confirmar reserva ✓</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div id="panel4" style="display:none;">
+    <div class="success-box">
+      <div class="success-icon">✅</div>
+      <h2>¡Turno <em>confirmado!</em></h2>
+      <p>Tu reserva quedó registrada. Agustina se va a comunicar con vos para confirmar los detalles finales por WhatsApp o email.</p>
+      <div class="success-detail" id="success-detail"></div>
+      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+        <button class="btn-primary" onclick="location.href='index.html'">Volver al inicio</button>
+        <button class="btn-outline" onclick="newBooking()">Reservar otro turno</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="main-footer">
+  <div class="footer-top">
+    <div class="footer-brand"><div class="footer-logo">Lic. <span>Agustina</span> Villegas</div><p>Nutricionista · Masajista · Running</p><p>Tarariras, Colonia, Uruguay</p><div class="footer-social"><a href="https://www.instagram.com/lic.agustinavillegas/" target="_blank">📷 Instagram</a><a href="https://www.tiktok.com/@agustinavillegas.e" target="_blank">🎵 TikTok</a><a href="https://wa.me/59899712691" target="_blank">💬 WhatsApp</a></div></div>
+    <div class="footer-col"><h4>Servicios</h4><a href="servicios.html">Nutrición clínica</a><a href="servicios.html">Masajes terapéuticos</a><a href="planes.html">Planes de alimentación</a></div>
+    <div class="footer-col"><h4>Navegación</h4><a href="sobre-mi.html">Sobre mí</a><a href="reservar.html">Reservar turno</a><a href="contacto.html">Contacto</a></div>
+    <div class="footer-col"><h4>Contacto</h4><a href="mailto:lic.agustinavillegase@gmail.com">lic.agustinavillegase@gmail.com</a><a href="https://wa.me/59899712691">+598 99 712 691</a><span>Lun–Vie · 8:00–20:00</span></div>
+  </div>
+  <div class="footer-bottom"><p>© 2025 Lic. Agustina Villegas · Todos los derechos reservados</p><p>Tarariras, Colonia, Uruguay</p></div>
+</footer>
+<a href="https://wa.me/59899712691" target="_blank" class="wa-float" title="Escribir por WhatsApp"><svg viewBox="0 0 24 24" fill="white" width="26" height="26"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.855L.057 23.547a.75.75 0 00.906.928l5.919-1.525A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.715 9.715 0 01-4.964-1.361l-.355-.212-3.683.948.988-3.558-.232-.368A9.712 9.712 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg></a>
+
+<script>
+window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',scrollY>50));
+
+let sel={svc:'',dur:0,price:'',type:'',date:null,time:'',dateStr:'',modality:'online'};
+const OPEN_H=8,CLOSE_H=20;
+let curYear=new Date().getFullYear(),curMonth=new Date().getMonth();
+
+// Pre-select from URL params
+window.addEventListener('DOMContentLoaded',()=>{
+  const params=new URLSearchParams(window.location.search);
+  const key=params.get('svc');
+  if(key){
+    const el=document.querySelector(`.svc-opt[data-key="${key}"]`);
+    if(el){el.click();}
+  }
+});
+
+async function getBookings(){
+  try{const r=await window.storage.get('agustina_bookings_v2');return r?JSON.parse(r.value):{};}catch{return {};}
+}
+async function saveBookings(data){
+  try{await window.storage.set('agustina_bookings_v2',JSON.stringify(data));}catch{}
+}
+
+function goStep(n){
+  [1,2,3,4].forEach(i=>{
+    document.getElementById('panel'+i).style.display=i===n?'block':'none';
+    const st=document.getElementById('st'+i);
+    st.classList.toggle('active',i===n);
+    st.classList.toggle('done',i<n);
+  });
+  if(n===2)renderCal();
+  if(n===3){
+    document.getElementById('cs-svc').textContent=sel.svc;
+    document.getElementById('cs-mod').textContent=sel.type==='masaje'?'Presencial — Montevideo':(sel.modality==='online'?'Online (videollamada)':'Presencial — Montevideo');
+    document.getElementById('cs-date').textContent=sel.dateStr;
+    document.getElementById('cs-time').textContent=sel.time;
+    document.getElementById('cs-dur').textContent=sel.dur+' minutos';
+    document.getElementById('cs-price').textContent=sel.price;
+  }
+}
+
+function setModality(m){
+  sel.modality=m;
+  document.getElementById('mod-online').classList.toggle('active',m==='online');
+  document.getElementById('mod-presencial').classList.toggle('active',m==='presencial');
+}
+
+function selectSvc(el,name,dur,price,type){
+  document.querySelectorAll('.svc-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  sel.svc=name;sel.dur=dur;sel.price=price;sel.type=type;
+  sel.date=null;sel.time='';sel.dateStr='';
+  document.getElementById('btn1').disabled=false;
+  // Show modality for nutrition only
+  const ms=document.getElementById('modality-section');
+  if(type==='nutricion'&&name!=='Medición ISAK'){
+    ms.style.display='block';
+    sel.modality='online';
+    setModality('online');
+  } else {
+    ms.style.display='none';
+    sel.modality='presencial';
+  }
+}
+
+const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+function changeMonth(d){curMonth+=d;if(curMonth>11){curMonth=0;curYear++;}if(curMonth<0){curMonth=11;curYear--;}renderCal();}
+
+function renderCal(){
+  document.getElementById('calMonth').textContent=MONTHS[curMonth]+' '+curYear;
+  const today=new Date();today.setHours(0,0,0,0);
+  const first=new Date(curYear,curMonth,1);
+  let startDow=first.getDay();startDow=startDow===0?6:startDow-1;
+  const daysInMonth=new Date(curYear,curMonth+1,0).getDate();
+  let html='';
+  for(let i=0;i<startDow;i++) html+='<div class="cal-day empty"></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const dt=new Date(curYear,curMonth,d);
+    const isPast=dt<today;
+    const isSun=dt.getDay()===0;
+    const isSelected=sel.date&&sel.date.getDate()===d&&sel.date.getMonth()===curMonth&&sel.date.getFullYear()===curYear;
+    const isToday=dt.getTime()===today.getTime();
+    let cls='cal-day';
+    if(isPast||isSun)cls+=' past';
+    else cls+=' available';
+    if(isSelected)cls+=' selected';
+    if(isToday)cls+=' today';
+    html+=`<div class="${cls}"${(!isPast&&!isSun)?` onclick="selectDate(${d})"`:''} >${d}</div>`;
+  }
+  document.getElementById('calDays').innerHTML=html;
+}
+
+async function selectDate(d){
+  sel.date=new Date(curYear,curMonth,d);
+  const dow=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  sel.dateStr=dow[sel.date.getDay()]+' '+d+' de '+MONTHS[curMonth]+' '+curYear;
+  renderCal();
+  await renderSlots();
+}
+
+async function renderSlots(){
+  const bookings=await getBookings();
+  const dateKey=sel.date.toISOString().split('T')[0];
+  const dayBookings=bookings[dateKey]||{};
+  const gap=sel.type==='masaje'?15:60;
+  const slots=[];
+  for(let h=OPEN_H;h<CLOSE_H;h++){
+    for(let m=0;m<60;m+=30){
+      const endMin=h*60+m+sel.dur;
+      if(endMin>CLOSE_H*60)break;
+      const label=(h<10?'0':'')+h+':'+(m===0?'00':'30');
+      let blocked=false;
+      for(const[btime,bdata] of Object.entries(dayBookings)){
+        const[bh,bm]=btime.split(':').map(Number);
+        const bStart=bh*60+bm;
+        const bdur=typeof bdata==='object'?bdata.dur:bdata;
+        const bEnd=bStart+bdur+gap;
+        const sStart=h*60+m;
+        const sEnd=sStart+sel.dur;
+        if(sStart<bEnd&&sEnd>bStart){blocked=true;break;}
+      }
+      slots.push({label,blocked});
+    }
+  }
+  document.getElementById('slotsTitle').textContent='Horarios disponibles — '+sel.dateStr;
+  document.getElementById('slotsGrid').innerHTML=slots.map(s=>`<div class="slot${s.blocked?' blocked':''}"${!s.blocked?` onclick="selectSlot('${s.label}')"`:''}>${s.label}</div>`).join('');
+  sel.time='';
+  document.getElementById('btn2').disabled=true;
+}
+
+function selectSlot(t){
+  sel.time=t;
+  document.querySelectorAll('.slot').forEach(s=>s.classList.toggle('selected',s.textContent.trim()===t));
+  document.getElementById('btn2').disabled=false;
+}
+
+async function confirmBooking(){
+  const name=document.getElementById('f-name').value.trim();
+  const last=document.getElementById('f-last').value.trim();
+  const email=document.getElementById('f-email').value.trim();
+  if(!name||!last||!email){alert('Por favor completá nombre, apellido y email.');return;}
+  const bookings=await getBookings();
+  const dateKey=sel.date.toISOString().split('T')[0];
+  if(!bookings[dateKey])bookings[dateKey]={};
+  const phone=document.getElementById('f-phone')?document.getElementById('f-phone').value.trim():'';
+  const notes=document.getElementById('f-notes')?document.getElementById('f-notes').value.trim():'';
+  const modLabel2=sel.type==='masaje'?'Presencial':(sel.modality==='online'?'Online (videollamada)':'Presencial');
+  bookings[dateKey][sel.time]={dur:sel.dur,svc:sel.svc,name:name+' '+last,email:email,phone:phone,notes:notes,modality:modLabel2};
+  await saveBookings(bookings);
+  const modLabel=sel.type==='masaje'?'Presencial':(sel.modality==='online'?'Online':'Presencial');
+  document.getElementById('success-detail').innerHTML=
+    `<p><strong>Servicio:</strong> ${sel.svc}</p>
+     <p><strong>Modalidad:</strong> ${modLabel}</p>
+     <p><strong>Fecha:</strong> ${sel.dateStr}</p>
+     <p><strong>Horario:</strong> ${sel.time}</p>
+     <p><strong>Paciente:</strong> ${name} ${last}</p>
+     <p><strong>Contacto:</strong> ${email}</p>`;
+  // Send confirmation email
+  try {
+    await emailjs.send(
+      'service_nnsgrl9',
+      'template_4pmzmjm',
+      {
+        patient_name: name + ' ' + last,
+        patient_email: email,
+        service: sel.svc,
+        date: sel.dateStr,
+        time: sel.time,
+        modality: sel.type==='masaje'?'Presencial':(sel.modality==='online'?'Online (videollamada)':'Presencial'),
+      }
+    );
+    console.log('Email de confirmación enviado a', email);
+  } catch(err) {
+    console.warn('No se pudo enviar email:', err);
+  }
+  goStep(4);
+}
+
+function newBooking(){
+  sel={svc:'',dur:0,price:'',type:'',date:null,time:'',dateStr:'',modality:'online'};
+  document.querySelectorAll('.svc-opt').forEach(o=>o.classList.remove('selected'));
+  document.getElementById('btn1').disabled=true;
+  ['f-name','f-last','f-email','f-phone','f-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  goStep(1);
+}
+
+renderCal();
+</script>
+
+<script>
+async function sendConfirmationEmail(bookingData) {
+  try {
+    await emailjs.send(
+      'service_nnsgrl9',
+      'template_4pmzmjm',
+      {
+        patient_name: bookingData.name,
+        patient_email: bookingData.email,
+        service: bookingData.svc,
+        date: bookingData.date,
+        time: bookingData.time,
+        modality: bookingData.modality || 'Presencial',
+      }
+    );
+    console.log('Email de confirmación enviado');
+  } catch(err) {
+    console.error('Error enviando email:', err);
+  }
+}
+</script>
+</body>
+</html>

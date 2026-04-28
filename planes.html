@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Planes | Lic. Agustina Villegas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.plans-hero{padding:8rem 5rem 4rem;background:var(--white);}
+.plans-hero p{font-size:1rem;color:var(--text-muted);max-width:540px;line-height:1.85;font-weight:300;margin-top:1rem;}
+.plans-section{padding:3rem 5rem 5rem;background:var(--cream2);}
+.plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-bottom:2rem;}
+.plan-card{background:var(--white);border-radius:24px;padding:2.2rem;border:1px solid var(--border);position:relative;transition:all .35s;}
+.plan-card:hover{transform:translateY(-5px);box-shadow:0 20px 50px rgba(168,112,106,.14);}
+.plan-card.pop{background:var(--text);border-color:var(--text);}
+.pop-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--rose-dark);color:white;font-size:.68rem;padding:.28rem 1.1rem;border-radius:50px;letter-spacing:.1em;text-transform:uppercase;font-weight:500;white-space:nowrap;}
+.plan-name{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:400;margin-bottom:.2rem;}
+.plan-card.pop .plan-name{color:white;}
+.plan-credits{display:inline-flex;align-items:center;gap:.4rem;font-size:.75rem;background:var(--sage-pale);color:var(--sage);padding:.2rem .7rem;border-radius:50px;border:1px solid var(--sage-light);margin-bottom:1rem;}
+.plan-card.pop .plan-credits{background:rgba(122,158,126,.2);color:var(--sage-light);border-color:rgba(122,158,126,.3);}
+.plan-sub{font-size:.8rem;color:var(--text-muted);margin-bottom:1.4rem;font-style:italic;}
+.plan-card.pop .plan-sub{color:rgba(255,255,255,.5);}
+.plan-price{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:300;color:var(--rose-dark);line-height:1;}
+.plan-card.pop .plan-price{color:#EEBDB8;}
+.plan-price sup{font-size:1.2rem;vertical-align:super;}
+.plan-period{font-size:.75rem;color:var(--text-muted);margin-bottom:1.8rem;margin-top:.2rem;}
+.plan-card.pop .plan-period{color:rgba(255,255,255,.4);}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:.65rem;margin-bottom:2rem;}
+.plan-features li{font-size:.83rem;color:var(--text-muted);display:flex;align-items:flex-start;gap:.6rem;font-weight:300;line-height:1.5;}
+.plan-card.pop .plan-features li{color:rgba(255,255,255,.7);}
+.plan-features li::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--sage);flex-shrink:0;margin-top:7px;}
+.plan-card.pop .plan-features li::before{background:var(--rose);}
+.plan-cta{width:100%;padding:.9rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.83rem;letter-spacing:.04em;cursor:pointer;transition:all .3s;border:1px solid var(--rose);background:transparent;color:var(--rose-dark);}
+.plan-cta:hover{background:var(--rose-dark);color:white;border-color:var(--rose-dark);}
+.plan-card.pop .plan-cta{background:var(--rose-dark);color:white;border-color:var(--rose-dark);}
+.plan-card.pop .plan-cta:hover{background:var(--rose);}
+.credits-info{background:var(--white);border-radius:20px;padding:2rem 2.5rem;border:1px solid var(--border);margin-top:1.5rem;}
+.credits-info h4{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;margin-bottom:.8rem;}
+.credits-info p{font-size:.88rem;color:var(--text-muted);line-height:1.8;font-weight:300;}
+.credits-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:1.5rem;}
+.credit-step{text-align:center;padding:1rem;}
+.credit-step-num{width:36px;height:36px;border-radius:50%;background:var(--sage-pale);color:var(--sage);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:500;margin:0 auto .6rem;}
+.credit-step h5{font-size:.83rem;font-weight:500;margin-bottom:.3rem;}
+.credit-step p{font-size:.75rem;color:var(--text-muted);}
+.includes-box{background:var(--white);border-radius:20px;padding:2rem 2.5rem;border:1px solid var(--border);margin-top:1rem;}
+.includes-box h4{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:400;margin-bottom:1.2rem;}
+.inc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;}
+.inc-item{display:flex;align-items:center;gap:.6rem;font-size:.82rem;color:var(--text-muted);}
+.inc-item::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--sage);flex-shrink:0;}
+@media(max-width:900px){.plans-hero,.plans-section{padding-left:1.5rem;padding-right:1.5rem;}.plans-grid{grid-template-columns:1fr;}.inc-grid,.credits-steps{grid-template-columns:1fr 1fr;}}
+</style>
+</head><body>
+<nav class="main-nav" id="nav"><a href="index.html" class="nav-logo">Lic. <span>Agustina</span> Villegas</a><ul class="nav-links"><li><a href="index.html">Inicio</a></li><li><a href="sobre-mi.html">Sobre mí</a></li><li><a href="servicios.html">Servicios</a></li><li><a href="planes.html" class="active">Planes</a></li><li><a href="habito.html">Hábito</a></li><li><a href="contacto.html">Contacto</a></li></ul><button class="nav-cta" onclick="location.href='reservar.html'">Reservar turno</button><button class="hamburger" onclick="document.getElementById('mm').classList.toggle('open')"><span></span><span></span><span></span></button></nav>
+<div class="mobile-menu" id="mm"><a href="index.html">Inicio</a><a href="sobre-mi.html">Sobre mí</a><a href="servicios.html">Servicios</a><a href="planes.html">Planes</a><a href="habito.html">Hábito</a><a href="contacto.html">Contacto</a><a href="reservar.html" style="color:var(--rose-dark);font-weight:500;">Reservar turno</a></div>
+
+<section class="plans-hero">
+  <span class="section-label reveal">Planes</span>
+  <h1 class="section-title reveal d1">Acompañamiento <em>completo</em></h1>
+  <p class="reveal d2">Pagás una vez y recibís créditos de consulta que usás cuando quieras. Reservá cada sesión desde tu cuenta sin costo adicional.</p>
+</section>
+
+<section class="plans-section">
+  <div class="plans-grid">
+    <div class="plan-card reveal">
+      <div class="plan-name">Plan 2 meses</div>
+      <div class="plan-credits">🎟 3 créditos de consulta</div>
+      <div class="plan-sub">Para empezar con base sólida</div>
+      <div class="plan-price"><sup>$</sup>4.100</div>
+      <div class="plan-period">Pago único · Sin costos mensuales</div>
+      <ul class="plan-features">
+        <li>Primera consulta + plan individualizado</li>
+        <li>3 consultas de control incluidas</li>
+        <li>Recetario personalizado</li>
+        <li>Acompañamiento por WhatsApp</li>
+        <li>Organización semanal</li>
+      </ul>
+      <button class="plan-cta" onclick="startPlan('Plan 2 meses',3,'4100')">Elegir plan →</button>
+    </div>
+    <div class="plan-card pop reveal d1">
+      <div class="pop-badge">Más elegido</div>
+      <div class="plan-name">Plan 3 meses</div>
+      <div class="plan-credits">🎟 5 créditos de consulta</div>
+      <div class="plan-sub">El proceso de cambio real</div>
+      <div class="plan-price"><sup>$</sup>5.300</div>
+      <div class="plan-period">Pago único · Sin costos mensuales</div>
+      <ul class="plan-features">
+        <li>Primera consulta + plan individualizado</li>
+        <li>5 consultas de control incluidas</li>
+        <li>Recetario personalizado</li>
+        <li>Acompañamiento por WhatsApp</li>
+        <li>Organización semanal</li>
+        <li>Educación alimentaria completa</li>
+      </ul>
+      <button class="plan-cta" onclick="startPlan('Plan 3 meses',5,'5300')">Elegir plan →</button>
+    </div>
+    <div class="plan-card reveal d2">
+      <div class="plan-name">Plan 6 meses</div>
+      <div class="plan-credits">🎟 8 créditos de consulta</div>
+      <div class="plan-sub">Transformación y hábitos duraderos</div>
+      <div class="plan-price"><sup>$</sup>9.700</div>
+      <div class="plan-period">Pago único · Sin costos mensuales</div>
+      <ul class="plan-features">
+        <li>Primera consulta + plan individualizado</li>
+        <li>11 consultas de control incluidas</li>
+        <li>Recetario personalizado</li>
+        <li>Acompañamiento por WhatsApp</li>
+        <li>Organización semanal</li>
+        <li>Educación alimentaria completa</li>
+        <li>Seguimiento de composición corporal</li>
+      </ul>
+      <button class="plan-cta" onclick="startPlan('Plan 6 meses',8,'9700')">Elegir plan →</button>
+    </div>
+  </div>
+
+  <div class="credits-info reveal">
+    <h4>¿Cómo funcionan los créditos?</h4>
+    <p>Al comprar un plan recibís créditos de consulta que quedan guardados en tu cuenta. Cada vez que reservás una sesión se descuenta un crédito automáticamente — sin volver a pagar.</p>
+    <div class="credits-steps">
+      <div class="credit-step"><div class="credit-step-num">1</div><h5>Elegís tu plan</h5><p>Seleccionás el plan y creás tu cuenta con email y contraseña</p></div>
+      <div class="credit-step"><div class="credit-step-num">2</div><h5>Recibís créditos</h5><p>Agustina activa los créditos en tu cuenta una vez confirmado el pago</p></div>
+      <div class="credit-step"><div class="credit-step-num">3</div><h5>Reservás cuando quieras</h5><p>Entrás a tu cuenta, elegís día y hora y se descuenta un crédito</p></div>
+      <div class="credit-step"><div class="credit-step-num">4</div><h5>Sin costos extra</h5><p>Todas las consultas del plan están incluidas sin pago adicional</p></div>
+    </div>
+  </div>
+
+  <div class="includes-box reveal">
+    <h4>Todos los planes incluyen</h4>
+    <div class="inc-grid">
+      <div class="inc-item">Plato completo equilibrado y adaptado</div>
+      <div class="inc-item">Cantidades por grupo alimentario</div>
+      <div class="inc-item">Recetario guía completo</div>
+      <div class="inc-item">Alimentos recomendados del super</div>
+      <div class="inc-item">Organización semanal</div>
+      <div class="inc-item">Acompañamiento por WhatsApp</div>
+    </div>
+  </div>
+</section>
+
+<footer class="main-footer">
+  <div class="footer-top">
+    <div class="footer-brand"><div class="footer-logo">Lic. <span>Agustina</span> Villegas</div><p>Nutricionista · Masajista · Running</p><p>Montevideo, Uruguay</p><div class="footer-social"><a href="https://www.instagram.com/lic.agustinavillegas/" target="_blank">📷 Instagram</a><a href="https://www.tiktok.com/@agustinavillegas.e" target="_blank">🎵 TikTok</a><a href="https://wa.me/59899712691" target="_blank">💬 WhatsApp</a></div></div>
+    <div class="footer-col"><h4>Servicios</h4><a href="servicios.html">Nutrición clínica</a><a href="servicios.html">Masajes terapéuticos</a><a href="planes.html">Planes de alimentación</a><a href="habito.html">Hábito — barritas</a></div>
+    <div class="footer-col"><h4>Navegación</h4><a href="sobre-mi.html">Sobre mí</a><a href="reservar.html">Reservar turno</a><a href="contacto.html">Contacto</a></div>
+    <div class="footer-col"><h4>Contacto</h4><a href="mailto:lic.agustinavillegase@gmail.com">lic.agustinavillegase@gmail.com</a><a href="https://wa.me/59899712691">+598 99 712 691</a><span>Lun–Sáb · 8:00–20:00</span></div>
+  </div>
+  <div class="footer-bottom"><p>© 2025 Lic. Agustina Villegas · Todos los derechos reservados</p><p>Montevideo, Uruguay</p></div>
+</footer>
+<a href="https://wa.me/59899712691" target="_blank" class="wa-float"><svg viewBox="0 0 24 24" fill="white" width="26" height="26"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.855L.057 23.547a.75.75 0 00.906.928l5.919-1.525A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.715 9.715 0 01-4.964-1.361l-.355-.212-3.683.948.988-3.558-.232-.368A9.712 9.712 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg></a>
+
+<script>
+window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',scrollY>50));
+const io=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('visible');}),{threshold:.08});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+function startPlan(planName, credits, price) {
+  // Store plan selection and redirect to registration/booking
+  sessionStorage.setItem('selectedPlan', JSON.stringify({name:planName, credits, price}));
+  location.href = 'mi-cuenta.html?plan=' + encodeURIComponent(planName) + '&credits=' + credits + '&price=' + price;
+}
+</script>
+</body></html>

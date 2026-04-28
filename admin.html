@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Panel Admin | Agustina Villegas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --cream:#FAF8F4;--cream2:#F5F0E8;--blush:#F0E6DF;
+  --rose:#C9958E;--rose-dark:#A8706A;--rose-deep:#8B5550;
+  --sage:#7A9E7E;--sage-pale:#E8F2E8;--sage-light:#B8D4BA;
+  --amber:#BA7517;--amber-pale:#FFF3DC;
+  --text:#2A2118;--text-muted:#8C7E78;--white:#fff;
+  --border:rgba(169,138,130,.15);
+  --red:#A32D2D;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text);min-height:100vh;}
+
+/* ── LOGIN ── */
+#loginPage{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;background:var(--text);}
+.login-card{background:var(--white);border-radius:20px;padding:2.4rem 2rem;width:320px;box-shadow:0 24px 60px rgba(0,0,0,.35);}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:1.25rem;text-align:center;margin-bottom:.2rem;}
+.login-logo span{color:var(--rose-dark);font-style:italic;}
+.login-sub{font-size:.72rem;color:var(--text-muted);text-align:center;margin-bottom:1.8rem;}
+.fg{margin-bottom:.9rem;}
+.fg label{display:block;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.28rem;font-weight:500;}
+.fg input{width:100%;padding:.68rem .85rem;background:var(--cream);border:1px solid var(--border);border-radius:9px;font-size:.87rem;outline:none;transition:border-color .3s;}
+.fg input:focus{border-color:var(--rose);}
+.login-btn{width:100%;padding:.82rem;background:var(--rose-dark);color:#fff;border:none;border-radius:50px;font-size:.85rem;cursor:pointer;margin-top:.3rem;transition:background .3s;}
+.login-btn:hover{background:var(--text);}
+.login-err{font-size:.73rem;color:var(--red);text-align:center;margin-top:.5rem;display:none;}
+.login-hint{font-size:.65rem;color:rgba(255,255,255,.25);margin-top:1rem;text-align:center;}
+
+/* ── SHELL ── */
+#adminShell{display:none;}
+#adminShell.on{display:flex;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sb{
+  width:210px;min-height:100vh;background:var(--text);
+  display:flex;flex-direction:column;
+  padding:1.4rem .9rem;flex-shrink:0;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+}
+.sb-logo{font-family:'Cormorant Garamond',serif;font-size:1rem;color:#fff;padding:0 .4rem;margin-bottom:.1rem;}
+.sb-logo span{color:var(--rose);font-style:italic;}
+.sb-role{font-size:.62rem;color:rgba(255,255,255,.3);padding:0 .4rem;margin-bottom:1.6rem;letter-spacing:.04em;}
+.sb-sec{font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.22);padding:.2rem .5rem;margin:1rem 0 .3rem;}
+.sb-btn{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.58rem .75rem;border-radius:9px;
+  font-size:.78rem;color:rgba(255,255,255,.58);
+  cursor:pointer;transition:all .18s;margin-bottom:.1rem;
+  border:none;background:transparent;width:100%;text-align:left;
+}
+.sb-btn:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sb-btn.on{background:var(--rose-dark);color:#fff;}
+.sb-btn .ic{font-size:.9rem;width:17px;text-align:center;flex-shrink:0;}
+.sb-div{height:1px;background:rgba(255,255,255,.06);margin:.7rem 0;}
+.sb-foot{margin-top:auto;}
+.sb-link{display:block;font-size:.7rem;color:rgba(255,255,255,.3);padding:.42rem .75rem;border-radius:8px;transition:all .2s;cursor:pointer;border:none;background:transparent;width:100%;text-align:left;}
+.sb-link:hover{color:rgba(255,255,255,.7);}
+
+/* ── MAIN AREA ── */
+.main-area{flex:1;min-width:0;display:flex;flex-direction:column;}
+.ph{padding:1.6rem 1.8rem 1rem;border-bottom:1px solid var(--border);background:var(--white);}
+.ph h1{font-family:'Cormorant Garamond',serif;font-size:1.55rem;font-weight:400;}
+.ph p{font-size:.78rem;color:var(--text-muted);margin-top:.15rem;}
+.pb{padding:1.4rem 1.8rem;}
+.panel{display:none;}.panel.on{display:block;}
+
+/* ── STAT CARDS ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem;margin-bottom:1.3rem;}
+.stat{background:var(--white);border-radius:13px;padding:1rem 1.1rem;border:1px solid var(--border);}
+.stat-n{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;color:var(--rose-dark);line-height:1;}
+.stat-l{font-size:.65rem;color:var(--text-muted);margin-top:.22rem;text-transform:uppercase;letter-spacing:.05em;}
+
+/* ── TABLE CARD ── */
+.tcard{background:var(--white);border-radius:13px;border:1px solid var(--border);overflow:hidden;margin-bottom:1.1rem;}
+.tcard-hd{
+  padding:.8rem 1.1rem;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;
+}
+.tcard-title{font-size:.85rem;font-weight:500;}
+.tcard-right{display:flex;align-items:center;gap:.6rem;}
+.badge{font-size:.65rem;padding:.18rem .65rem;border-radius:50px;font-weight:500;}
+.b-green{background:var(--sage-pale);color:var(--sage);}
+.b-rose{background:var(--blush);color:var(--rose-deep);}
+.b-amber{background:var(--amber-pale);color:var(--amber);}
+.b-gray{background:var(--cream2);color:var(--text-muted);}
+.srch{
+  padding:.36rem .75rem;background:var(--cream2);
+  border:1px solid var(--border);border-radius:8px;
+  font-size:.75rem;outline:none;width:180px;
+}
+.srch:focus{border-color:var(--rose);}
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.78rem;}
+thead{background:var(--cream2);}
+th{padding:.58rem .9rem;text-align:left;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-weight:500;white-space:nowrap;}
+td{padding:.65rem .9rem;border-top:1px solid var(--border);vertical-align:middle;}
+tbody tr:hover td{background:var(--cream);}
+.td-bold{font-weight:500;}
+.td-sm{font-size:.72rem;color:var(--text-muted);}
+.btn-xs{font-size:.65rem;padding:.18rem .6rem;border-radius:50px;border:1px solid;cursor:pointer;background:transparent;transition:all .18s;white-space:nowrap;}
+.btn-del{border-color:var(--rose);color:var(--rose);}.btn-del:hover{background:var(--rose);color:#fff;}
+.btn-ok{border-color:var(--sage);color:var(--sage);}.btn-ok:hover{background:var(--sage);color:#fff;}
+.btn-wa{border-color:#22c55e;color:#16a34a;}.btn-wa:hover{background:#22c55e;color:#fff;}
+.empty td{text-align:center;color:var(--text-muted);padding:2rem;font-style:italic;font-size:.8rem;}
+
+/* ── CREDITS ── */
+.cr-form{background:var(--white);border-radius:13px;border:1px solid var(--border);padding:1.2rem;margin-bottom:1.1rem;}
+.cr-form h3{font-size:.85rem;font-weight:500;margin-bottom:.9rem;}
+.fi-row{display:grid;grid-template-columns:1fr 1fr auto;gap:.7rem;align-items:end;}
+.fi label{display:block;font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.25rem;}
+.fi input,.fi select{width:100%;padding:.58rem .8rem;background:var(--cream);border:1px solid var(--border);border-radius:8px;font-size:.8rem;outline:none;transition:border-color .3s;}
+.fi input:focus,.fi select:focus{border-color:var(--rose);}
+.btn-act{padding:.58rem 1.2rem;background:var(--sage);color:#fff;border:none;border-radius:8px;font-size:.78rem;cursor:pointer;white-space:nowrap;}
+.btn-act:hover{background:#5d8a62;}
+
+/* ── EDITOR ── */
+.ed-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.ed-card{background:var(--white);border-radius:13px;border:1px solid var(--border);overflow:hidden;}
+.ed-hd{padding:.7rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.ed-title{font-size:.8rem;font-weight:500;}
+.btn-sv{padding:.35rem .9rem;background:var(--rose-dark);color:#fff;border:none;border-radius:50px;font-size:.7rem;cursor:pointer;}
+.btn-sv:hover{background:var(--text);}
+.ed-body{padding:.9rem;}
+.ef{margin-bottom:.65rem;}
+.ef label{display:block;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.22rem;}
+.ef input,.ef textarea{width:100%;padding:.52rem .78rem;background:var(--cream);border:1px solid var(--border);border-radius:7px;font-size:.8rem;outline:none;transition:border-color .3s;}
+.ef textarea{height:65px;resize:vertical;}
+.ef input:focus,.ef textarea:focus{border-color:var(--rose);}
+
+/* ── INFO BANNER ── */
+.banner{border-radius:10px;padding:.7rem 1rem;margin-bottom:1rem;font-size:.76rem;display:flex;gap:.6rem;align-items:flex-start;line-height:1.5;}
+.banner-amber{background:var(--amber-pale);color:var(--amber);border:1px solid rgba(186,117,23,.2);}
+.banner-rose{background:var(--blush);color:var(--rose-deep);border:1px solid rgba(168,112,106,.2);}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:1.4rem;right:1.4rem;z-index:9999;
+  background:var(--sage);color:#fff;padding:.58rem 1.2rem;
+  border-radius:50px;font-size:.78rem;font-weight:500;
+  opacity:0;transform:translateY(50px);transition:all .3s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage">
+  <div class="login-card">
+    <div class="login-logo">Lic. <span>Agustina</span> Villegas</div>
+    <div class="login-sub">Panel de administración</div>
+    <div class="fg"><label>Email</label><input id="aEmail" type="email" placeholder="tu@email.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="fg"><label>Contraseña</label><input id="aPass" type="password" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="login-btn" onclick="doLogin()">Ingresar al panel</button>
+    <div class="login-err" id="loginErr">Email o contraseña incorrectos</div>
+  </div>
+  <div class="login-hint">Contraseña por defecto: agustina2025</div>
+</div>
+
+<!-- APP SHELL -->
+<div id="adminShell">
+  <aside class="sb">
+    <div class="sb-logo">Lic. <span>Agustina</span></div>
+    <div class="sb-role">Panel admin</div>
+    <div class="sb-sec">Principal</div>
+    <button class="sb-btn on" onclick="go('dashboard',this)"><span class="ic">📊</span>Dashboard</button>
+    <button class="sb-btn" onclick="go('reservas',this)"><span class="ic">📅</span>Reservas</button>
+    <div class="sb-div"></div>
+    <div class="sb-sec">Gestión</div>
+    <button class="sb-btn" onclick="go('creditos',this)"><span class="ic">🎟</span>Créditos</button>
+    <button class="sb-btn" onclick="go('contenido',this)"><span class="ic">✏️</span>Contenido web</button>
+    <button class="sb-btn" onclick="go('pedidos',this)"><span class="ic">📦</span>Pedidos Hábito</button>
+    <div class="sb-foot">
+      <div class="sb-div"></div>
+      <button class="sb-link" onclick="location.href='index.html'">← Ver web pública</button>
+      <button class="sb-link" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <div class="main-area">
+
+    <!-- DASHBOARD -->
+    <div id="p-dashboard" class="panel on">
+      <div class="ph"><h1>Dashboard</h1><p id="dashSub">Cargando...</p></div>
+      <div class="pb">
+        <div class="stats">
+          <div class="stat"><div class="stat-n" id="s1">—</div><div class="stat-l">Próximas reservas</div></div>
+          <div class="stat"><div class="stat-n" id="s2">—</div><div class="stat-l">Total reservas</div></div>
+          <div class="stat"><div class="stat-n" id="s3">—</div><div class="stat-l">Pacientes registrados</div></div>
+          <div class="stat"><div class="stat-n" id="s4">—</div><div class="stat-l">Pedidos Hábito</div></div>
+        </div>
+        <div class="tcard">
+          <div class="tcard-hd">
+            <span class="tcard-title">Próximas reservas</span>
+            <span class="badge b-green" id="d-cnt">0</span>
+          </div>
+          <div class="tw"><table>
+            <thead><tr><th>Paciente</th><th>Servicio</th><th>Fecha</th><th>Hora</th><th>Modalidad</th><th>Comentario</th></tr></thead>
+            <tbody id="d-rows"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESERVAS -->
+    <div id="p-reservas" class="panel">
+      <div class="ph"><h1>Reservas</h1><p>Historial completo de turnos</p></div>
+      <div class="pb">
+        <div class="tcard">
+          <div class="tcard-hd">
+            <span class="tcard-title">Todas las reservas</span>
+            <div class="tcard-right">
+              <input class="srch" placeholder="Buscar nombre..." oninput="filtRes(this.value)">
+              <span class="badge b-rose" id="res-cnt">0</span>
+            </div>
+          </div>
+          <div class="tw"><table>
+            <thead><tr><th>Nombre</th><th>Apellido</th><th>Servicio</th><th>Fecha</th><th>Hora</th><th>Modalidad</th><th>Comentario</th><th>Email</th><th>WhatsApp</th><th>Acción</th></tr></thead>
+            <tbody id="res-rows"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CRÉDITOS -->
+    <div id="p-creditos" class="panel">
+      <div class="ph"><h1>Créditos de pacientes</h1><p>Activá créditos para quienes pagaron un plan</p></div>
+      <div class="pb">
+        <div class="banner banner-amber">💡 Cuando un paciente compra un plan, aparece aquí como pendiente. Confirmá el pago y activá sus créditos.</div>
+        <div class="cr-form">
+          <h3>Agregar créditos</h3>
+          <div class="fi-row">
+            <div class="fi"><label>Email del paciente</label><input id="cr-email" type="email" placeholder="email@paciente.com"></div>
+            <div class="fi"><label>Plan</label>
+              <select id="cr-plan">
+                <option value="Plan 2 meses|3">Plan 2 meses — 3 créditos</option>
+                <option value="Plan 3 meses|5">Plan 3 meses — 5 créditos</option>
+                <option value="Plan 6 meses|8">Plan 6 meses — 8 créditos</option>
+                <option value="Manual|1">+1 crédito adicional</option>
+              </select>
+            </div>
+            <button class="btn-act" onclick="activateCredits()">Activar ✓</button>
+          </div>
+        </div>
+        <div class="tcard">
+          <div class="tcard-hd">
+            <span class="tcard-title">Pacientes registrados</span>
+            <span class="badge b-green" id="pat-cnt">0</span>
+          </div>
+          <div class="tw"><table>
+            <thead><tr><th>Nombre</th><th>Email</th><th>WhatsApp</th><th>Plan activo</th><th>Créditos</th><th>Consultas usadas</th><th>Estado</th><th>Alta</th></tr></thead>
+            <tbody id="pat-rows"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENIDO -->
+    <div id="p-contenido" class="panel">
+      <div class="ph"><h1>Editar contenido</h1><p>Modificá precios y textos de la web</p></div>
+      <div class="pb">
+        <div class="banner banner-rose">⚠️ Los cambios se guardan localmente. Una vez publicada la web en el servidor, los precios se actualizan automáticamente.</div>
+        <div class="ed-grid">
+          <div class="ed-card">
+            <div class="ed-hd"><span class="ed-title">Nutrición — Precios</span><button class="btn-sv" onclick="saveEd('nut')">Guardar</button></div>
+            <div class="ed-body" id="ed-nut">
+              <div class="ef"><label>Primera consulta</label><input data-key="price_consulta" value="$1.200"></div>
+              <div class="ef"><label>Plan de alimentación</label><input data-key="price_plan" value="$2.500"></div>
+              <div class="ef"><label>Medición ISAK</label><input data-key="price_isak" value="$1.100"></div>
+              <div class="ef"><label>Consulta de control</label><input data-key="price_control" value="$800"></div>
+            </div>
+          </div>
+          <div class="ed-card">
+            <div class="ed-hd"><span class="ed-title">Masajes — Precios</span><button class="btn-sv" onclick="saveEd('mas')">Guardar</button></div>
+            <div class="ed-body" id="ed-mas">
+              <div class="ef"><label>Cuerpo completo</label><input data-key="price_cuerpo" value="$1.100"></div>
+              <div class="ef"><label>Descontracturante</label><input data-key="price_descontrac" value="$890"></div>
+              <div class="ef"><label>Relajante</label><input data-key="price_relajante" value="$800"></div>
+              <div class="ef"><label>Drenaje linfático</label><input data-key="price_drenaje" value="$750"></div>
+              <div class="ef"><label>Deportivo</label><input data-key="price_deportivo" value="$890"></div>
+              <div class="ef"><label>Embarazadas</label><input data-key="price_embarazo" value="$800"></div>
+            </div>
+          </div>
+          <div class="ed-card">
+            <div class="ed-hd"><span class="ed-title">Planes — Precios</span><button class="btn-sv" onclick="saveEd('planes')">Guardar</button></div>
+            <div class="ed-body" id="ed-planes">
+              <div class="ef"><label>Plan 2 meses</label><input data-key="price_plan2" value="$4.100"></div>
+              <div class="ef"><label>Plan 3 meses</label><input data-key="price_plan3" value="$5.300"></div>
+              <div class="ef"><label>Plan 6 meses</label><input data-key="price_plan6" value="$9.700"></div>
+            </div>
+          </div>
+          <div class="ed-card">
+            <div class="ed-hd"><span class="ed-title">Hábito — Precios</span><button class="btn-sv" onclick="saveEd('hab')">Guardar</button></div>
+            <div class="ed-body" id="ed-hab">
+              <div class="ef"><label>Energética × 1</label><input data-key="hab_ener1" value="$55"></div>
+              <div class="ef"><label>Energética × 12</label><input data-key="hab_ener12" value="$605"></div>
+              <div class="ef"><label>Proteica × 1</label><input data-key="hab_prot1" value="$70"></div>
+              <div class="ef"><label>Proteica × 12</label><input data-key="hab_prot12" value="$770"></div>
+            </div>
+          </div>
+          <div class="ed-card" style="grid-column:span 2">
+            <div class="ed-hd"><span class="ed-title">Texto de inicio — Hero</span><button class="btn-sv" onclick="saveEd('hero')">Guardar</button></div>
+            <div class="ed-body" id="ed-hero">
+              <div class="ef"><label>Título</label><input data-key="hero_title" value="Alimentá tu cuerpo, calma tu mente"></div>
+              <div class="ef"><label>Descripción</label><textarea data-key="hero_desc">Planes nutricionales diseñados para restaurar energía, salud digestiva y bienestar integral.</textarea></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PEDIDOS -->
+    <div id="p-pedidos" class="panel">
+      <div class="ph"><h1>Pedidos Hábito</h1><p>Pedidos de barritas recibidos</p></div>
+      <div class="pb">
+        <div class="tcard">
+          <div class="tcard-hd">
+            <span class="tcard-title">Todos los pedidos</span>
+            <div class="tcard-right">
+              <input class="srch" placeholder="Buscar..." oninput="filtPed(this.value)">
+              <span class="badge b-rose" id="ped-cnt">0</span>
+            </div>
+          </div>
+          <div class="tw"><table>
+            <thead><tr><th>Fecha</th><th>Cliente</th><th>WhatsApp</th><th>Productos</th><th>Total</th><th>Zona</th><th>Estado</th><th>Acción</th></tr></thead>
+            <tbody id="ped-rows"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-area -->
+</div><!-- /adminShell -->
+
+<div class="toast" id="toast">✓ Guardado</div>
+
+<script>
+const PASS = 'agustina2025';
+const MAIL = 'lic.agustinavillegase@gmail.com';
+
+function doLogin(){
+  const e=document.getElementById('aEmail').value.trim().toLowerCase();
+  const p=document.getElementById('aPass').value;
+  document.getElementById('loginErr').style.display='none';
+  if(e===MAIL.toLowerCase()&&p===PASS){
+    sessionStorage.setItem('adm','1');
+    bootApp();
+  } else {
+    document.getElementById('loginErr').style.display='block';
+  }
+}
+function doLogout(){sessionStorage.removeItem('adm');location.reload();}
+
+function bootApp(){
+  document.getElementById('loginPage').style.display='none';
+  document.getElementById('adminShell').classList.add('on');
+  const d=new Date();
+  const days=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  document.getElementById('dashSub').textContent=`${days[d.getDay()]} ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
+  loadDashboard();
+}
+
+function go(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('p-'+name).classList.add('on');
+  btn.classList.add('on');
+  ({reservas:loadReservas,creditos:loadCreditos,pedidos:loadPedidos,contenido:loadContent}[name]||function(){})();
+}
+
+async function st(key){try{const r=await window.storage.get(key);return r?JSON.parse(r.value):null;}catch{return null;}}
+async function sv(key,val){try{await window.storage.set(key,JSON.stringify(val));}catch{}}
+
+function fmtD(s){
+  if(!s)return'—';
+  const p=s.split('-');
+  const m=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return `${parseInt(p[2])} ${m[parseInt(p[1])-1]}`;
+}
+
+// ── DASHBOARD ──
+async function loadDashboard(){
+  const bk=await st('agustina_bookings_v2')||{};
+  const us=await st('agustina_users')||{};
+  const od=await st('habito_orders')||[];
+  const today=new Date().toISOString().split('T')[0];
+  let total=0; const up=[];
+  for(const[d,slots] of Object.entries(bk))
+    for(const[t,v] of Object.entries(slots)){
+      total++;
+      const b={date:d,time:t,...(typeof v==='object'?v:{})};
+      if(d>=today) up.push(b);
+    }
+  up.sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+  document.getElementById('s1').textContent=up.length;
+  document.getElementById('s2').textContent=total;
+  document.getElementById('s3').textContent=Object.keys(us).length;
+  document.getElementById('s4').textContent=(od||[]).length;
+  document.getElementById('d-cnt').textContent=up.length;
+  document.getElementById('d-rows').innerHTML=up.slice(0,8).map(b=>`
+    <tr><td class="td-bold">${b.name||'—'}</td><td>${b.svc||'Consulta'}</td>
+    <td>${fmtD(b.date)}</td><td><strong>${b.time||'—'}</strong></td>
+    <td><span class="badge ${b.modality&&b.modality.toLowerCase().includes('online')?'b-green':'b-gray'}">${b.modality||'Presencial'}</span></td>
+    <td class="td-sm">${b.notes||'—'}</td></tr>`).join('')
+    ||`<tr class="empty"><td colspan="6">No hay reservas próximas</td></tr>`;
+}
+
+// ── RESERVAS ──
+let _resAll=[];
+async function loadReservas(){
+  const bk=await st('agustina_bookings_v2')||{};
+  _resAll=[];
+  for(const[d,slots] of Object.entries(bk))
+    for(const[t,v] of Object.entries(slots))
+      _resAll.push({date:d,time:t,...(typeof v==='object'?v:{})});
+  _resAll.sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time));
+  renderRes(_resAll);
+}
+function renderRes(data){
+  document.getElementById('res-cnt').textContent=data.length;
+  document.getElementById('res-rows').innerHTML=data.map(b=>{
+    const np=(b.name||'').trim().split(' ');
+    const first=np[0]||'—', last=np.slice(1).join(' ')||'—';
+    const phone=(b.phone||'').replace(/\D/g,'');
+    return `<tr>
+      <td class="td-bold">${first}</td><td>${last}</td>
+      <td>${b.svc||'Consulta'}</td>
+      <td>${fmtD(b.date)}</td><td><strong>${b.time||'—'}</strong></td>
+      <td><span class="badge ${b.modality&&b.modality.toLowerCase().includes('online')?'b-green':'b-gray'}">${b.modality||'Presencial'}</span></td>
+      <td class="td-sm">${b.notes||'—'}</td>
+      <td class="td-sm">${b.email||'—'}</td>
+      <td>${phone?`<a href="https://wa.me/${phone}" target="_blank" class="btn-xs btn-wa">WA</a>`:'—'}</td>
+      <td><button class="btn-xs btn-del" onclick="delRes('${b.date}','${b.time}')">Cancelar</button></td>
+    </tr>`;
+  }).join('')||`<tr class="empty"><td colspan="10">No hay reservas</td></tr>`;
+}
+function filtRes(q){renderRes(q?_resAll.filter(b=>(b.name||'').toLowerCase().includes(q.toLowerCase())):_resAll);}
+async function delRes(d,t){
+  if(!confirm('¿Cancelar esta reserva?'))return;
+  const bk=await st('agustina_bookings_v2')||{};
+  if(bk[d])delete bk[d][t];
+  await sv('agustina_bookings_v2',bk);
+  loadReservas();loadDashboard();toast('Reserva cancelada');
+}
+
+// ── CRÉDITOS ──
+async function loadCreditos(){
+  const us=await st('agustina_users')||{};
+  const list=Object.values(us);
+  document.getElementById('pat-cnt').textContent=list.length;
+  document.getElementById('pat-rows').innerHTML=list.map(u=>`
+    <tr>
+      <td class="td-bold">${u.name||'—'}</td>
+      <td class="td-sm">${u.email}</td>
+      <td class="td-sm">${u.phone||'—'}</td>
+      <td>${u.plan||'—'}</td>
+      <td><strong style="color:var(--sage);font-size:1.1rem;">${u.credits||0}</strong></td>
+      <td>${(u.bookings||[]).length}</td>
+      <td>${u.pendingPlan?`<span class="badge b-amber">⏳ ${u.pendingPlan.name}</span>`:`<span class="badge b-green">Activo</span>`}</td>
+      <td class="td-sm">${u.createdAt?u.createdAt.split('T')[0]:'—'}</td>
+    </tr>`).join('')||`<tr class="empty"><td colspan="8">No hay pacientes</td></tr>`;
+}
+async function activateCredits(){
+  const email=document.getElementById('cr-email').value.trim().toLowerCase();
+  const[plan,cs]=document.getElementById('cr-plan').value.split('|');
+  const credits=parseInt(cs);
+  if(!email)return alert('Ingresá el email del paciente.');
+  const us=await st('agustina_users')||{};
+  if(!us[email]){
+    if(!confirm(`${email} no está registrado. ¿Crear cuenta?`))return;
+    us[email]={name:'Paciente',email,credits:0,plan:null,bookings:[],createdAt:new Date().toISOString()};
+  }
+  us[email].credits=(us[email].credits||0)+credits;
+  us[email].plan=plan;us[email].pendingPlan=null;
+  await sv('agustina_users',us);
+  loadCreditos();toast(`${credits} créditos activados para ${email}`);
+  document.getElementById('cr-email').value='';
+}
+
+// ── CONTENIDO ──
+async function loadContent(){
+  const c=await st('agustina_content')||{};
+  document.querySelectorAll('[data-key]').forEach(el=>{if(c[el.dataset.key])el.value=c[el.dataset.key];});
+}
+async function saveEd(sec){
+  const c=await st('agustina_content')||{};
+  document.getElementById('ed-'+sec).querySelectorAll('[data-key]').forEach(el=>{c[el.dataset.key]=el.value;});
+  await sv('agustina_content',c);toast('Guardado correctamente');
+}
+
+// ── PEDIDOS ──
+let _pedAll=[];
+async function loadPedidos(){
+  const od=await st('habito_orders')||[];
+  _pedAll=od.slice().reverse();renderPed(_pedAll);
+}
+function renderPed(data){
+  document.getElementById('ped-cnt').textContent=data.length;
+  document.getElementById('ped-rows').innerHTML=data.map(o=>{
+    const phone=(o.phone||'').replace(/\D/g,'');
+    const d=o.date?new Date(o.date).toLocaleDateString('es',{day:'numeric',month:'short'}):'—';
+    const msg=`Hola ${encodeURIComponent(o.name||'')}%2C+confirmo+tu+pedido+de+Hábito.+Total%3A+%24${o.total||0}.`;
+    return `<tr>
+      <td class="td-sm">${d}</td>
+      <td class="td-bold">${o.name||'—'}</td>
+      <td>${phone?`<a href="https://wa.me/${phone}" target="_blank" style="color:var(--sage)">${o.phone}</a>`:'—'}</td>
+      <td class="td-sm" style="max-width:180px;white-space:normal;">${(o.items||[]).join(', ')}</td>
+      <td><strong>$${o.total||0}</strong></td>
+      <td class="td-sm">${o.zone||'—'}</td>
+      <td><span class="badge b-amber">Pendiente</span></td>
+      <td>${phone?`<a href="https://wa.me/${phone}?text=${msg}" target="_blank" class="btn-xs btn-wa">Confirmar</a>`:'—'}</td>
+    </tr>`;
+  }).join('')||`<tr class="empty"><td colspan="8">No hay pedidos aún</td></tr>`;
+}
+function filtPed(q){renderPed(q?_pedAll.filter(o=>(o.name||'').toLowerCase().includes(q.toLowerCase())||(o.zone||'').toLowerCase().includes(q.toLowerCase())):_pedAll);}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// Auto-boot
+window.addEventListener('DOMContentLoaded',()=>{
+  if(sessionStorage.getItem('adm')==='1') bootApp();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Mi cuenta | Lic. Agustina Villegas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.account-wrap{min-height:100vh;padding:8rem 2rem 4rem;display:flex;align-items:flex-start;justify-content:center;background:var(--cream2);}
+.account-box{background:var(--white);border-radius:24px;padding:2.5rem;border:1px solid var(--border);width:100%;max-width:460px;}
+.account-logo{font-family:'Cormorant Garamond',serif;font-size:1.15rem;text-align:center;margin-bottom:1.5rem;color:var(--text);}
+.account-logo span{color:var(--rose-dark);font-style:italic;}
+.plan-badge{background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:12px;padding:.8rem 1rem;margin-bottom:1.5rem;text-align:center;display:none;}
+.plan-badge h4{font-size:.85rem;font-weight:500;color:var(--sage);margin-bottom:.2rem;}
+.plan-badge p{font-size:.78rem;color:var(--text-muted);}
+.tabs{display:flex;gap:.4rem;background:var(--blush);padding:3px;border-radius:50px;margin-bottom:1.5rem;}
+.tab-btn{flex:1;padding:.5rem;border-radius:50px;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-muted);cursor:pointer;transition:all .3s;}
+.tab-btn.active{background:var(--white);color:var(--rose-deep);box-shadow:0 2px 8px rgba(168,112,106,.15);}
+.form-panel{display:none;}.form-panel.active{display:block;}
+.fg{margin-bottom:1rem;}
+.fg label{display:block;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.35rem;font-weight:500;}
+.fg input{width:100%;padding:.75rem 1rem;background:var(--cream);border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);outline:none;transition:border-color .3s;}
+.fg input:focus{border-color:var(--rose);}
+.f-submit{width:100%;padding:.95rem;background:var(--rose-dark);color:white;border:none;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.85rem;letter-spacing:.04em;cursor:pointer;transition:all .35s;margin-top:.5rem;}
+.f-submit:hover{background:var(--text);}
+.f-note{font-size:.75rem;color:var(--text-muted);text-align:center;margin-top:.8rem;line-height:1.5;}
+.error-msg{background:#FCEBEB;border:1px solid #F09595;border-radius:10px;padding:.7rem 1rem;font-size:.82rem;color:#A32D2D;margin-bottom:1rem;display:none;}
+/* DASHBOARD */
+.dashboard{display:none;}
+.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;}
+.dash-header h3{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400;}
+.logout-btn{font-size:.75rem;color:var(--text-muted);background:none;border:none;cursor:pointer;text-decoration:underline;}
+.credits-display{background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:16px;padding:1.5rem;text-align:center;margin-bottom:1.5rem;}
+.credits-num{font-family:'Cormorant Garamond',serif;font-size:3.5rem;font-weight:300;color:var(--sage);line-height:1;}
+.credits-label{font-size:.8rem;color:var(--text-muted);margin-top:.3rem;letter-spacing:.04em;text-transform:uppercase;}
+.credits-plan{font-size:.75rem;color:var(--sage);margin-top:.3rem;font-style:italic;}
+.dash-actions{display:flex;flex-direction:column;gap:.7rem;}
+.dash-btn{width:100%;padding:.85rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;transition:all .3s;text-align:center;}
+.dash-btn.primary{background:var(--rose-dark);color:white;border:none;}
+.dash-btn.primary:hover{background:var(--text);}
+.dash-btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text-muted);}
+.dash-btn.secondary:hover{border-color:var(--rose);color:var(--rose-dark);}
+.history-title{font-size:.8rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin:1.2rem 0 .6rem;}
+.history-item{display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--border);font-size:.83rem;}
+.history-item:last-child{border-bottom:none;}
+.history-item .date{color:var(--text-muted);}
+.history-item .status{font-size:.7rem;padding:.2rem .6rem;border-radius:50px;}
+.status-used{background:#FCEBEB;color:#A32D2D;}
+.status-upcoming{background:var(--sage-pale);color:var(--sage);}
+.no-credits{text-align:center;padding:1rem;font-size:.88rem;color:var(--text-muted);}
+</style>
+</head>
+<body>
+<nav class="main-nav" id="nav">
+  <a href="index.html" class="nav-logo">Lic. <span>Agustina</span> Villegas</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Inicio</a></li>
+    <li><a href="servicios.html">Servicios</a></li>
+    <li><a href="planes.html">Planes</a></li>
+    <li><a href="reservar.html">Reservar</a></li>
+    <li><a href="contacto.html">Contacto</a></li>
+  </ul>
+  <button class="hamburger" onclick="document.getElementById('mm').classList.toggle('open')"><span></span><span></span><span></span></button>
+</nav>
+<div class="mobile-menu" id="mm">
+  <a href="index.html">Inicio</a><a href="planes.html">Planes</a><a href="reservar.html">Reservar</a><a href="contacto.html">Contacto</a>
+</div>
+
+<div class="account-wrap">
+  <div class="account-box">
+    <div class="account-logo">Lic. <span>Agustina</span> Villegas</div>
+    <div class="plan-badge" id="planBadge">
+      <h4 id="planBadgeName"></h4>
+      <p id="planBadgeCredits"></p>
+    </div>
+
+    <!-- AUTH FORMS -->
+    <div id="authSection">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('login',this)">Iniciar sesión</button>
+        <button class="tab-btn" onclick="switchTab('register',this)">Crear cuenta</button>
+      </div>
+
+      <div id="errorMsg" class="error-msg"></div>
+
+      <!-- LOGIN -->
+      <div class="form-panel active" id="panel-login">
+        <div class="fg"><label>Email</label><input type="email" id="login-email" placeholder="tu@email.com"></div>
+        <div class="fg"><label>Contraseña</label><input type="password" id="login-pass" placeholder="Tu contraseña"></div>
+        <button class="f-submit" onclick="doLogin()">Iniciar sesión</button>
+        <p class="f-note">¿No tenés cuenta? Hacé clic en "Crear cuenta"</p>
+      </div>
+
+      <!-- REGISTER -->
+      <div class="form-panel" id="panel-register">
+        <div class="fg"><label>Nombre completo</label><input type="text" id="reg-name" placeholder="Tu nombre y apellido"></div>
+        <div class="fg"><label>Email</label><input type="email" id="reg-email" placeholder="tu@email.com"></div>
+        <div class="fg"><label>WhatsApp</label><input type="tel" id="reg-phone" placeholder="+598 09X XXX XXX"></div>
+        <div class="fg"><label>Contraseña</label><input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres"></div>
+        <div class="fg"><label>Repetir contraseña</label><input type="password" id="reg-pass2" placeholder="Repetí tu contraseña"></div>
+        <button class="f-submit" onclick="doRegister()">Crear cuenta</button>
+        <p class="f-note">Al registrarte, Agustina activará tus créditos una vez confirmado el pago por WhatsApp.</p>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard" id="dashboard">
+      <div style="background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:14px;padding:.8rem 1.2rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;" id="creditsBar">
+  <div>
+    <span style="font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);font-weight:500;">Créditos disponibles</span>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:var(--sage);line-height:1;" id="creditsNum">—</div>
+  </div>
+  <button onclick="location.href='reservar.html?mode=credit'" id="useCredit" style="background:var(--sage);color:white;border:none;padding:.6rem 1.2rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.8rem;cursor:pointer;display:none;">Usar crédito</button>
+</div><div class="dash-header">
+        <h3>Mi cuenta</h3>
+        <button class="logout-btn" onclick="doLogout()">Cerrar sesión</button>
+      </div>
+      <div class="credits-display">
+        <div class="credits-num" id="creditsNum">0</div>
+        <div class="credits-label">Créditos disponibles</div>
+        <div class="credits-plan" id="creditsPlan"></div>
+      </div>
+      <div class="dash-actions">
+        <button class="dash-btn primary" id="reserveBtn" onclick="reserveWithCredit()">Usar crédito — Reservar consulta</button>
+        <button class="dash-btn secondary" onclick="location.href='planes.html'">Ver planes y agregar créditos</button>
+      </div>
+      <div id="historySection">
+        <div class="history-title">Historial de reservas</div>
+        <div id="historyList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<a href="https://wa.me/59899712691" target="_blank" class="wa-float"><svg viewBox="0 0 24 24" fill="white" width="26" height="26"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.855L.057 23.547a.75.75 0 00.906.928l5.919-1.525A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.715 9.715 0 01-4.964-1.361l-.355-.212-3.683.948.988-3.558-.232-.368A9.712 9.712 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg></a>
+
+<script>
+window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',scrollY>50));
+
+// Read URL params
+const params = new URLSearchParams(window.location.search);
+const planName = params.get('plan');
+const planCredits = parseInt(params.get('credits')||'0');
+const planPrice = params.get('price');
+
+if(planName) {
+  document.getElementById('planBadge').style.display='block';
+  document.getElementById('planBadgeName').textContent = planName + ' — $' + planPrice;
+  document.getElementById('planBadgeCredits').textContent = planCredits + ' créditos de consulta incluidos';
+  // Auto-switch to register tab
+  switchTab('register', document.querySelectorAll('.tab-btn')[1]);
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.form-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+  hideError();
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg; el.style.display='block';
+}
+function hideError() { document.getElementById('errorMsg').style.display='none'; }
+
+// Storage helpers
+async function getUsers() {
+  try { const r = await window.storage.get('agustina_users'); return r ? JSON.parse(r.value) : {}; } catch { return {}; }
+}
+async function saveUsers(data) {
+  try { await window.storage.set('agustina_users', JSON.stringify(data)); } catch {}
+}
+function hashPass(p) { return btoa(p + '_agustina_salt'); }
+
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim().toLowerCase();
+  const phone = document.getElementById('reg-phone').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const pass2 = document.getElementById('reg-pass2').value;
+  hideError();
+  if(!name||!email||!pass) return showError('Completá todos los campos obligatorios.');
+  if(pass.length < 6) return showError('La contraseña debe tener al menos 6 caracteres.');
+  if(pass !== pass2) return showError('Las contraseñas no coinciden.');
+  const users = await getUsers();
+  if(users[email]) return showError('Ya existe una cuenta con ese email. Iniciá sesión.');
+  users[email] = {
+    name, email, phone,
+    pass: hashPass(pass),
+    plan: planName || null,
+    credits: 0, // Agustina activates manually
+    pendingPlan: planName ? {name:planName, credits:planCredits, price:planPrice} : null,
+    bookings: [],
+    createdAt: new Date().toISOString()
+  };
+  await saveUsers(users);
+  sessionStorage.setItem('loggedUser', email);
+  showDashboard(users[email]);
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value;
+  hideError();
+  if(!email||!pass) return showError('Completá email y contraseña.');
+  const users = await getUsers();
+  if(!users[email]) return showError('No encontramos una cuenta con ese email.');
+  if(users[email].pass !== hashPass(pass)) return showError('Contraseña incorrecta.');
+  sessionStorage.setItem('loggedUser', email);
+  showDashboard(users[email]);
+}
+
+function showDashboard(user) {
+  document.getElementById('authSection').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  document.getElementById('planBadge').style.display='none';
+  document.getElementById('creditsNum').textContent = user.credits || 0;
+  const credBar = document.getElementById('creditsBar');
+  const useBtn = document.getElementById('useCredit');
+  if(credBar) {
+    if(user.credits > 0) {
+      useBtn.style.display = 'block';
+    }
+  }
+  document.getElementById('creditsPlan').textContent = user.plan ? user.plan : '';
+  // Disable reserve if no credits
+  const btn = document.getElementById('reserveBtn');
+  if(user.credits <= 0) {
+    btn.disabled = true;
+    btn.style.opacity = '.5';
+    btn.textContent = 'Sin créditos disponibles';
+  }
+  // History
+  const list = document.getElementById('historyList');
+  if(!user.bookings || user.bookings.length === 0) {
+    list.innerHTML = '<div class="no-credits">Todavía no tenés reservas registradas.</div>';
+  } else {
+    list.innerHTML = user.bookings.map(b => `
+      <div class="history-item">
+        <span>${b.service} — ${b.date} ${b.time}</span>
+        <span class="status ${b.status==='usado'?'status-used':'status-upcoming'}">${b.status==='usado'?'Realizada':'Próxima'}</span>
+      </div>`).join('');
+  }
+  // Show pending plan notice
+  if(user.pendingPlan) {
+    document.getElementById('creditsPlan').textContent = '⏳ ' + user.pendingPlan.name + ' — pendiente de activación por Agustina';
+  }
+}
+
+async function reserveWithCredit() {
+  const email = sessionStorage.getItem('loggedUser');
+  const users = await getUsers();
+  if(!users[email] || users[email].credits <= 0) return;
+  // Pass to reservar with credit mode
+  location.href = 'reservar.html?mode=credit&user=' + encodeURIComponent(email);
+}
+
+async function doLogout() {
+  sessionStorage.removeItem('loggedUser');
+  location.reload();
+}
+
+// Auto-login if session active
+window.addEventListener('DOMContentLoaded', async () => {
+  const email = sessionStorage.getItem('loggedUser');
+  if(email) {
+    const users = await getUsers();
+    if(users[email]) showDashboard(users[email]);
+  }
+});
+</script>
+</body>
+</html>
