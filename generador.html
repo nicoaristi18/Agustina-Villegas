@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Generador de documentos · Agustina Villegas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --cream:#FAF8F4;--cream2:#F5F0E8;--blush:#F0E6DF;
+  --rose:#C9958E;--rose-dark:#A8706A;--rose-deep:#8B5550;
+  --text:#2A2118;--text-muted:#8C7E78;--white:#fff;
+  --border:rgba(169,138,130,.15);--border2:rgba(169,138,130,.3);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text);min-height:100vh;}
+
+/* APP CHROME */
+.app-header{background:var(--text);color:#fff;padding:.85rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+.app-left{display:flex;align-items:center;gap:.9rem;}
+.back-btn{background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.65);padding:.35rem .7rem;border-radius:7px;cursor:pointer;font-size:.72rem;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.back-btn:hover{background:rgba(255,255,255,.18);color:#fff;}
+.app-title{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:400;color:#fff;}
+.app-title span{color:var(--rose);font-style:italic;}
+
+/* TABS */
+.tabs-bar{background:var(--white);border-bottom:1px solid var(--border);display:flex;gap:.1rem;padding:.45rem .8rem 0;}
+.tab-btn{font-family:'DM Sans',sans-serif;font-size:.77rem;padding:.55rem 1rem;border:none;background:transparent;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .18s;border-radius:6px 6px 0 0;}
+.tab-btn:hover{color:var(--text);background:var(--cream);}
+.tab-btn.on{color:var(--rose-deep);border-bottom-color:var(--rose-dark);font-weight:500;}
+
+/* PANEL LAYOUT */
+.tab-panel{display:none;}
+.tab-panel.on{display:flex;height:calc(100vh - 88px);overflow:hidden;}
+.form-col{width:370px;flex-shrink:0;overflow-y:auto;background:var(--white);border-right:1px solid var(--border);padding:1.1rem 1rem;}
+.prev-col{flex:1;overflow:hidden;background:#5A5450;display:flex;flex-direction:column;}
+.prev-toolbar{background:rgba(0,0,0,.38);backdrop-filter:blur(8px);padding:.6rem 1rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.prev-info{font-size:.7rem;color:rgba(255,255,255,.5);}
+.prev-wrap{flex:1;overflow-y:auto;padding:16px;display:flex;justify-content:center;align-items:flex-start;}
+.prev-inner{width:595px;transform-origin:top center;}
+
+/* FORM COMPONENTS */
+.fsec{margin-bottom:1.2rem;}
+.fsec-title{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rose-dark);font-weight:500;margin-bottom:.65rem;padding-bottom:.32rem;border-bottom:1px solid var(--border);}
+.fg{margin-bottom:.68rem;}
+.fg label{display:block;font-size:.61rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.25rem;font-weight:500;}
+.fg input,.fg textarea,.fg select{width:100%;padding:.55rem .72rem;background:var(--cream);border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.81rem;outline:none;transition:border-color .25s;color:var(--text);}
+.fg input:focus,.fg textarea:focus,.fg select:focus{border-color:var(--rose);}
+.fg textarea{resize:vertical;min-height:65px;line-height:1.45;}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;}
+.fg-check{display:flex;align-items:center;gap:.45rem;cursor:pointer;font-size:.78rem;color:var(--text-muted);margin-top:.3rem;}
+.fg-check input[type=checkbox]{width:auto;padding:0;background:none;border:none;}
+.add-btn{width:100%;padding:.52rem;border:1.5px dashed var(--border2);border-radius:8px;background:transparent;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:.76rem;cursor:pointer;transition:all .2s;margin-top:.3rem;}
+.add-btn:hover{border-color:var(--rose);color:var(--rose-dark);background:var(--blush);}
+.add-btn:disabled{opacity:.4;cursor:not-allowed;}
+.dl-btn{background:var(--rose-dark);color:#fff;border:none;padding:.55rem 1rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.76rem;cursor:pointer;transition:background .2s;display:flex;align-items:center;gap:.35rem;}
+.dl-btn:hover{background:var(--rose-deep);}
+.dl-btn:disabled{background:var(--text-muted);cursor:not-allowed;}
+
+/* RECIPE CARD (form) */
+.rcard{border:1px solid var(--border);border-radius:9px;margin-bottom:.6rem;overflow:hidden;}
+.rcard-head{background:var(--cream);padding:.5rem .75rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.rcard-title{font-size:.78rem;font-weight:500;color:var(--text);}
+.rcard-badge{font-size:.6rem;color:var(--text-muted);background:var(--blush);padding:.13rem .42rem;border-radius:20px;}
+.rcard-body{padding:.7rem .75rem;}
+.del-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.68rem;padding:.18rem .38rem;border-radius:5px;transition:all .18s;line-height:1;}
+.del-btn:hover{background:#fff0ef;color:#a32d2d;}
+.cat-card{border:1px solid var(--border);border-radius:9px;margin-bottom:.55rem;overflow:hidden;}
+.cat-head{background:var(--cream);padding:.45rem .75rem;display:flex;align-items:center;gap:.5rem;}
+.cat-name-inp{flex:1;border:none;background:transparent;font-size:.8rem;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;}
+.cat-toggle{display:flex;align-items:center;gap:.35rem;font-size:.7rem;color:var(--text-muted);cursor:pointer;flex-shrink:0;}
+.meal-card{border:1px solid var(--border);border-radius:9px;margin-bottom:.6rem;overflow:hidden;}
+.meal-head{background:var(--blush);padding:.48rem .75rem;display:flex;align-items:center;justify-content:space-between;}
+.meal-name-inp{border:none;background:transparent;font-size:.78rem;font-weight:500;color:var(--rose-deep);font-family:'DM Sans',sans-serif;outline:none;width:120px;}
+.meal-body{padding:.65rem .75rem;}
+
+/* ============================================================
+   DOCUMENT STYLES (preview + PDF)
+   ============================================================ */
+.ag-doc{width:595px;font-family:'DM Sans',sans-serif;color:#2A2118;background:#fff;}
+.ag-doc *{box-sizing:border-box;}
+
+.doc-page{width:595px;min-height:842px;padding:52px 58px;position:relative;background:#fff;break-before:page;page-break-before:always;}
+.doc-page:first-child{break-before:auto;page-break-before:auto;}
+
+/* COVER */
+.page-cover{padding:0;background:#8B5550;height:842px;min-height:842px;overflow:hidden;}
+.cover-bg-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;}
+.cover-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(150deg,rgba(43,33,24,.52) 0%,rgba(139,85,80,.38) 100%);}
+.cover-body{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;padding:50px 58px;}
+.cover-sig{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:300;}
+.cover-space{flex:1;}
+.cover-line{width:32px;height:1px;background:rgba(255,255,255,.38);margin-bottom:16px;}
+.cover-title{font-family:'Cormorant Garamond',serif;font-size:68px;font-weight:300;line-height:1.05;color:#fff;letter-spacing:-.01em;margin-bottom:12px;white-space:pre-line;}
+.cover-sub{font-size:13px;font-weight:300;color:rgba(255,255,255,.7);letter-spacing:.02em;margin-bottom:3px;}
+.cover-sub2{font-size:11px;font-weight:300;color:rgba(255,255,255,.48);}
+.cover-foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:44px;}
+.cover-date{font-size:9px;color:rgba(255,255,255,.38);letter-spacing:.09em;text-transform:uppercase;}
+.cover-brand{font-family:'Cormorant Garamond',serif;font-size:12px;color:rgba(255,255,255,.32);font-style:italic;font-weight:300;}
+
+/* PAGE HEADER */
+.pg-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;padding-bottom:14px;border-bottom:1px solid rgba(169,138,130,.18);}
+.pg-hdr-doc{font-family:'Cormorant Garamond',serif;font-size:10px;color:rgba(169,138,130,.55);letter-spacing:.1em;text-transform:uppercase;font-weight:400;}
+.pg-hdr-name{font-size:9px;color:rgba(169,138,130,.45);font-weight:300;}
+
+/* SECTION LABELS */
+.sec-label{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:400;color:#A8706A;letter-spacing:.03em;display:flex;align-items:center;gap:11px;margin-bottom:18px;margin-top:26px;}
+.sec-label.first{margin-top:0;}
+.sec-label::after{content:'';flex:1;height:1px;background:rgba(169,138,130,.22);}
+
+/* ABBREV */
+.abbrev-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:26px;}
+.abbrev-item{background:#FAF8F4;border-radius:7px;padding:9px 11px;}
+.abbrev-code{font-family:'Cormorant Garamond',serif;font-size:15px;color:#A8706A;font-weight:400;margin-bottom:2px;}
+.abbrev-def{font-size:9px;color:#8C7E78;font-weight:300;}
+
+/* INDEX */
+.idx-list{list-style:none;}
+.idx-item{display:flex;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(169,138,130,.09);font-size:11px;}
+.idx-item:last-child{border-bottom:none;}
+.idx-name{color:#2A2118;font-weight:300;}
+.idx-dots{flex:1;border-bottom:1px dashed rgba(169,138,130,.18);margin:0 7px;margin-bottom:2px;}
+.idx-sec{font-size:9px;color:#8C7E78;background:#F0E6DF;padding:1px 6px;border-radius:10px;}
+
+/* RECIPE BLOCK */
+.rec-block{margin-bottom:26px;padding-bottom:22px;border-bottom:1px solid rgba(169,138,130,.16);page-break-inside:avoid;break-inside:avoid;}
+.rec-block:last-child{border-bottom:none;}
+.rec-name{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:400;color:#2A2118;margin-bottom:7px;}
+.rec-tags{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;}
+.rec-tag{font-size:9px;letter-spacing:.04em;padding:2px 8px;border-radius:20px;border:1px solid rgba(169,138,130,.3);color:#A8706A;background:#FAF8F4;}
+.rec-tag.tacc{background:#E8F2E8;border-color:rgba(122,158,126,.4);color:#4A7A4E;}
+.rec-cols{display:grid;grid-template-columns:2fr 3fr;gap:18px;}
+.col-title{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#A8706A;font-weight:500;margin-bottom:7px;padding-bottom:4px;border-bottom:1px solid rgba(169,138,130,.18);}
+.ing-list,.prep-list{list-style:none;}
+.ing-item{font-size:10px;font-weight:300;color:#2A2118;padding:3px 0 3px 13px;position:relative;border-bottom:1px solid rgba(169,138,130,.06);}
+.ing-item:last-child{border-bottom:none;}
+.ing-item::before{content:'–';position:absolute;left:0;top:3px;color:rgba(169,138,130,.45);font-size:9px;}
+.prep-list{counter-reset:step;}
+.prep-item{counter-increment:step;font-size:10px;font-weight:300;color:#2A2118;padding:4px 0 4px 18px;position:relative;line-height:1.55;border-bottom:1px solid rgba(169,138,130,.06);}
+.prep-item:last-child{border-bottom:none;}
+.prep-item::before{content:counter(step);position:absolute;left:0;top:4px;font-size:9px;color:#A8706A;font-weight:500;width:14px;text-align:center;}
+.rec-kcal{margin-top:9px;display:inline-flex;align-items:center;gap:5px;background:#FAF8F4;border:1px solid rgba(169,138,130,.18);border-radius:6px;padding:4px 9px;}
+.rec-kcal-n{font-family:'Cormorant Garamond',serif;font-size:15px;color:#A8706A;font-weight:400;}
+.rec-kcal-l{font-size:8px;color:#8C7E78;font-weight:300;}
+
+/* SUPER */
+.intro-box{background:#FAF8F4;border-left:3px solid #A8706A;padding:11px 14px;border-radius:0 7px 7px 0;font-size:10px;color:#5A4E47;font-weight:300;line-height:1.6;margin-bottom:24px;}
+.cats-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 22px;}
+.cat-block{break-inside:avoid;page-break-inside:avoid;margin-bottom:16px;}
+.cat-title{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:400;color:#2A2118;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;padding-bottom:4px;border-bottom:1px solid rgba(169,138,130,.22);}
+.cat-items{list-style:none;}
+.cat-item{font-size:10px;font-weight:300;color:#2A2118;padding:2px 0 2px 13px;position:relative;border-bottom:1px solid rgba(169,138,130,.05);}
+.cat-item:last-child{border-bottom:none;}
+.cat-item::before{content:'–';position:absolute;left:0;top:2px;color:rgba(169,138,130,.45);font-size:9px;}
+
+/* PLAN */
+.obj-box{border-left:3px solid #A8706A;background:#F0E6DF;padding:13px 17px;border-radius:0 9px 9px 0;margin-bottom:26px;}
+.obj-label{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#A8706A;font-weight:500;margin-bottom:3px;}
+.obj-text{font-size:11px;font-weight:300;color:#2A2118;line-height:1.6;}
+.macros-tbl{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:11px;}
+.macros-tbl th{background:#2A2118;color:#fff;padding:8px 11px;text-align:left;font-size:8px;letter-spacing:.07em;text-transform:uppercase;font-weight:400;}
+.macros-tbl th:nth-child(2),.macros-tbl th:nth-child(3){text-align:right;}
+.macros-tbl td{padding:7px 11px;border-bottom:1px solid rgba(169,138,130,.1);font-weight:300;}
+.macros-tbl td:nth-child(2),.macros-tbl td:nth-child(3){text-align:right;}
+.macros-tbl tr:nth-child(even) td{background:#FAF8F4;}
+.macros-tbl tr.ttl td{border-top:1px solid rgba(169,138,130,.28);font-weight:500;background:#FAF8F4;}
+.macro-bar{display:flex;border-radius:5px;overflow:hidden;height:9px;margin-bottom:6px;}
+.macro-seg{height:100%;}
+.macro-seg.p{background:#A8706A;}
+.macro-seg.g{background:#C9958E;}
+.macro-seg.c{background:#E8D5D0;}
+.macro-legend{display:flex;gap:14px;margin-bottom:24px;}
+.ml-item{display:flex;align-items:center;gap:4px;font-size:9px;color:#8C7E78;}
+.ml-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0;}
+.meal-blk{margin-bottom:18px;page-break-inside:avoid;break-inside:avoid;}
+.meal-hdr{background:#F0E6DF;border-left:3px solid #A8706A;padding:9px 13px;display:flex;align-items:center;justify-content:space-between;border-radius:0 7px 0 0;}
+.meal-hdr-name{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:400;color:#2A2118;}
+.meal-hdr-hora{font-size:9px;color:#8C7E78;font-weight:300;}
+.meal-hdr-kcal{font-size:9px;color:#A8706A;font-weight:500;background:#fff;padding:2px 7px;border-radius:10px;border:1px solid rgba(169,138,130,.28);}
+.meal-bd{border:1px solid rgba(169,138,130,.14);border-top:none;padding:11px 13px;border-radius:0 0 7px 7px;}
+.meal-alims{list-style:none;}
+.meal-alim{font-size:10px;font-weight:300;color:#2A2118;padding:2px 0 2px 13px;position:relative;border-bottom:1px solid rgba(169,138,130,.06);}
+.meal-alim:last-child{border-bottom:none;}
+.meal-alim::before{content:'–';position:absolute;left:0;top:2px;color:rgba(169,138,130,.4);font-size:9px;}
+.meal-nota{margin-top:7px;font-size:9px;color:#8C7E78;font-style:italic;font-weight:300;padding:4px 9px;background:#FAF8F4;border-radius:5px;}
+.avoid-box{border:1px solid rgba(169,138,130,.18);border-radius:9px;padding:13px 16px;margin-bottom:14px;}
+.avoid-title{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#A8706A;font-weight:500;margin-bottom:7px;}
+.avoid-list{list-style:none;}
+.avoid-item{font-size:10px;font-weight:300;color:#2A2118;padding:2px 0 2px 13px;position:relative;}
+.avoid-item::before{content:'–';position:absolute;left:0;top:2px;color:rgba(169,138,130,.4);font-size:9px;}
+.recs-text{font-size:10px;font-weight:300;color:#2A2118;line-height:1.7;white-space:pre-line;}
+.next-consult{display:inline-flex;align-items:center;gap:9px;background:#2A2118;color:#fff;padding:9px 16px;border-radius:7px;margin-top:7px;}
+.nc-label{font-size:8px;letter-spacing:.1em;text-transform:uppercase;opacity:.45;}
+.nc-date{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:300;}
+.doc-sig{position:absolute;bottom:48px;right:58px;text-align:right;}
+.sig-name{font-family:'Cormorant Garamond',serif;font-size:13px;font-style:italic;color:#A8706A;font-weight:400;}
+.sig-role{font-size:8px;color:#8C7E78;letter-spacing:.06em;text-transform:uppercase;font-weight:300;margin-top:2px;}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-left">
+    <button class="back-btn" onclick="window.close()">&#8592; Volver al admin</button>
+    <div class="app-title">Generador de documentos &middot; <span>Agustina Villegas</span></div>
+  </div>
+</header>
+
+<div class="tabs-bar">
+  <button class="tab-btn on" data-tab="rec" onclick="switchTab('rec')">Recetario</button>
+  <button class="tab-btn" data-tab="sup" onclick="switchTab('sup')">Recomendados del s&uacute;per</button>
+  <button class="tab-btn" data-tab="plan" onclick="switchTab('plan')">Plan de alimentaci&oacute;n</button>
+</div>
+
+<!-- TAB 1: RECETARIO -->
+<div id="panel-rec" class="tab-panel on">
+  <div class="form-col">
+    <div class="fsec">
+      <div class="fsec-title">Datos del documento</div>
+      <div class="fg"><label>Nombre del cliente</label><input id="rec-nombre" type="text" placeholder="Mar&iacute;a Garc&iacute;a" oninput="upRec()"></div>
+      <div class="fg-row">
+        <div class="fg"><label>Fecha</label><input id="rec-fecha" type="date" oninput="upRec()"></div>
+        <div class="fg"><label>Imagen de portada</label><input id="rec-portada" type="file" accept="image/*" onchange="setCover(this,'gen_cv_rec','upRec')"></div>
+      </div>
+      <div class="fg"><label>Frase introductoria (opcional)</label><textarea id="rec-intro" rows="2" placeholder="Estas recetas est&aacute;n dise&ntilde;adas para&hellip;" oninput="upRec()"></textarea></div>
+    </div>
+    <div class="fsec">
+      <div class="fsec-title">Recetas</div>
+      <div id="recetas-list"></div>
+      <button class="add-btn" onclick="addReceta()">+ Agregar receta</button>
+    </div>
+  </div>
+  <div class="prev-col">
+    <div class="prev-toolbar">
+      <span class="prev-info" id="rec-info">0 recetas</span>
+      <button class="dl-btn" id="btn-dl-rec" onclick="dlPDF('doc-rec','Recetario.pdf','btn-dl-rec')">&#8595; Descargar PDF</button>
+    </div>
+    <div class="prev-wrap" id="pw-rec">
+      <div class="prev-inner" id="preview-rec"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: RECOMENDADOS -->
+<div id="panel-sup" class="tab-panel">
+  <div class="form-col">
+    <div class="fsec">
+      <div class="fsec-title">Datos del documento</div>
+      <div class="fg"><label>Nombre del cliente</label><input id="sup-nombre" type="text" placeholder="Mar&iacute;a Garc&iacute;a" oninput="upSup()"></div>
+      <div class="fg-row">
+        <div class="fg"><label>Fecha</label><input id="sup-fecha" type="date" oninput="upSup()"></div>
+        <div class="fg"><label>Imagen de portada</label><input id="sup-portada" type="file" accept="image/*" onchange="setCover(this,'gen_cv_sup','upSup')"></div>
+      </div>
+      <div class="fg">
+        <label>Per&iacute;odo</label>
+        <select id="sup-periodo" onchange="supPeriodoChange()">
+          <option value="Para esta semana">Para esta semana</option>
+          <option value="Para este mes">Para este mes</option>
+          <option value="otro">Otro&hellip;</option>
+        </select>
+      </div>
+      <div class="fg" id="sup-custom-fg" style="display:none">
+        <label>Per&iacute;odo personalizado</label>
+        <input id="sup-custom" type="text" placeholder="Del 5 al 12 de mayo" oninput="upSup()">
+      </div>
+      <div class="fg"><label>Nota introductoria (opcional)</label><textarea id="sup-intro" rows="2" placeholder="Priorizá productos naturales&hellip;" oninput="upSup()"></textarea></div>
+    </div>
+    <div class="fsec">
+      <div class="fsec-title">Categor&iacute;as</div>
+      <div id="cats-list"></div>
+      <button class="add-btn" onclick="addCat()">+ Agregar categor&iacute;a</button>
+    </div>
+  </div>
+  <div class="prev-col">
+    <div class="prev-toolbar">
+      <span class="prev-info" id="sup-info">0 categor&iacute;as</span>
+      <button class="dl-btn" id="btn-dl-sup" onclick="dlPDF('doc-sup','Recomendados_super.pdf','btn-dl-sup')">&#8595; Descargar PDF</button>
+    </div>
+    <div class="prev-wrap" id="pw-sup">
+      <div class="prev-inner" id="preview-sup"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: PLAN DE ALIMENTACIÓN -->
+<div id="panel-plan" class="tab-panel">
+  <div class="form-col">
+    <div class="fsec">
+      <div class="fsec-title">Datos del documento</div>
+      <div class="fg"><label>Nombre del cliente</label><input id="plan-nombre" type="text" placeholder="Mar&iacute;a Garc&iacute;a" oninput="upPlan()"></div>
+      <div class="fg-row">
+        <div class="fg"><label>Fecha</label><input id="plan-fecha" type="date" oninput="upPlan()"></div>
+        <div class="fg"><label>Imagen de portada</label><input id="plan-portada" type="file" accept="image/*" onchange="setCover(this,'gen_cv_plan','upPlan')"></div>
+      </div>
+      <div class="fg-row">
+        <div class="fg"><label>Objetivo</label><input id="plan-objetivo" type="text" placeholder="Descenso de peso" oninput="upPlan()"></div>
+        <div class="fg"><label>Duraci&oacute;n</label><input id="plan-duracion" type="text" placeholder="2 meses" oninput="upPlan()"></div>
+      </div>
+    </div>
+    <div class="fsec">
+      <div class="fsec-title">Macros totales</div>
+      <div class="fg"><label>Calor&iacute;as totales (kcal)</label><input id="plan-kcal" type="number" placeholder="1800" oninput="upPlan()"></div>
+      <div class="fg-row">
+        <div class="fg"><label>Prote&iacute;nas (g)</label><input id="plan-prot-g" type="number" placeholder="120" oninput="upPlan()"></div>
+        <div class="fg"><label>Prote&iacute;nas (%)</label><input id="plan-prot-pct" type="number" placeholder="27" oninput="upPlan()"></div>
+      </div>
+      <div class="fg-row">
+        <div class="fg"><label>Grasas (g)</label><input id="plan-grasas-g" type="number" placeholder="60" oninput="upPlan()"></div>
+        <div class="fg"><label>Grasas (%)</label><input id="plan-grasas-pct" type="number" placeholder="30" oninput="upPlan()"></div>
+      </div>
+      <div class="fg-row">
+        <div class="fg"><label>Carbohidratos (g)</label><input id="plan-carbs-g" type="number" placeholder="180" oninput="upPlan()"></div>
+        <div class="fg"><label>Carbohidratos (%)</label><input id="plan-carbs-pct" type="number" placeholder="43" oninput="upPlan()"></div>
+      </div>
+    </div>
+    <div class="fsec">
+      <div class="fsec-title">Comidas del d&iacute;a</div>
+      <div id="meals-list"></div>
+      <button class="add-btn" id="btn-add-meal" onclick="addMeal()">+ Agregar comida</button>
+    </div>
+    <div class="fsec">
+      <div class="fsec-title">Notas finales</div>
+      <div class="fg"><label>Alimentos a evitar (uno por l&iacute;nea)</label><textarea id="plan-evitar" rows="3" placeholder="Az&uacute;car refinada&#10;Bebidas gaseosas" oninput="upPlan()"></textarea></div>
+      <div class="fg"><label>Recomendaciones generales</label><textarea id="plan-recs" rows="4" placeholder="Tomar 2 litros de agua al d&iacute;a&hellip;" oninput="upPlan()"></textarea></div>
+      <div class="fg"><label>Pr&oacute;xima consulta</label><input id="plan-prox" type="text" placeholder="15 de junio de 2026" oninput="upPlan()"></div>
+    </div>
+  </div>
+  <div class="prev-col">
+    <div class="prev-toolbar">
+      <span class="prev-info" id="plan-info">0 comidas</span>
+      <button class="dl-btn" id="btn-dl-plan" onclick="dlPDF('doc-plan','Plan_alimentacion.pdf','btn-dl-plan')">&#8595; Descargar PDF</button>
+    </div>
+    <div class="prev-wrap" id="pw-plan">
+      <div class="prev-inner" id="preview-plan"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* SESSION */
+if (!sessionStorage.getItem('adm') && !localStorage.getItem('gen_auth')) {
+  window.location.href = 'admin.html';
+}
+
+/* STORAGE SHIM */
+if (!window.storage) {
+  window.storage = {
+    async lpush(k, v) {
+      try { await fetch('/api/kv', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'lpush',key:k,value:v})}); } catch(e) {}
+    }
+  };
+}
+
+/* UTILS */
+const $ = id => document.getElementById(id);
+const val = id => ($( id) || {}).value || '';
+const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmtDate = d => {
+  if (!d) return '';
+  try { return new Date(d + 'T12:00:00').toLocaleDateString('es-UY', {day:'numeric',month:'long',year:'numeric'}); }
+  catch(e) { return d; }
+};
+const nl2li = (s, cls) => (s || '').split('\n').map(l => l.trim()).filter(Boolean).map(l => `<li class="${cls}">${esc(l)}</li>`).join('');
+const nl2steps = s => (s || '').split('\n').map(l => l.trim()).filter(Boolean).map(l => `<li class="prep-item">${esc(l)}</li>`).join('');
+const deb = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+
+/* TABS */
+function switchTab(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('on', p.id === 'panel-' + id));
+  setTimeout(() => scaleDoc('pw-' + id, 'preview-' + id), 60);
+}
+
+/* SCALE PREVIEW */
+function scaleDoc(wId, dId) {
+  const w = $(wId), d = $(dId);
+  if (!w || !d) return;
+  const avail = w.clientWidth;
+  if (avail <= 0) return;
+  const scale = Math.max(0.28, Math.min(1, (avail - 28) / 595));
+  d.style.transform = 'scale(' + scale + ')';
+  d.style.transformOrigin = 'top center';
+  d.style.marginBottom = (-d.scrollHeight * (1 - scale)) + 'px';
+}
+
+/* COVER IMAGE */
+function setCover(inp, key, upFn) {
+  const f = inp.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = e => { localStorage.setItem(key, e.target.result); window[upFn](); };
+  r.readAsDataURL(f);
+}
+
+/* BUILD COVER */
+function buildCover(titulo, nombre, fecha, imgKey, extra) {
+  const img = localStorage.getItem(imgKey) || '';
+  return '<div class="doc-page page-cover">' +
+    (img ? '<img class="cover-bg-img" src="' + img + '" alt="">' : '') +
+    '<div class="cover-overlay"></div>' +
+    '<div class="cover-body">' +
+    '<div class="cover-sig">Lic. Agustina Villegas &middot; Nutricionista</div>' +
+    '<div class="cover-space"></div>' +
+    '<div class="cover-line"></div>' +
+    '<div class="cover-title">' + esc(titulo) + '</div>' +
+    (nombre ? '<div class="cover-sub">Para ' + esc(nombre) + '</div>' : '') +
+    (extra ? '<div class="cover-sub2">' + esc(extra) + '</div>' : '') +
+    '<div class="cover-foot"><span class="cover-date">' + fmtDate(fecha) + '</span><span class="cover-brand">Agustina Villegas</span></div>' +
+    '</div></div>';
+}
+
+/* PAGE HEADER */
+function pgHdr(label, name) {
+  return '<div class="pg-hdr"><span class="pg-hdr-doc">' + esc(label) + '</span><span class="pg-hdr-name">' + esc(name) + '</span></div>';
+}
+
+/* ============================================================
+   RECETARIO
+   ============================================================ */
+var recetas = [];
+var recCtr = 0;
+var SECS = {desayuno:'Desayunos &amp; Meriendas', almuerzo:'Almuerzos &amp; Cenas', extra:'Extras'};
+
+function addReceta() {
+  recCtr++;
+  recetas.push({id:recCtr, nombre:'', sec:'desayuno', porciones:'1', ing:'', prep:'', tacc:false, kcal:''});
+  renderRecForm();
+  upRec();
+}
+
+function removeReceta(id) {
+  recetas = recetas.filter(function(r){ return r.id !== id; });
+  renderRecForm();
+  upRec();
+}
+
+function syncRec(id, f, v) {
+  var r = recetas.find(function(r){ return r.id === id; });
+  if (r) r[f] = v;
+  upRec();
+}
+
+function toggleCard(id) {
+  var el = $(id);
+  if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+function renderRecForm() {
+  var el = $('recetas-list');
+  if (!el) return;
+  if (!recetas.length) {
+    el.innerHTML = '<p style="font-size:.74rem;color:var(--text-muted);text-align:center;padding:.4rem 0">Sin recetas a&uacute;n</p>';
+    return;
+  }
+  el.innerHTML = recetas.map(function(r, i) {
+    return '<div class="rcard">' +
+      '<div class="rcard-head" onclick="toggleCard(\'rc-' + r.id + '\')">' +
+      '<span class="rcard-title">' + (r.nombre ? esc(r.nombre) : 'Receta ' + (i + 1)) + '</span>' +
+      '<div style="display:flex;align-items:center;gap:.35rem">' +
+      '<span class="rcard-badge">' + (r.sec === 'desayuno' ? 'D/M' : r.sec === 'almuerzo' ? 'A/C' : 'Extra') + '</span>' +
+      '<button class="del-btn" onclick="event.stopPropagation();removeReceta(' + r.id + ')">&#x2715;</button>' +
+      '</div></div>' +
+      '<div class="rcard-body" id="rc-' + r.id + '">' +
+      '<div class="fg-row">' +
+      '<div class="fg"><label>Nombre</label><input type="text" value="' + esc(r.nombre) + '" placeholder="Nombre de la receta" oninput="syncRec(' + r.id + ',\'nombre\',this.value)"></div>' +
+      '<div class="fg"><label>Secci&oacute;n</label><select onchange="syncRec(' + r.id + ',\'sec\',this.value)">' +
+      '<option value="desayuno"' + (r.sec === 'desayuno' ? ' selected' : '') + '>Desayuno/Merienda</option>' +
+      '<option value="almuerzo"' + (r.sec === 'almuerzo' ? ' selected' : '') + '>Almuerzo/Cena</option>' +
+      '<option value="extra"' + (r.sec === 'extra' ? ' selected' : '') + '>Extra</option>' +
+      '</select></div></div>' +
+      '<div class="fg-row">' +
+      '<div class="fg"><label>Porciones</label><input type="number" value="' + esc(r.porciones) + '" min="1" oninput="syncRec(' + r.id + ',\'porciones\',this.value)"></div>' +
+      '<div class="fg"><label>Kcal/porci&oacute;n (opc.)</label><input type="number" value="' + esc(r.kcal) + '" placeholder="320" oninput="syncRec(' + r.id + ',\'kcal\',this.value)"></div>' +
+      '</div>' +
+      '<div class="fg"><label>Ingredientes (uno por l&iacute;nea)</label><textarea rows="4" placeholder="1 taza de avena" oninput="syncRec(' + r.id + ',\'ing\',this.value)">' + esc(r.ing) + '</textarea></div>' +
+      '<div class="fg"><label>Preparaci&oacute;n (un paso por l&iacute;nea)</label><textarea rows="4" placeholder="Mezclar los secos" oninput="syncRec(' + r.id + ',\'prep\',this.value)">' + esc(r.prep) + '</textarea></div>' +
+      '<label class="fg-check"><input type="checkbox"' + (r.tacc ? ' checked' : '') + ' onchange="syncRec(' + r.id + ',\'tacc\',this.checked)"> Apto sin TACC</label>' +
+      '</div></div>';
+  }).join('');
+}
+
+function buildRecDoc() {
+  var nombre = val('rec-nombre'), fecha = val('rec-fecha'), intro = val('rec-intro');
+  var bySec = {desayuno:[], almuerzo:[], extra:[]};
+  recetas.forEach(function(r){ if (bySec[r.sec]) bySec[r.sec].push(r); });
+  var idxItems = recetas.filter(function(r){ return r.nombre; }).map(function(r) {
+    return '<li class="idx-item"><span class="idx-name">' + esc(r.nombre) + '</span><span class="idx-dots"></span><span class="idx-sec">' + (r.sec === 'desayuno' ? 'D/M' : r.sec === 'almuerzo' ? 'A/C' : 'Ext') + '</span></li>';
+  }).join('');
+  var recHtml = '';
+  ['desayuno','almuerzo','extra'].forEach(function(s) {
+    if (!bySec[s].length) return;
+    recHtml += '<div class="sec-label">' + SECS[s] + '</div>';
+    bySec[s].forEach(function(r) {
+      var tags = (r.tacc ? '<span class="rec-tag tacc">Sin TACC</span>' : '') +
+        (r.porciones ? '<span class="rec-tag">' + esc(r.porciones) + ' porci&oacute;n' + (r.porciones != 1 ? 'es' : '') + '</span>' : '');
+      recHtml += '<div class="rec-block">' +
+        '<div class="rec-name">' + (esc(r.nombre) || 'Sin nombre') + '</div>' +
+        (tags ? '<div class="rec-tags">' + tags + '</div>' : '') +
+        '<div class="rec-cols">' +
+        '<div><div class="col-title">Ingredientes</div>' +
+        '<ul class="ing-list">' + (nl2li(r.ing, 'ing-item') || '<li class="ing-item">&mdash;</li>') + '</ul>' +
+        (r.kcal ? '<div class="rec-kcal"><span class="rec-kcal-n">' + esc(r.kcal) + '</span><span class="rec-kcal-l">kcal/porci&oacute;n</span></div>' : '') +
+        '</div>' +
+        '<div><div class="col-title">Preparaci&oacute;n</div>' +
+        '<ol class="prep-list">' + (nl2steps(r.prep) || '<li class="prep-item">&mdash;</li>') + '</ol>' +
+        '</div></div></div>';
+    });
+  });
+  return '<div class="ag-doc" id="doc-rec">' +
+    buildCover('Recetario', nombre, fecha, 'gen_cv_rec') +
+    '<div class="doc-page" style="background:#FAF8F4">' +
+    pgHdr('Recetario', nombre) +
+    '<div class="sec-label first">Abreviaciones</div>' +
+    '<div class="abbrev-grid">' +
+    '<div class="abbrev-item"><div class="abbrev-code">tz</div><div class="abbrev-def">taza</div></div>' +
+    '<div class="abbrev-item"><div class="abbrev-code">cda</div><div class="abbrev-def">cucharada</div></div>' +
+    '<div class="abbrev-item"><div class="abbrev-code">cdta</div><div class="abbrev-def">cucharadita</div></div>' +
+    '<div class="abbrev-item"><div class="abbrev-code">c/n</div><div class="abbrev-def">cantidad necesaria</div></div>' +
+    '</div>' +
+    (idxItems ? '<div class="sec-label">&Iacute;ndice de recetas</div><ul class="idx-list">' + idxItems + '</ul>' : '') +
+    '</div>' +
+    '<div class="doc-page">' +
+    pgHdr('Recetario', nombre) +
+    (intro ? '<div class="intro-box">' + esc(intro) + '</div>' : '') +
+    (recHtml || '<p style="font-size:11px;color:#8C7E78">Agrega recetas desde el formulario.</p>') +
+    '</div></div>';
+}
+
+var upRec = deb(function() {
+  var el = $('preview-rec');
+  if (!el) return;
+  el.innerHTML = buildRecDoc();
+  var n = recetas.length;
+  $('rec-info').textContent = n + ' receta' + (n !== 1 ? 's' : '');
+  scaleDoc('pw-rec', 'preview-rec');
+}, 150);
+
+/* ============================================================
+   RECOMENDADOS DEL SÚPER
+   ============================================================ */
+var DEF_CATS = ['L&aacute;cteos y huevos','Carnes, aves y pescados','Verduras y hortalizas','Frutas','Panificados y cereales','Legumbres y semillas','Aceites y condimentos','Otros'];
+var cats = [];
+var catCtr = 0;
+
+function initCats() {
+  cats = DEF_CATS.map(function(n) { return {id:++catCtr, name:n, items:'', vis:true}; });
+  renderCatsForm();
+  upSup();
+}
+
+function addCat() {
+  cats.push({id:++catCtr, name:'Nueva categor&iacute;a', items:'', vis:true});
+  renderCatsForm();
+  upSup();
+}
+
+function removeCat(id) {
+  cats = cats.filter(function(c){ return c.id !== id; });
+  renderCatsForm();
+  upSup();
+}
+
+function syncCat(id, f, v) {
+  var c = cats.find(function(c){ return c.id === id; });
+  if (c) c[f] = v;
+  upSup();
+}
+
+function renderCatsForm() {
+  var el = $('cats-list');
+  if (!el) return;
+  el.innerHTML = cats.map(function(c) {
+    return '<div class="cat-card">' +
+      '<div class="cat-head">' +
+      '<input class="cat-name-inp" type="text" value="' + c.name + '" oninput="syncCat(' + c.id + ',\'name\',this.value)">' +
+      '<label class="cat-toggle"><input type="checkbox"' + (c.vis ? ' checked' : '') + ' onchange="syncCat(' + c.id + ',\'vis\',this.checked)"> Mostrar</label>' +
+      '<button class="del-btn" style="margin-left:.3rem" onclick="removeCat(' + c.id + ')">&#x2715;</button>' +
+      '</div>' +
+      (c.vis ? '<div style="padding:.6rem .75rem"><div class="fg" style="margin:0"><textarea rows="3" placeholder="Un producto por l&iacute;nea&hellip;" oninput="syncCat(' + c.id + ',\'items\',this.value)">' + esc(c.items) + '</textarea></div></div>' : '') +
+      '</div>';
+  }).join('');
+}
+
+function supPeriodoChange() {
+  var v = $('sup-periodo').value;
+  $('sup-custom-fg').style.display = v === 'otro' ? '' : 'none';
+  upSup();
+}
+
+function buildSupDoc() {
+  var nombre = val('sup-nombre'), fecha = val('sup-fecha'), intro = val('sup-intro');
+  var per = $('sup-periodo').value === 'otro' ? val('sup-custom') : val('sup-periodo');
+  var vis = cats.filter(function(c){ return c.vis && c.items.trim(); });
+  var catsHtml = vis.map(function(c) {
+    return '<div class="cat-block">' +
+      '<div class="cat-title">' + c.name + '</div>' +
+      '<ul class="cat-items">' + (nl2li(c.items, 'cat-item') || '<li class="cat-item">&mdash;</li>') + '</ul>' +
+      '</div>';
+  }).join('');
+  return '<div class="ag-doc" id="doc-sup">' +
+    buildCover('Recomendados\ndel súper', nombre, fecha, 'gen_cv_sup', per ? 'Período: ' + per : '') +
+    '<div class="doc-page">' +
+    pgHdr('Recomendados del súper', nombre) +
+    (intro ? '<div class="intro-box">' + esc(intro) + '</div>' : '') +
+    '<div class="cats-grid">' + (catsHtml || '<p style="font-size:11px;color:#8C7E78">Completá las categorías.</p>') + '</div>' +
+    '</div></div>';
+}
+
+var upSup = deb(function() {
+  var el = $('preview-sup');
+  if (!el) return;
+  el.innerHTML = buildSupDoc();
+  var n = cats.filter(function(c){ return c.vis; }).length;
+  $('sup-info').textContent = n + ' categoría' + (n !== 1 ? 's' : '');
+  scaleDoc('pw-sup', 'preview-sup');
+}, 150);
+
+/* ============================================================
+   PLAN DE ALIMENTACIÓN
+   ============================================================ */
+var DEF_MEALS = ['Desayuno','Almuerzo','Merienda','Cena'];
+var meals = [];
+var mealCtr = 0;
+
+function initMeals() {
+  meals = DEF_MEALS.map(function(n) { return {id:++mealCtr, nombre:n, hora:'', kcal:'', alimentos:'', nota:''}; });
+  renderMealsForm();
+  upPlan();
+}
+
+function addMeal() {
+  if (meals.length >= 6) return;
+  meals.push({id:++mealCtr, nombre:'Colación', hora:'', kcal:'', alimentos:'', nota:''});
+  renderMealsForm();
+  upPlan();
+  if (meals.length >= 6) { var b = $('btn-add-meal'); if (b) b.disabled = true; }
+}
+
+function removeMeal(id) {
+  meals = meals.filter(function(m){ return m.id !== id; });
+  renderMealsForm();
+  upPlan();
+  var b = $('btn-add-meal');
+  if (b) b.disabled = false;
+}
+
+function syncMeal(id, f, v) {
+  var m = meals.find(function(m){ return m.id === id; });
+  if (m) m[f] = v;
+  upPlan();
+}
+
+function renderMealsForm() {
+  var el = $('meals-list');
+  if (!el) return;
+  el.innerHTML = meals.map(function(m) {
+    return '<div class="meal-card">' +
+      '<div class="meal-head">' +
+      '<input class="meal-name-inp" type="text" value="' + esc(m.nombre) + '" oninput="syncMeal(' + m.id + ',\'nombre\',this.value)">' +
+      '<button class="del-btn" onclick="removeMeal(' + m.id + ')">&#x2715;</button>' +
+      '</div>' +
+      '<div class="meal-body">' +
+      '<div class="fg-row">' +
+      '<div class="fg"><label>Hora sugerida</label><input type="text" value="' + esc(m.hora) + '" placeholder="8:00 hs" oninput="syncMeal(' + m.id + ',\'hora\',this.value)"></div>' +
+      '<div class="fg"><label>Kcal</label><input type="number" value="' + esc(m.kcal) + '" placeholder="400" oninput="syncMeal(' + m.id + ',\'kcal\',this.value)"></div>' +
+      '</div>' +
+      '<div class="fg"><label>Alimentos (uno por línea)</label><textarea rows="3" placeholder="1 taza de avena" oninput="syncMeal(' + m.id + ',\'alimentos\',this.value)">' + esc(m.alimentos) + '</textarea></div>' +
+      '<div class="fg"><label>Nota (opcional)</label><input type="text" value="' + esc(m.nota) + '" placeholder="Podés sustituir por…" oninput="syncMeal(' + m.id + ',\'nota\',this.value)"></div>' +
+      '</div></div>';
+  }).join('');
+}
+
+function buildPlanDoc() {
+  var nombre = val('plan-nombre'), fecha = val('plan-fecha');
+  var objetivo = val('plan-objetivo'), duracion = val('plan-duracion');
+  var kcal = val('plan-kcal');
+  var pG = val('plan-prot-g'), pP = val('plan-prot-pct');
+  var gG = val('plan-grasas-g'), gP = val('plan-grasas-pct');
+  var cG = val('plan-carbs-g'), cP = val('plan-carbs-pct');
+  var evitar = val('plan-evitar'), recs = val('plan-recs'), prox = val('plan-prox');
+  var tot = (parseFloat(pP)||0) + (parseFloat(gP)||0) + (parseFloat(cP)||0);
+  var pp = tot ? (parseFloat(pP)||0) / tot * 100 : 33.3;
+  var gp = tot ? (parseFloat(gP)||0) / tot * 100 : 33.3;
+  var cp = tot ? (parseFloat(cP)||0) / tot * 100 : 33.4;
+  var objBox = objetivo ? '<div class="obj-box"><div class="obj-label">Objetivo</div><div class="obj-text">' + esc(objetivo) + (duracion ? ' &middot; ' + esc(duracion) : '') + '</div></div>' : '';
+  var macrosTbl = '<table class="macros-tbl"><thead><tr><th>Nutriente</th><th>Gramos</th><th>% del total</th></tr></thead><tbody>' +
+    '<tr><td>Proteínas</td><td>' + (pG||'&mdash;') + ' g</td><td>' + (pP ? pP + '%' : '&mdash;') + '</td></tr>' +
+    '<tr><td>Grasas</td><td>' + (gG||'&mdash;') + ' g</td><td>' + (gP ? gP + '%' : '&mdash;') + '</td></tr>' +
+    '<tr><td>Carbohidratos</td><td>' + (cG||'&mdash;') + ' g</td><td>' + (cP ? cP + '%' : '&mdash;') + '</td></tr>' +
+    '<tr class="ttl"><td><strong>Total</strong></td><td colspan="2"><strong>' + (kcal||'&mdash;') + ' kcal</strong></td></tr>' +
+    '</tbody></table>';
+  var bars = '<div class="macro-bar">' +
+    '<div class="macro-seg p" style="width:' + pp.toFixed(1) + '%"></div>' +
+    '<div class="macro-seg g" style="width:' + gp.toFixed(1) + '%"></div>' +
+    '<div class="macro-seg c" style="width:' + cp.toFixed(1) + '%"></div>' +
+    '</div>' +
+    '<div class="macro-legend">' +
+    '<span class="ml-item"><span class="ml-dot" style="background:#A8706A"></span>Proteínas' + (pP ? ' ' + pP + '%' : '') + '</span>' +
+    '<span class="ml-item"><span class="ml-dot" style="background:#C9958E"></span>Grasas' + (gP ? ' ' + gP + '%' : '') + '</span>' +
+    '<span class="ml-item"><span class="ml-dot" style="background:#E8D5D0"></span>Carbohidratos' + (cP ? ' ' + cP + '%' : '') + '</span>' +
+    '</div>';
+  var mealsHtml = meals.map(function(m) {
+    return '<div class="meal-blk">' +
+      '<div class="meal-hdr">' +
+      '<div><div class="meal-hdr-name">' + esc(m.nombre) + '</div>' + (m.hora ? '<div class="meal-hdr-hora">' + esc(m.hora) + '</div>' : '') + '</div>' +
+      (m.kcal ? '<div class="meal-hdr-kcal">~ ' + esc(m.kcal) + ' kcal</div>' : '') +
+      '</div>' +
+      '<div class="meal-bd"><ul class="meal-alims">' + (nl2li(m.alimentos, 'meal-alim') || '<li class="meal-alim">&mdash;</li>') + '</ul>' +
+      (m.nota ? '<div class="meal-nota">' + esc(m.nota) + '</div>' : '') +
+      '</div></div>';
+  }).join('');
+  var notasPage = (evitar || recs || prox) ? '<div class="doc-page" style="background:#FAF8F4">' +
+    pgHdr('Notas finales', nombre) +
+    (evitar ? '<div class="avoid-box"><div class="avoid-title">Alimentos a evitar</div><ul class="avoid-list">' + nl2li(evitar, 'avoid-item') + '</ul></div>' : '') +
+    (recs ? '<div class="avoid-box"><div class="avoid-title">Recomendaciones generales</div><div class="recs-text">' + esc(recs) + '</div></div>' : '') +
+    (prox ? '<div class="next-consult"><div><div class="nc-label">Próxima consulta</div><div class="nc-date">' + esc(prox) + '</div></div></div>' : '') +
+    '<div class="doc-sig"><div class="sig-name">Lic. Agustina Villegas</div><div class="sig-role">Nutricionista</div></div>' +
+    '</div>' : '';
+  return '<div class="ag-doc" id="doc-plan">' +
+    buildCover('Plan de\nalimentación', nombre, fecha, 'gen_cv_plan', objetivo || '') +
+    '<div class="doc-page" style="background:#FAF8F4">' +
+    pgHdr('Plan de alimentación', nombre) +
+    objBox +
+    '<div class="sec-label' + (objBox ? '' : ' first') + '">Distribución nutricional</div>' +
+    macrosTbl + bars +
+    '</div>' +
+    '<div class="doc-page">' +
+    pgHdr('Plan de alimentación', nombre) +
+    '<div class="sec-label first">Comidas del día</div>' +
+    (mealsHtml || '<p style="font-size:11px;color:#8C7E78">Agrega comidas desde el formulario.</p>') +
+    '</div>' + notasPage + '</div>';
+}
+
+var upPlan = deb(function() {
+  var el = $('preview-plan');
+  if (!el) return;
+  el.innerHTML = buildPlanDoc();
+  var n = meals.length;
+  $('plan-info').textContent = n + ' comida' + (n !== 1 ? 's' : '');
+  scaleDoc('pw-plan', 'preview-plan');
+}, 150);
+
+/* ============================================================
+   PDF DOWNLOAD
+   ============================================================ */
+async function dlPDF(docId, filename, btnId) {
+  var docEl = $(docId);
+  if (!docEl) return;
+  var btn = $(btnId);
+  var prevTxt = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = 'Generando…'; btn.disabled = true; }
+  var pi = docEl.closest('.prev-inner');
+  var prevT = pi ? pi.style.transform : '';
+  var prevM = pi ? pi.style.marginBottom : '';
+  if (pi) { pi.style.transform = 'none'; pi.style.marginBottom = '0'; }
+  try {
+    await html2pdf().set({
+      margin: 0,
+      filename: filename,
+      html2canvas: {scale:2, useCORS:true, width:595, windowWidth:595, logging:false},
+      jsPDF: {unit:'pt', format:'a4', orientation:'portrait'},
+      pagebreak: {mode:['css','legacy'], before:'.doc-page'}
+    }).from(docEl).save();
+    var tipo = docId === 'doc-rec' ? 'recetario' : docId === 'doc-sup' ? 'recomendados' : 'plan';
+    var cId = tipo === 'recetario' ? 'rec-nombre' : tipo === 'recomendados' ? 'sup-nombre' : 'plan-nombre';
+    var cliente = val(cId) || '—';
+    try { await window.storage.lpush('ag:pdf_stats', JSON.stringify({ts: new Date().toISOString(), tipo:tipo, cliente:cliente})); } catch(e){}
+  } catch(err) {
+    alert('Error al generar el PDF. Intentá nuevamente.');
+    console.error(err);
+  }
+  if (pi) { pi.style.transform = prevT; pi.style.marginBottom = prevM; }
+  if (btn) { btn.textContent = prevTxt; btn.disabled = false; }
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', function() {
+  var today = new Date().toISOString().slice(0, 10);
+  ['rec-fecha','sup-fecha','plan-fecha'].forEach(function(id) {
+    var el = $(id);
+    if (el && !el.value) el.value = today;
+  });
+  renderRecForm();
+  initCats();
+  initMeals();
+  upRec();
+  upSup();
+  upPlan();
+});
+
+window.addEventListener('resize', function() {
+  scaleDoc('pw-rec', 'preview-rec');
+  scaleDoc('pw-sup', 'preview-sup');
+  scaleDoc('pw-plan', 'preview-plan');
+});
+</script>
+</body>
+</html>
