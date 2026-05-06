@@ -228,7 +228,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 .idea-cat-inp{flex:1;border:none;background:transparent;font-size:.77rem;font-weight:500;color:var(--rose-deep);font-family:'DM Sans',sans-serif;outline:none;}
 
 /* MACRONUTRIENTES PAGE (PDF dark) */
-.macro-pg{width:595px;min-height:842px;padding:0;position:relative;background:#5A3D3A;break-before:page;page-break-before:always;}
+.macro-pg{width:595px;height:842px;overflow:hidden;padding:0;position:relative;background:#5A3D3A;break-before:page;page-break-before:always;}
 .macro-pg-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(160deg,rgba(43,33,24,.5) 0%,rgba(139,85,80,.25) 100%);}
 .macro-pg-body{position:relative;z-index:2;padding:52px 58px;height:842px;display:flex;flex-direction:column;}
 .macro-eyebrow{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:300;margin-bottom:12px;}
@@ -1231,29 +1231,54 @@ async function dlPDF(docId, filename, btnId) {
   var btn = $(btnId);
   var prevTxt = btn ? btn.textContent : '';
   if (btn) { btn.textContent = 'Generando…'; btn.disabled = true; }
-  var pi = docEl.closest('.prev-inner');
-  var prevT = pi ? pi.style.transform : '';
-  var prevM = pi ? pi.style.marginBottom : '';
-  if (pi) { pi.style.transform = 'none'; pi.style.marginBottom = '0'; }
+
+  // Guardar posición original
+  var origParent = docEl.parentNode;
+  var origNext = docEl.nextSibling;
+
+  // Mover al body sin transform para que html2canvas capture correctamente
+  docEl.style.setProperty('position', 'absolute', 'important');
+  docEl.style.setProperty('left', '-9999px', 'important');
+  docEl.style.setProperty('top', '0', 'important');
+  docEl.style.setProperty('width', '595px', 'important');
+  document.body.appendChild(docEl);
+
   try {
     await html2pdf().set({
       margin: 0,
       filename: filename,
-      html2canvas: {scale:2, useCORS:true, width:595, windowWidth:595, logging:false},
-      jsPDF: {unit:'pt', format:'a4', orientation:'portrait'},
-      pagebreak: {mode:['css','legacy'], before:'.doc-page'}
+      html2canvas: {
+        scale: 2, useCORS: true, allowTaint: true,
+        width: 595, windowWidth: 595,
+        logging: false, scrollX: 0, scrollY: 0,
+        imageTimeout: 15000
+      },
+      jsPDF: {unit: 'pt', format: [595.28, 841.89], orientation: 'portrait'},
+      pagebreak: {
+        mode: 'legacy',
+        before: '.doc-page, .macro-pg',
+        avoid: ['.meal-blk', '.rec-block', '.porc-pg-block', '.ideas-block',
+                '.avoid-box', '.cat-block', '.obj-box', '.next-consult']
+      }
     }).from(docEl).save();
+
     var tipo = docId === 'doc-rec' ? 'recetario' : docId === 'doc-sup' ? 'recomendados' : 'plan';
     var cId = tipo === 'recetario' ? 'rec-nombre' : tipo === 'recomendados' ? 'sup-nombre' : 'plan-nombre';
-    var cliente = val(cId) || '—';
-    try { await window.storage.lpush('ag:pdf_stats', JSON.stringify({ts: new Date().toISOString(), tipo:tipo, cliente:cliente})); } catch(e){}
+    try { await window.storage.lpush('ag:pdf_stats', JSON.stringify({ts: new Date().toISOString(), tipo:tipo, cliente:val(cId)||'—'})); } catch(e){}
   } catch(err) {
     alert('Error al generar el PDF. Intentá nuevamente.');
     console.error(err);
-  }
-  if (pi) { pi.style.transform = prevT; pi.style.marginBottom = prevM; }
-  if (btn) { btn.textContent = prevTxt; btn.disabled = false; }
-}
+  } finally {
+    // Siempre restaurar el elemento a su lugar original
+    docEl.style.removeProperty('position');
+    docEl.style.removeProperty('left');
+    docEl.style.removeProperty('top');
+    docEl.style.removeProperty('width');
+    if (origNext) { origParent.insertBefore(docEl, origNext); }
+    else { origParent.appendChild(docEl); }
+    if (btn) { btn.textContent = prevTxt; btn.disabled = false; }
+  } // end finally
+} // end dlPDF
 
 /* ============================================================
    INIT
