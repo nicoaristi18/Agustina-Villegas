@@ -197,6 +197,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 .sig-name{font-family:'Cormorant Garamond',serif;font-size:13px;font-style:italic;color:#A8706A;font-weight:400;}
 .sig-role{font-size:8px;color:#8C7E78;letter-spacing:.06em;text-transform:uppercase;font-weight:300;margin-top:2px;}
 
+/* LOGO IN DOCS */
+.cover-logo-img{display:block;height:44px;width:auto;filter:brightness(0) invert(1);opacity:.82;}
+.pg-hdr-logo{height:20px;width:auto;opacity:.32;flex-shrink:0;}
+.sig-logo-img{height:58px;width:auto;display:block;}
+.macro-logo-img{height:28px;width:auto;filter:brightness(0) invert(1);opacity:.38;display:block;}
+
 /* SAVE/LOAD BAR */
 .save-bar{display:flex;gap:.4rem;align-items:center;margin-bottom:1rem;padding:.55rem .7rem;background:var(--cream);border:1px solid var(--border);border-radius:8px;flex-wrap:wrap;}
 .save-bar select{flex:1;min-width:0;padding:.35rem .55rem;background:#fff;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text);outline:none;}
@@ -275,6 +281,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
   <div class="app-left">
     <button class="back-btn" onclick="window.close()">&#8592; Volver al admin</button>
     <div class="app-title">Generador de documentos &middot; <span>Agustina Villegas</span></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:.55rem;margin-left:auto">
+    <img id="logo-hdr-thumb" style="height:28px;width:auto;display:none;filter:brightness(0) invert(1);opacity:.75;border-radius:3px" alt="Logo">
+    <label style="display:flex;align-items:center;gap:.35rem;cursor:pointer;background:rgba(255,255,255,.1);padding:.32rem .65rem;border-radius:7px;transition:background .18s" title="Cargar logo para los documentos">
+      <input type="file" accept="image/*" id="logo-inp" onchange="setLogo(this)" style="display:none">
+      <span style="font-size:.68rem;color:rgba(255,255,255,.65);white-space:nowrap">&#128247; Logo</span>
+    </label>
+    <button id="logo-clear-btn" onclick="clearLogo()" style="display:none;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.5);padding:.3rem .5rem;border-radius:6px;cursor:pointer;font-size:.65rem" title="Quitar logo">&#x2715;</button>
   </div>
 </header>
 
@@ -471,6 +485,36 @@ if (!window.storage) {
   };
 }
 
+/* LOGO */
+function getLogo() { return localStorage.getItem('gen_logo') || ''; }
+
+function setLogo(inp) {
+  var f = inp.files[0];
+  if (!f) return;
+  var r = new FileReader();
+  r.onload = function(e) {
+    localStorage.setItem('gen_logo', e.target.result);
+    updateLogoUI();
+    upRec(); upSup(); upPlan();
+  };
+  r.readAsDataURL(f);
+}
+
+function clearLogo() {
+  localStorage.removeItem('gen_logo');
+  var inp = $('logo-inp'); if (inp) inp.value = '';
+  updateLogoUI();
+  upRec(); upSup(); upPlan();
+}
+
+function updateLogoUI() {
+  var logo = getLogo();
+  var thumb = $('logo-hdr-thumb');
+  var clearBtn = $('logo-clear-btn');
+  if (thumb) { thumb.src = logo || ''; thumb.style.display = logo ? 'block' : 'none'; }
+  if (clearBtn) clearBtn.style.display = logo ? '' : 'none';
+}
+
 /* UTILS */
 const $ = id => document.getElementById(id);
 const val = id => ($( id) || {}).value || '';
@@ -515,11 +559,15 @@ function setCover(inp, key, upFn) {
 /* BUILD COVER */
 function buildCover(titulo, nombre, fecha, imgKey, extra) {
   const img = localStorage.getItem(imgKey) || '';
+  var logo = getLogo();
+  var coverTop = logo
+    ? '<img class="cover-logo-img" src="' + logo + '" alt="Agustina Villegas">'
+    : '<div class="cover-sig">Lic. Agustina Villegas &middot; Nutricionista</div>';
   return '<div class="doc-page page-cover">' +
     (img ? '<img class="cover-bg-img" src="' + img + '" alt="">' : '') +
     '<div class="cover-overlay"></div>' +
     '<div class="cover-body">' +
-    '<div class="cover-sig">Lic. Agustina Villegas &middot; Nutricionista</div>' +
+    coverTop +
     '<div class="cover-space"></div>' +
     '<div class="cover-line"></div>' +
     '<div class="cover-title">' + esc(titulo) + '</div>' +
@@ -531,7 +579,11 @@ function buildCover(titulo, nombre, fecha, imgKey, extra) {
 
 /* PAGE HEADER */
 function pgHdr(label, name) {
-  return '<div class="pg-hdr"><span class="pg-hdr-doc">' + esc(label) + '</span><span class="pg-hdr-name">' + esc(name) + '</span></div>';
+  var logo = getLogo();
+  var right = logo
+    ? '<img class="pg-hdr-logo" src="' + logo + '" alt="">'
+    : '<span class="pg-hdr-name">' + esc(name) + '</span>';
+  return '<div class="pg-hdr"><span class="pg-hdr-doc">' + esc(label) + (name ? ' &middot; ' + esc(name) : '') + '</span>' + right + '</div>';
 }
 
 /* ============================================================
@@ -1102,6 +1154,7 @@ function buildPlanDoc() {
 
   /* Macronutrientes pages */
   var macrosPgs = '';
+  var macroLogo = getLogo();
   if (macrosOn) {
     macrosPgs = macros4.map(function(m) {
       return '<div class="macro-pg">'+
@@ -1113,7 +1166,11 @@ function buildPlanDoc() {
         '<div class="macro-subcols">'+
         '<div class="macro-subcol"><div class="macro-sub-title">'+esc(m.s1t)+'</div><div class="macro-sub-items">'+esc(m.s1s)+'</div>'+(m.s1i?'<div class="macro-sub-note">'+esc(m.s1i)+'</div>':'')+' </div>'+
         '<div class="macro-subcol"><div class="macro-sub-title">'+esc(m.s2t)+'</div><div class="macro-sub-items">'+esc(m.s2s)+'</div>'+(m.s2i?'<div class="macro-sub-note">'+esc(m.s2i)+'</div>':'')+' </div>'+
-        '</div></div></div>';
+        '</div>'+
+        (macroLogo?'<div style="margin-top:28px">'+
+          '<img class="macro-logo-img" src="'+macroLogo+'" alt="Agustina Villegas">'+
+          '</div>':'')+
+        '</div></div>';
     }).join('');
   }
 
@@ -1186,12 +1243,16 @@ function buildPlanDoc() {
   }
 
   /* Notas page */
+  var logo = getLogo();
+  var sigBlock = logo
+    ? '<div class="doc-sig"><img class="sig-logo-img" src="'+logo+'" alt="Agustina Villegas"></div>'
+    : '<div class="doc-sig"><div class="sig-name">Lic. Agustina Villegas</div><div class="sig-role">Nutricionista</div></div>';
   var notasPage = (evitar||recs||prox)?'<div class="doc-page" style="background:#FAF8F4">'+
     pgHdr('Notas finales', nombre)+
     (evitar?'<div class="avoid-box"><div class="avoid-title">Alimentos a evitar</div><ul class="avoid-list">'+nl2li(evitar,'avoid-item')+'</ul></div>':'')+
     (recs?'<div class="avoid-box"><div class="avoid-title">Recomendaciones generales</div><div class="recs-text">'+esc(recs)+'</div></div>':'')+
     (prox?'<div class="next-consult"><div><div class="nc-label">Próxima consulta</div><div class="nc-date">'+esc(prox)+'</div></div></div>':'')+
-    '<div class="doc-sig"><div class="sig-name">Lic. Agustina Villegas</div><div class="sig-role">Nutricionista</div></div>'+
+    sigBlock+
     '</div>':'';
 
   /* Page order: Cover → Macros summary → Macronutrientes pages → Distribución → Porciones → Crudos → Ideas → Notas */
@@ -1289,6 +1350,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var el = $(id);
     if (el && !el.value) el.value = today;
   });
+  updateLogoUI();
   renderRecForm();
   initCats();
   initMeals();
