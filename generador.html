@@ -196,6 +196,77 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 .doc-sig{position:absolute;bottom:48px;right:58px;text-align:right;}
 .sig-name{font-family:'Cormorant Garamond',serif;font-size:13px;font-style:italic;color:#A8706A;font-weight:400;}
 .sig-role{font-size:8px;color:#8C7E78;letter-spacing:.06em;text-transform:uppercase;font-weight:300;margin-top:2px;}
+
+/* SAVE/LOAD BAR */
+.save-bar{display:flex;gap:.4rem;align-items:center;margin-bottom:1rem;padding:.55rem .7rem;background:var(--cream);border:1px solid var(--border);border-radius:8px;flex-wrap:wrap;}
+.save-bar select{flex:1;min-width:0;padding:.35rem .55rem;background:#fff;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text);outline:none;}
+.save-bar .sb-btn{padding:.35rem .65rem;border-radius:6px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.71rem;cursor:pointer;transition:all .18s;white-space:nowrap;background:var(--cream2);color:var(--text);}
+.save-bar .sb-btn:hover{background:var(--blush);}
+.save-bar .sb-btn.primary{background:var(--rose-dark);color:#fff;border-color:var(--rose-dark);}
+.save-bar .sb-btn.primary:hover{background:var(--rose-deep);}
+.save-bar .sb-btn.danger:hover{color:#a32d2d;border-color:#a32d2d;}
+
+/* SECTION TOGGLE */
+.sec-toggle{display:flex;align-items:center;justify-content:space-between;padding:.42rem .6rem;background:var(--cream);border:1px solid var(--border);border-radius:7px;margin-bottom:.45rem;cursor:pointer;}
+.sec-toggle span{font-size:.75rem;color:var(--text);pointer-events:none;}
+.sec-toggle input[type=checkbox]{width:auto;margin:0;cursor:pointer;}
+
+/* PORC CARD */
+.porc-card{border:1px solid var(--border);border-radius:9px;margin-bottom:.55rem;overflow:hidden;}
+.porc-head{background:var(--cream);padding:.4rem .7rem;display:flex;align-items:center;gap:.4rem;}
+.porc-name-inp{flex:1;border:none;background:transparent;font-size:.77rem;font-weight:500;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;}
+
+/* CRUDO ROW */
+.crudo-row{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:.38rem;align-items:center;margin-bottom:.38rem;}
+.crudo-row input{padding:.36rem .52rem;background:var(--cream);border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.75rem;outline:none;color:var(--text);}
+.medida-row{display:grid;grid-template-columns:1fr 1fr auto;gap:.38rem;align-items:center;margin-bottom:.38rem;}
+.medida-row input{padding:.36rem .52rem;background:var(--cream);border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.75rem;outline:none;color:var(--text);}
+
+/* IDEA CARD */
+.idea-card{border:1px solid var(--border);border-radius:9px;margin-bottom:.55rem;overflow:hidden;}
+.idea-head{background:var(--blush);padding:.4rem .7rem;display:flex;align-items:center;gap:.4rem;}
+.idea-cat-inp{flex:1;border:none;background:transparent;font-size:.77rem;font-weight:500;color:var(--rose-deep);font-family:'DM Sans',sans-serif;outline:none;}
+
+/* MACRONUTRIENTES PAGE (PDF dark) */
+.macro-pg{width:595px;min-height:842px;padding:0;position:relative;background:#5A3D3A;break-before:page;page-break-before:always;}
+.macro-pg-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(160deg,rgba(43,33,24,.5) 0%,rgba(139,85,80,.25) 100%);}
+.macro-pg-body{position:relative;z-index:2;padding:52px 58px;height:842px;display:flex;flex-direction:column;}
+.macro-eyebrow{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:300;margin-bottom:12px;}
+.macro-pg-title{font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:300;color:#fff;line-height:1.05;margin-bottom:20px;letter-spacing:-.01em;}
+.macro-pg-desc{font-size:11px;font-weight:300;color:rgba(255,255,255,.72);line-height:1.75;margin-bottom:32px;max-width:430px;}
+.macro-subcols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:auto;}
+.macro-subcol{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:16px 18px;}
+.macro-sub-title{font-family:'Cormorant Garamond',serif;font-size:14px;color:rgba(255,255,255,.88);margin-bottom:7px;font-weight:400;}
+.macro-sub-items{font-size:10px;color:rgba(255,255,255,.62);font-weight:300;line-height:1.75;white-space:pre-line;}
+.macro-sub-note{font-size:9px;color:rgba(255,255,255,.38);font-style:italic;margin-top:7px;line-height:1.5;}
+
+/* PORCIONES PAGE (PDF) */
+.porc-pg-block{margin-bottom:16px;break-inside:avoid;page-break-inside:avoid;}
+.porc-pg-title{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:400;color:#2A2118;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid rgba(169,138,130,.2);padding-bottom:4px;margin-bottom:6px;}
+.porc-pg-items{font-size:10px;font-weight:300;color:#2A2118;line-height:1.7;white-space:pre-line;}
+.porc-pg-note{font-size:9px;color:#8C7E78;font-style:italic;margin-top:5px;padding:5px 9px;background:#FAF8F4;border-radius:5px;line-height:1.55;}
+
+/* CRUDOS TABLE (PDF) */
+.crudos-tbl{width:100%;border-collapse:collapse;font-size:10px;margin-bottom:18px;}
+.crudos-tbl th{background:#2A2118;color:#fff;padding:7px 10px;text-align:left;font-size:8px;letter-spacing:.07em;text-transform:uppercase;font-weight:400;}
+.crudos-tbl td{padding:6px 10px;border-bottom:1px solid rgba(169,138,130,.1);font-weight:300;}
+.crudos-tbl tr:nth-child(even) td{background:#FAF8F4;}
+.medidas-tbl{width:100%;border-collapse:collapse;font-size:10px;margin-top:8px;}
+.medidas-tbl th{background:#F0E6DF;color:#A8706A;padding:6px 10px;font-size:8px;letter-spacing:.07em;text-transform:uppercase;font-weight:500;text-align:left;}
+.medidas-tbl td{padding:5px 10px;border-bottom:1px solid rgba(169,138,130,.08);font-weight:300;}
+
+/* INTERCAMBIO 2-COL (meals PDF) */
+.meal-interc-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0;}
+.meal-interc-col .col-title{font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:#A8706A;font-weight:500;margin-bottom:5px;padding-bottom:3px;border-bottom:1px solid rgba(169,138,130,.18);}
+.meal-interc-text{font-size:10px;font-weight:300;color:#2A2118;line-height:1.65;white-space:pre-line;}
+
+/* IDEAS DE COMIDAS (PDF) */
+.ideas-block{margin-bottom:18px;break-inside:avoid;page-break-inside:avoid;}
+.ideas-cat-title{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:400;color:#2A2118;border-bottom:1px solid rgba(169,138,130,.2);padding-bottom:4px;margin-bottom:8px;}
+.ideas-list{list-style:none;}
+.ideas-item{font-size:10px;font-weight:300;color:#2A2118;padding:2px 0 2px 13px;position:relative;border-bottom:1px solid rgba(169,138,130,.05);}
+.ideas-item:last-child{border-bottom:none;}
+.ideas-item::before{content:'–';position:absolute;left:0;top:2px;color:rgba(169,138,130,.45);font-size:9px;}
 </style>
 </head>
 <body>
@@ -286,6 +357,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 <!-- TAB 3: PLAN DE ALIMENTACIÓN -->
 <div id="panel-plan" class="tab-panel">
   <div class="form-col">
+    <!-- SAVE/LOAD -->
+    <div class="save-bar">
+      <select id="plan-saves-sel"><option value="">— Guardados —</option></select>
+      <button class="sb-btn" onclick="loadPlanSnapshot()">Cargar</button>
+      <button class="sb-btn danger" onclick="deletePlanSnapshot()">Borrar</button>
+      <button class="sb-btn primary" onclick="savePlanSnapshot()">Guardar</button>
+    </div>
     <div class="fsec">
       <div class="fsec-title">Datos del documento</div>
       <div class="fg"><label>Nombre del cliente</label><input id="plan-nombre" type="text" placeholder="Mar&iacute;a Garc&iacute;a" oninput="upPlan()"></div>
@@ -300,24 +378,63 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
     </div>
     <div class="fsec">
       <div class="fsec-title">Macros totales</div>
-      <div class="fg"><label>Calor&iacute;as totales (kcal)</label><input id="plan-kcal" type="number" placeholder="1800" oninput="upPlan()"></div>
+      <div class="fg"><label>Calor&iacute;as totales (kcal)</label><input id="plan-kcal" type="number" placeholder="1800" oninput="autoCalcMacros()"></div>
       <div class="fg-row">
-        <div class="fg"><label>Prote&iacute;nas (g)</label><input id="plan-prot-g" type="number" placeholder="120" oninput="upPlan()"></div>
-        <div class="fg"><label>Prote&iacute;nas (%)</label><input id="plan-prot-pct" type="number" placeholder="27" oninput="upPlan()"></div>
+        <div class="fg"><label>Prote&iacute;nas (%)</label><input id="plan-prot-pct" type="number" placeholder="27" oninput="autoCalcMacros()"></div>
+        <div class="fg"><label>Prote&iacute;nas (g) &mdash; auto</label><input id="plan-prot-g" type="number" placeholder="auto" oninput="upPlan()"></div>
       </div>
       <div class="fg-row">
-        <div class="fg"><label>Grasas (g)</label><input id="plan-grasas-g" type="number" placeholder="60" oninput="upPlan()"></div>
-        <div class="fg"><label>Grasas (%)</label><input id="plan-grasas-pct" type="number" placeholder="30" oninput="upPlan()"></div>
+        <div class="fg"><label>Grasas (%)</label><input id="plan-grasas-pct" type="number" placeholder="30" oninput="autoCalcMacros()"></div>
+        <div class="fg"><label>Grasas (g) &mdash; auto</label><input id="plan-grasas-g" type="number" placeholder="auto" oninput="upPlan()"></div>
       </div>
       <div class="fg-row">
-        <div class="fg"><label>Carbohidratos (g)</label><input id="plan-carbs-g" type="number" placeholder="180" oninput="upPlan()"></div>
-        <div class="fg"><label>Carbohidratos (%)</label><input id="plan-carbs-pct" type="number" placeholder="43" oninput="upPlan()"></div>
+        <div class="fg"><label>Carbohidratos (%)</label><input id="plan-carbs-pct" type="number" placeholder="43" oninput="autoCalcMacros()"></div>
+        <div class="fg"><label>Carbohidratos (g) &mdash; auto</label><input id="plan-carbs-g" type="number" placeholder="auto" oninput="upPlan()"></div>
       </div>
+    </div>
+    <div class="fsec">
+      <div class="fsec-title">Secciones adicionales</div>
+      <label class="sec-toggle"><span>Macronutrientes (4 p&aacute;ginas)</span><input type="checkbox" id="plan-macros-on" onchange="planToggleSec(this,'fsec-macros4')"></label>
+      <label class="sec-toggle"><span>Porciones e intercambios</span><input type="checkbox" id="plan-porc-on" onchange="planToggleSec(this,'fsec-porcs')"></label>
+      <label class="sec-toggle"><span>Alimentos crudos y cocidos</span><input type="checkbox" id="plan-crudo-on" onchange="planToggleSec(this,'fsec-crudos')"></label>
+      <label class="sec-toggle"><span>Ideas de comidas</span><input type="checkbox" id="plan-ideas-on" onchange="planToggleSec(this,'fsec-ideas')"></label>
+    </div>
+    <div class="fsec" id="fsec-macros4" style="display:none">
+      <div class="fsec-title">Macronutrientes &mdash; contenido</div>
+      <p style="font-size:.7rem;color:var(--text-muted);margin-bottom:.7rem">4 p&aacute;ginas (prot&eacute;inas, grasas, carbohidratos, fibra). Clic en cada bloque para editar.</p>
+      <div id="macros4-list"></div>
     </div>
     <div class="fsec">
       <div class="fsec-title">Comidas del d&iacute;a</div>
       <div id="meals-list"></div>
       <button class="add-btn" id="btn-add-meal" onclick="addMeal()">+ Agregar comida</button>
+    </div>
+    <div class="fsec" id="fsec-porcs" style="display:none">
+      <div class="fsec-title">Porciones e intercambios</div>
+      <div class="fg"><label>Nota de secci&oacute;n (opcional)</label><input id="plan-porc-sub" type="text" placeholder="1 intercambio equivale a&hellip;" oninput="upPlan()"></div>
+      <div id="porcs-list"></div>
+      <button class="add-btn" onclick="addPorc()">+ Agregar grupo</button>
+    </div>
+    <div class="fsec" id="fsec-crudos" style="display:none">
+      <div class="fsec-title">Alimentos crudos y cocidos</div>
+      <div class="fg"><label>Nota introductoria (opcional)</label><input id="plan-crudo-nota" type="text" placeholder="Equivalencias de cocci&oacute;n&hellip;" oninput="upPlan()"></div>
+      <div style="font-size:.6rem;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.4rem">Tabla crudo / cocido</div>
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:.35rem;margin-bottom:.3rem;padding:0 .1rem">
+        <span style="font-size:.58rem;color:var(--text-muted)">Alimento</span><span style="font-size:.58rem;color:var(--text-muted)">Crudo</span><span style="font-size:.58rem;color:var(--text-muted)">Cocido</span><span></span>
+      </div>
+      <div id="crudos-list"></div>
+      <button class="add-btn" onclick="addCrudoRow()" style="margin-bottom:.9rem">+ Agregar alimento</button>
+      <div style="font-size:.6rem;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.4rem">Equivalencias de medidas</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.35rem;margin-bottom:.3rem;padding:0 .1rem">
+        <span style="font-size:.58rem;color:var(--text-muted)">Columna A</span><span style="font-size:.58rem;color:var(--text-muted)">Columna B</span><span></span>
+      </div>
+      <div id="medidas-list"></div>
+      <button class="add-btn" onclick="addMedidaRow()">+ Agregar equivalencia</button>
+    </div>
+    <div class="fsec" id="fsec-ideas" style="display:none">
+      <div class="fsec-title">Ideas de comidas</div>
+      <div id="ideas-list"></div>
+      <button class="add-btn" onclick="addIdeaSection()">+ Agregar categor&iacute;a</button>
     </div>
     <div class="fsec">
       <div class="fsec-title">Notas finales</div>
@@ -621,30 +738,51 @@ var upSup = deb(function() {
 /* ============================================================
    PLAN DE ALIMENTACIÓN
    ============================================================ */
+
+/* AUTO-CALC MACROS */
+function autoCalcMacros() {
+  var kcal = parseFloat(val('plan-kcal')) || 0;
+  if (kcal > 0) {
+    var pP = parseFloat(val('plan-prot-pct')) || 0;
+    var gP = parseFloat(val('plan-grasas-pct')) || 0;
+    var cP = parseFloat(val('plan-carbs-pct')) || 0;
+    if (pP > 0) { var eP = $('plan-prot-g'); if (eP) eP.value = Math.round(kcal * pP / 100 / 4); }
+    if (gP > 0) { var eG = $('plan-grasas-g'); if (eG) eG.value = Math.round(kcal * gP / 100 / 9); }
+    if (cP > 0) { var eC = $('plan-carbs-g'); if (eC) eC.value = Math.round(kcal * cP / 100 / 4); }
+  }
+  upPlan();
+}
+
+/* SECTION TOGGLE */
+function planToggleSec(cb, secId) {
+  var sec = $(secId);
+  if (sec) sec.style.display = cb.checked ? '' : 'none';
+  upPlan();
+}
+
+/* MEALS */
 var DEF_MEALS = ['Desayuno','Almuerzo','Merienda','Cena'];
 var meals = [];
 var mealCtr = 0;
 
 function initMeals() {
-  meals = DEF_MEALS.map(function(n) { return {id:++mealCtr, nombre:n, hora:'', kcal:'', alimentos:'', nota:''}; });
+  meals = DEF_MEALS.map(function(n) { return {id:++mealCtr, nombre:n, hora:'', intercambio:'', ejemplo:'', foods:'', nota:''}; });
   renderMealsForm();
-  upPlan();
 }
 
 function addMeal() {
-  if (meals.length >= 6) return;
-  meals.push({id:++mealCtr, nombre:'Colación', hora:'', kcal:'', alimentos:'', nota:''});
+  if (meals.length >= 7) return;
+  meals.push({id:++mealCtr, nombre:'Colación', hora:'', intercambio:'', ejemplo:'', foods:'', nota:''});
   renderMealsForm();
   upPlan();
-  if (meals.length >= 6) { var b = $('btn-add-meal'); if (b) b.disabled = true; }
+  if (meals.length >= 7) { var b = $('btn-add-meal'); if (b) b.disabled = true; }
 }
 
 function removeMeal(id) {
   meals = meals.filter(function(m){ return m.id !== id; });
   renderMealsForm();
   upPlan();
-  var b = $('btn-add-meal');
-  if (b) b.disabled = false;
+  var b = $('btn-add-meal'); if (b) b.disabled = false;
 }
 
 function syncMeal(id, f, v) {
@@ -663,16 +801,267 @@ function renderMealsForm() {
       '<button class="del-btn" onclick="removeMeal(' + m.id + ')">&#x2715;</button>' +
       '</div>' +
       '<div class="meal-body">' +
-      '<div class="fg-row">' +
       '<div class="fg"><label>Hora sugerida</label><input type="text" value="' + esc(m.hora) + '" placeholder="8:00 hs" oninput="syncMeal(' + m.id + ',\'hora\',this.value)"></div>' +
-      '<div class="fg"><label>Kcal</label><input type="number" value="' + esc(m.kcal) + '" placeholder="400" oninput="syncMeal(' + m.id + ',\'kcal\',this.value)"></div>' +
-      '</div>' +
-      '<div class="fg"><label>Alimentos (uno por línea)</label><textarea rows="3" placeholder="1 taza de avena" oninput="syncMeal(' + m.id + ',\'alimentos\',this.value)">' + esc(m.alimentos) + '</textarea></div>' +
+      '<div class="fg"><label>Grupo de intercambio</label><textarea rows="2" placeholder="1 intercambio de lácteo&#10;2 intercambios de panificado" oninput="syncMeal(' + m.id + ',\'intercambio\',this.value)">' + esc(m.intercambio||'') + '</textarea></div>' +
+      '<div class="fg"><label>Ejemplo de alimento</label><textarea rows="2" placeholder="200cc yogur descremado&#10;2 rebanadas pan integral" oninput="syncMeal(' + m.id + ',\'ejemplo\',this.value)">' + esc(m.ejemplo||'') + '</textarea></div>' +
+      '<div class="fg"><label>Alimentos adicionales (uno por línea)</label><textarea rows="2" placeholder="Frutas de estación" oninput="syncMeal(' + m.id + ',\'foods\',this.value)">' + esc(m.foods||'') + '</textarea></div>' +
       '<div class="fg"><label>Nota (opcional)</label><input type="text" value="' + esc(m.nota) + '" placeholder="Podés sustituir por…" oninput="syncMeal(' + m.id + ',\'nota\',this.value)"></div>' +
       '</div></div>';
   }).join('');
 }
 
+/* MACRONUTRIENTES 4 PAGES */
+var DEF_MACROS4 = [
+  { key:'prot', label:'PROTEÍNAS',
+    desc:'Las proteínas son esenciales para la construcción y reparación de tejidos, síntesis de enzimas y hormonas, y mantenimiento del sistema inmune.',
+    s1t:'Proteínas animales', s1s:'Carnes magras, pollo sin piel, pescado, huevos, lácteos descremados', s1i:'',
+    s2t:'Proteínas vegetales', s2s:'Legumbres, tofu, tempeh, semillas, frutos secos', s2i:'' },
+  { key:'gras', label:'GRASAS',
+    desc:'Las grasas son fuente de energía concentrada, forman parte de las membranas celulares y permiten la absorción de vitaminas liposolubles A, D, E y K.',
+    s1t:'Grasas saludables', s1s:'Palta, aceite de oliva, frutos secos, semillas, pescados grasos', s1i:'',
+    s2t:'Grasas a limitar', s2s:'Grasas trans, frituras, productos ultraprocesados, embutidos grasos', s2i:'' },
+  { key:'carb', label:'CARBOHIDRATOS',
+    desc:'Los carbohidratos son la principal fuente de energía del organismo, especialmente para el cerebro y el sistema nervioso.',
+    s1t:'Carbohidratos complejos', s1s:'Arroz integral, avena, legumbres, pan integral, papa, batata', s1i:'',
+    s2t:'Carbohidratos simples', s2s:'Frutas, miel (con moderación), azúcar natural de la fruta', s2i:'' },
+  { key:'fibr', label:'FIBRA',
+    desc:'La fibra regula el tránsito intestinal, controla el colesterol y la glucemia, y favorece la saciedad prolongada.',
+    s1t:'Fibra soluble', s1s:'Avena, manzana, pera, legumbres, zanahoria, semillas de chía', s1i:'',
+    s2t:'Fibra insoluble', s2s:'Salvado de trigo, vegetales de hoja, semillas de lino, nueces', s2i:'' }
+];
+var macros4 = DEF_MACROS4.map(function(m){ return Object.assign({}, m); });
+
+function renderMacros4Form() {
+  var el = $('macros4-list');
+  if (!el) return;
+  el.innerHTML = macros4.map(function(m, i) {
+    return '<div class="rcard" style="margin-bottom:.65rem">' +
+      '<div class="rcard-head" onclick="toggleCard(\'mc4-' + i + '\')">' +
+      '<span class="rcard-title">' + m.label + '</span>' +
+      '<span class="rcard-badge">Página ' + (i+1) + '</span>' +
+      '</div>' +
+      '<div class="rcard-body" id="mc4-' + i + '" style="display:none">' +
+      '<div class="fg"><label>Descripción</label><textarea rows="3" oninput="syncMacro4(' + i + ',\'desc\',this.value)">' + esc(m.desc) + '</textarea></div>' +
+      '<div class="fg"><label>Subtítulo bloque 1</label><input type="text" value="' + esc(m.s1t) + '" oninput="syncMacro4(' + i + ',\'s1t\',this.value)"></div>' +
+      '<div class="fg"><label>Contenido bloque 1</label><textarea rows="2" oninput="syncMacro4(' + i + ',\'s1s\',this.value)">' + esc(m.s1s) + '</textarea></div>' +
+      '<div class="fg"><label>Subtítulo bloque 2</label><input type="text" value="' + esc(m.s2t) + '" oninput="syncMacro4(' + i + ',\'s2t\',this.value)"></div>' +
+      '<div class="fg"><label>Contenido bloque 2</label><textarea rows="2" oninput="syncMacro4(' + i + ',\'s2s\',this.value)">' + esc(m.s2s) + '</textarea></div>' +
+      '</div></div>';
+  }).join('');
+}
+
+function syncMacro4(i, f, v) { macros4[i][f] = v; upPlan(); }
+
+/* PORCIONES E INTERCAMBIOS */
+var DEF_PORCS = [
+  { nom:'LÁCTEOS', items:'200 cc leche descremada\n200 cc yogur descremado\n½ taza leche en polvo\n½ pote yogur Ser 15 gr', note:'1 intercambio de lácteo equivale a 1 intercambio de panificado y 8 gr de proteínas magras.' },
+  { nom:'PANIFICADOS Y CEREALES', items:'1 rebanada pan integral\n2 u galleta arroz grandes\n¾ taza de copos de avena\n1 taza de pasta cocida\n1 taza de arroz cocido', note:'' },
+  { nom:'PROTEÍNAS', items:'90 gr carne vacuna magra\n90 gr pollo sin piel\n90 gr pescado\n2 huevos\n4 claras de huevo', note:'' },
+  { nom:'FRUTAS', items:'1 fruta mediana\n1 taza fruta picada\n½ taza fruta deshidratada', note:'' }
+];
+var porcs = [];
+var porcCtr = 0;
+
+function initPorcs() {
+  porcs = DEF_PORCS.map(function(p){ return {id:++porcCtr, nom:p.nom, items:p.items, note:p.note}; });
+  renderPorcsForm();
+}
+
+function addPorc() {
+  porcs.push({id:++porcCtr, nom:'Nuevo grupo', items:'', note:''});
+  renderPorcsForm();
+  upPlan();
+}
+
+function removePorc(id) {
+  porcs = porcs.filter(function(p){ return p.id !== id; });
+  renderPorcsForm();
+  upPlan();
+}
+
+function syncPorc(id, f, v) {
+  var p = porcs.find(function(p){ return p.id === id; });
+  if (p) p[f] = v;
+  upPlan();
+}
+
+function renderPorcsForm() {
+  var el = $('porcs-list');
+  if (!el) return;
+  el.innerHTML = porcs.map(function(p) {
+    return '<div class="porc-card">' +
+      '<div class="porc-head">' +
+      '<input class="porc-name-inp" type="text" value="' + esc(p.nom) + '" oninput="syncPorc(' + p.id + ',\'nom\',this.value)">' +
+      '<button class="del-btn" onclick="removePorc(' + p.id + ')">&#x2715;</button>' +
+      '</div>' +
+      '<div style="padding:.5rem .7rem">' +
+      '<div class="fg" style="margin-bottom:.4rem"><label>Alimentos (uno por línea)</label><textarea rows="3" oninput="syncPorc(' + p.id + ',\'items\',this.value)">' + esc(p.items) + '</textarea></div>' +
+      '<div class="fg" style="margin:0"><label>Nota equivalencia (opcional)</label><input type="text" value="' + esc(p.note) + '" placeholder="1 intercambio equivale a…" oninput="syncPorc(' + p.id + ',\'note\',this.value)"></div>' +
+      '</div></div>';
+  }).join('');
+}
+
+/* CRUDOS Y COCIDOS */
+var DEF_CRUDOS = [
+  {food:'Arroz', crudo:'2 cdas', cocido:'½ taza'},
+  {food:'Legumbre', crudo:'3 cdas', cocido:'½ taza'},
+  {food:'Fideos', crudo:'¼ taza', cocido:'½ taza'},
+  {food:'Avena', crudo:'3 cdas', cocido:'½ taza'}
+];
+var DEF_MEDIDAS = [['4 cdas','¼ taza'],['¾ taza','½ taza'],['8 cdas','½ taza'],['16 cdas','1 taza'],['3 cditas','1 cda']];
+var crudos = [];
+var medidas = [];
+var crudoCtr = 0, medidaCtr = 0;
+
+function initCrudos() {
+  crudos = DEF_CRUDOS.map(function(c){ return {id:++crudoCtr, food:c.food, crudo:c.crudo, cocido:c.cocido}; });
+  medidas = DEF_MEDIDAS.map(function(m){ return {id:++medidaCtr, a:m[0], b:m[1]}; });
+  renderCrudosForm();
+}
+
+function addCrudoRow() {
+  crudos.push({id:++crudoCtr, food:'', crudo:'', cocido:''});
+  renderCrudosForm(); upPlan();
+}
+function removeCrudo(id) { crudos = crudos.filter(function(c){ return c.id !== id; }); renderCrudosForm(); upPlan(); }
+function syncCrudo(id, f, v) { var c = crudos.find(function(c){ return c.id === id; }); if (c) c[f] = v; upPlan(); }
+function addMedidaRow() { medidas.push({id:++medidaCtr, a:'', b:''}); renderCrudosForm(); upPlan(); }
+function removeMedida(id) { medidas = medidas.filter(function(m){ return m.id !== id; }); renderCrudosForm(); upPlan(); }
+function syncMedida(id, f, v) { var m = medidas.find(function(m){ return m.id === id; }); if (m) m[f] = v; upPlan(); }
+
+function renderCrudosForm() {
+  var cl = $('crudos-list'), ml = $('medidas-list');
+  if (cl) cl.innerHTML = crudos.map(function(c) {
+    return '<div class="crudo-row">' +
+      '<input type="text" value="' + esc(c.food) + '" placeholder="Alimento" oninput="syncCrudo(' + c.id + ',\'food\',this.value)">' +
+      '<input type="text" value="' + esc(c.crudo) + '" placeholder="Crudo" oninput="syncCrudo(' + c.id + ',\'crudo\',this.value)">' +
+      '<input type="text" value="' + esc(c.cocido) + '" placeholder="Cocido" oninput="syncCrudo(' + c.id + ',\'cocido\',this.value)">' +
+      '<button class="del-btn" onclick="removeCrudo(' + c.id + ')">&#x2715;</button></div>';
+  }).join('');
+  if (ml) ml.innerHTML = medidas.map(function(m) {
+    return '<div class="medida-row">' +
+      '<input type="text" value="' + esc(m.a) + '" oninput="syncMedida(' + m.id + ',\'a\',this.value)">' +
+      '<input type="text" value="' + esc(m.b) + '" oninput="syncMedida(' + m.id + ',\'b\',this.value)">' +
+      '<button class="del-btn" onclick="removeMedida(' + m.id + ')">&#x2715;</button></div>';
+  }).join('');
+}
+
+/* IDEAS DE COMIDAS */
+var ideas = [];
+var ideaCtr = 0;
+
+function addIdeaSection() {
+  ideas.push({id:++ideaCtr, cat:'Nueva categoría', items:''});
+  renderIdeasForm(); upPlan();
+}
+function removeIdea(id) { ideas = ideas.filter(function(x){ return x.id !== id; }); renderIdeasForm(); upPlan(); }
+function syncIdea(id, f, v) { var x = ideas.find(function(x){ return x.id === id; }); if (x) x[f] = v; upPlan(); }
+
+function renderIdeasForm() {
+  var el = $('ideas-list');
+  if (!el) return;
+  if (!ideas.length) { el.innerHTML = '<p style="font-size:.74rem;color:var(--text-muted);text-align:center;padding:.4rem 0">Sin categorías aún</p>'; return; }
+  el.innerHTML = ideas.map(function(x) {
+    return '<div class="idea-card">' +
+      '<div class="idea-head">' +
+      '<input class="idea-cat-inp" type="text" value="' + esc(x.cat) + '" oninput="syncIdea(' + x.id + ',\'cat\',this.value)">' +
+      '<button class="del-btn" onclick="removeIdea(' + x.id + ')">&#x2715;</button>' +
+      '</div>' +
+      '<div style="padding:.5rem .7rem"><div class="fg" style="margin:0"><label>Ideas (una por línea)</label>' +
+      '<textarea rows="3" oninput="syncIdea(' + x.id + ',\'items\',this.value)">' + esc(x.items) + '</textarea></div></div></div>';
+  }).join('');
+}
+
+/* SAVE / LOAD */
+function savePlanSnapshot() {
+  var nombre = val('plan-nombre');
+  var name = prompt('Nombre del guardado:', nombre || 'Plan sin nombre');
+  if (!name) return;
+  var snap = collectPlanData();
+  snap._name = name; snap._ts = new Date().toISOString();
+  var arr = JSON.parse(localStorage.getItem('ag_plan_saves') || '[]');
+  arr.unshift(snap);
+  if (arr.length > 30) arr = arr.slice(0, 30);
+  localStorage.setItem('ag_plan_saves', JSON.stringify(arr));
+  updatePlanSavesUI();
+  alert('Guardado: ' + name);
+}
+
+function updatePlanSavesUI() {
+  var sel = $('plan-saves-sel');
+  if (!sel) return;
+  var arr = JSON.parse(localStorage.getItem('ag_plan_saves') || '[]');
+  sel.innerHTML = '<option value="">— Guardados (' + arr.length + ') —</option>' +
+    arr.map(function(s, i){ return '<option value="' + i + '">' + esc(s._name||'Sin nombre') + '</option>'; }).join('');
+}
+
+function loadPlanSnapshot() {
+  var sel = $('plan-saves-sel');
+  if (!sel || sel.value === '') { alert('Seleccioná un guardado primero.'); return; }
+  var arr = JSON.parse(localStorage.getItem('ag_plan_saves') || '[]');
+  var snap = arr[parseInt(sel.value)];
+  if (!snap) return;
+  applyPlanData(snap);
+  upPlan();
+}
+
+function deletePlanSnapshot() {
+  var sel = $('plan-saves-sel');
+  if (!sel || sel.value === '') { alert('Seleccioná un guardado primero.'); return; }
+  if (!confirm('¿Borrar este guardado?')) return;
+  var arr = JSON.parse(localStorage.getItem('ag_plan_saves') || '[]');
+  arr.splice(parseInt(sel.value), 1);
+  localStorage.setItem('ag_plan_saves', JSON.stringify(arr));
+  updatePlanSavesUI();
+}
+
+function collectPlanData() {
+  return {
+    nombre:val('plan-nombre'), fecha:val('plan-fecha'),
+    objetivo:val('plan-objetivo'), duracion:val('plan-duracion'),
+    kcal:val('plan-kcal'),
+    protPct:val('plan-prot-pct'), protG:val('plan-prot-g'),
+    grasPct:val('plan-grasas-pct'), grasG:val('plan-grasas-g'),
+    carbPct:val('plan-carbs-pct'), carbG:val('plan-carbs-g'),
+    macrosOn:!!($('plan-macros-on')&&$('plan-macros-on').checked),
+    porcOn:!!($('plan-porc-on')&&$('plan-porc-on').checked),
+    crudoOn:!!($('plan-crudo-on')&&$('plan-crudo-on').checked),
+    ideasOn:!!($('plan-ideas-on')&&$('plan-ideas-on').checked),
+    porcSub:val('plan-porc-sub'), crudoNota:val('plan-crudo-nota'),
+    evitar:val('plan-evitar'), recs:val('plan-recs'), prox:val('plan-prox'),
+    meals:JSON.parse(JSON.stringify(meals)),
+    macros4:JSON.parse(JSON.stringify(macros4)),
+    porcs:JSON.parse(JSON.stringify(porcs)),
+    crudos:JSON.parse(JSON.stringify(crudos)),
+    medidas:JSON.parse(JSON.stringify(medidas)),
+    ideas:JSON.parse(JSON.stringify(ideas))
+  };
+}
+
+function applyPlanData(d) {
+  function setV(id,v){var e=$(id);if(e)e.value=v||'';}
+  function setCb(id,v){var e=$(id);if(e)e.checked=!!v;}
+  setV('plan-nombre',d.nombre);setV('plan-fecha',d.fecha);
+  setV('plan-objetivo',d.objetivo);setV('plan-duracion',d.duracion);
+  setV('plan-kcal',d.kcal);
+  setV('plan-prot-pct',d.protPct);setV('plan-prot-g',d.protG);
+  setV('plan-grasas-pct',d.grasPct);setV('plan-grasas-g',d.grasG);
+  setV('plan-carbs-pct',d.carbPct);setV('plan-carbs-g',d.carbG);
+  setCb('plan-macros-on',d.macrosOn);setCb('plan-porc-on',d.porcOn);
+  setCb('plan-crudo-on',d.crudoOn);setCb('plan-ideas-on',d.ideasOn);
+  setV('plan-porc-sub',d.porcSub);setV('plan-crudo-nota',d.crudoNota);
+  setV('plan-evitar',d.evitar);setV('plan-recs',d.recs);setV('plan-prox',d.prox);
+  if(d.meals){meals=d.meals;renderMealsForm();}
+  if(d.macros4){macros4=d.macros4;renderMacros4Form();}
+  if(d.porcs){porcs=d.porcs;renderPorcsForm();}
+  if(d.crudos)crudos=d.crudos;if(d.medidas)medidas=d.medidas;
+  if(d.crudos||d.medidas)renderCrudosForm();
+  if(d.ideas){ideas=d.ideas;renderIdeasForm();}
+  var fsecMap={'plan-macros-on':'fsec-macros4','plan-porc-on':'fsec-porcs','plan-crudo-on':'fsec-crudos','plan-ideas-on':'fsec-ideas'};
+  Object.keys(fsecMap).forEach(function(k){var cb=$(k),sec=$(fsecMap[k]);if(sec)sec.style.display=(cb&&cb.checked)?'':'none';});
+}
+
+/* BUILD PLAN PDF */
 function buildPlanDoc() {
   var nombre = val('plan-nombre'), fecha = val('plan-fecha');
   var objetivo = val('plan-objetivo'), duracion = val('plan-duracion');
@@ -681,57 +1070,147 @@ function buildPlanDoc() {
   var gG = val('plan-grasas-g'), gP = val('plan-grasas-pct');
   var cG = val('plan-carbs-g'), cP = val('plan-carbs-pct');
   var evitar = val('plan-evitar'), recs = val('plan-recs'), prox = val('plan-prox');
-  var tot = (parseFloat(pP)||0) + (parseFloat(gP)||0) + (parseFloat(cP)||0);
-  var pp = tot ? (parseFloat(pP)||0) / tot * 100 : 33.3;
-  var gp = tot ? (parseFloat(gP)||0) / tot * 100 : 33.3;
-  var cp = tot ? (parseFloat(cP)||0) / tot * 100 : 33.4;
-  var objBox = objetivo ? '<div class="obj-box"><div class="obj-label">Objetivo</div><div class="obj-text">' + esc(objetivo) + (duracion ? ' &middot; ' + esc(duracion) : '') + '</div></div>' : '';
-  var macrosTbl = '<table class="macros-tbl"><thead><tr><th>Nutriente</th><th>Gramos</th><th>% del total</th></tr></thead><tbody>' +
-    '<tr><td>Proteínas</td><td>' + (pG||'&mdash;') + ' g</td><td>' + (pP ? pP + '%' : '&mdash;') + '</td></tr>' +
-    '<tr><td>Grasas</td><td>' + (gG||'&mdash;') + ' g</td><td>' + (gP ? gP + '%' : '&mdash;') + '</td></tr>' +
-    '<tr><td>Carbohidratos</td><td>' + (cG||'&mdash;') + ' g</td><td>' + (cP ? cP + '%' : '&mdash;') + '</td></tr>' +
-    '<tr class="ttl"><td><strong>Total</strong></td><td colspan="2"><strong>' + (kcal||'&mdash;') + ' kcal</strong></td></tr>' +
+  var macrosOn = $('plan-macros-on') && $('plan-macros-on').checked;
+  var porcOn = $('plan-porc-on') && $('plan-porc-on').checked;
+  var crudoOn = $('plan-crudo-on') && $('plan-crudo-on').checked;
+  var ideasOn = $('plan-ideas-on') && $('plan-ideas-on').checked;
+
+  var tot = (parseFloat(pP)||0)+(parseFloat(gP)||0)+(parseFloat(cP)||0);
+  var pp = tot?(parseFloat(pP)||0)/tot*100:33.3;
+  var gp = tot?(parseFloat(gP)||0)/tot*100:33.3;
+  var cp = tot?(parseFloat(cP)||0)/tot*100:33.4;
+
+  var objBox = objetivo?'<div class="obj-box"><div class="obj-label">Objetivo</div><div class="obj-text">'+esc(objetivo)+(duracion?' &middot; '+esc(duracion):'')+
+    '</div></div>':'';
+
+  var macrosTbl = '<table class="macros-tbl"><thead><tr><th>Nutriente</th><th>Gramos</th><th>% del total</th></tr></thead><tbody>'+
+    '<tr><td>Proteínas</td><td>'+(pG||'—')+' g</td><td>'+(pP?pP+'%':'—')+'</td></tr>'+
+    '<tr><td>Grasas</td><td>'+(gG||'—')+' g</td><td>'+(gP?gP+'%':'—')+'</td></tr>'+
+    '<tr><td>Carbohidratos</td><td>'+(cG||'—')+' g</td><td>'+(cP?cP+'%':'—')+'</td></tr>'+
+    '<tr class="ttl"><td><strong>Total</strong></td><td colspan="2"><strong>'+(kcal||'—')+' kcal</strong></td></tr>'+
     '</tbody></table>';
-  var bars = '<div class="macro-bar">' +
-    '<div class="macro-seg p" style="width:' + pp.toFixed(1) + '%"></div>' +
-    '<div class="macro-seg g" style="width:' + gp.toFixed(1) + '%"></div>' +
-    '<div class="macro-seg c" style="width:' + cp.toFixed(1) + '%"></div>' +
-    '</div>' +
-    '<div class="macro-legend">' +
-    '<span class="ml-item"><span class="ml-dot" style="background:#A8706A"></span>Proteínas' + (pP ? ' ' + pP + '%' : '') + '</span>' +
-    '<span class="ml-item"><span class="ml-dot" style="background:#C9958E"></span>Grasas' + (gP ? ' ' + gP + '%' : '') + '</span>' +
-    '<span class="ml-item"><span class="ml-dot" style="background:#E8D5D0"></span>Carbohidratos' + (cP ? ' ' + cP + '%' : '') + '</span>' +
+
+  var bars = '<div class="macro-bar">'+
+    '<div class="macro-seg p" style="width:'+pp.toFixed(1)+'%"></div>'+
+    '<div class="macro-seg g" style="width:'+gp.toFixed(1)+'%"></div>'+
+    '<div class="macro-seg c" style="width:'+cp.toFixed(1)+'%"></div>'+
+    '</div><div class="macro-legend">'+
+    '<span class="ml-item"><span class="ml-dot" style="background:#A8706A"></span>Proteínas'+(pP?' '+pP+'%':'')+' </span>'+
+    '<span class="ml-item"><span class="ml-dot" style="background:#C9958E"></span>Grasas'+(gP?' '+gP+'%':'')+' </span>'+
+    '<span class="ml-item"><span class="ml-dot" style="background:#E8D5D0"></span>Carbohidratos'+(cP?' '+cP+'%':'')+' </span>'+
     '</div>';
+
+  /* Macronutrientes pages */
+  var macrosPgs = '';
+  if (macrosOn) {
+    macrosPgs = macros4.map(function(m) {
+      return '<div class="macro-pg">'+
+        '<div class="macro-pg-overlay"></div>'+
+        '<div class="macro-pg-body">'+
+        '<div class="macro-eyebrow">Macronutrientes &middot; '+esc(nombre)+'</div>'+
+        '<div class="macro-pg-title">'+esc(m.label)+'</div>'+
+        '<div class="macro-pg-desc">'+esc(m.desc)+'</div>'+
+        '<div class="macro-subcols">'+
+        '<div class="macro-subcol"><div class="macro-sub-title">'+esc(m.s1t)+'</div><div class="macro-sub-items">'+esc(m.s1s)+'</div>'+(m.s1i?'<div class="macro-sub-note">'+esc(m.s1i)+'</div>':'')+' </div>'+
+        '<div class="macro-subcol"><div class="macro-sub-title">'+esc(m.s2t)+'</div><div class="macro-sub-items">'+esc(m.s2s)+'</div>'+(m.s2i?'<div class="macro-sub-note">'+esc(m.s2i)+'</div>':'')+' </div>'+
+        '</div></div></div>';
+    }).join('');
+  }
+
+  /* Meals HTML */
   var mealsHtml = meals.map(function(m) {
-    return '<div class="meal-blk">' +
-      '<div class="meal-hdr">' +
-      '<div><div class="meal-hdr-name">' + esc(m.nombre) + '</div>' + (m.hora ? '<div class="meal-hdr-hora">' + esc(m.hora) + '</div>' : '') + '</div>' +
-      (m.kcal ? '<div class="meal-hdr-kcal">~ ' + esc(m.kcal) + ' kcal</div>' : '') +
-      '</div>' +
-      '<div class="meal-bd"><ul class="meal-alims">' + (nl2li(m.alimentos, 'meal-alim') || '<li class="meal-alim">&mdash;</li>') + '</ul>' +
-      (m.nota ? '<div class="meal-nota">' + esc(m.nota) + '</div>' : '') +
+    var hasI = m.intercambio && m.intercambio.trim();
+    var hasE = m.ejemplo && m.ejemplo.trim();
+    var hasF = m.foods && m.foods.trim();
+    return '<div class="meal-blk">'+
+      '<div class="meal-hdr">'+
+      '<div><div class="meal-hdr-name">'+esc(m.nombre)+'</div>'+(m.hora?'<div class="meal-hdr-hora">'+esc(m.hora)+'</div>':'')+' </div>'+
+      '</div>'+
+      '<div class="meal-bd">'+
+      ((hasI||hasE)?'<div class="meal-interc-cols">'+
+        '<div class="meal-interc-col"><div class="col-title">Grupo de intercambio</div><div class="meal-interc-text">'+esc(m.intercambio||'')+'</div></div>'+
+        '<div class="meal-interc-col"><div class="col-title">Ejemplo de alimento</div><div class="meal-interc-text">'+esc(m.ejemplo||'')+'</div></div>'+
+        '</div>':'')+
+      (hasF?'<ul class="meal-alims">'+nl2li(m.foods,'meal-alim')+'</ul>':'')+
+      (m.nota?'<div class="meal-nota">'+esc(m.nota)+'</div>':'')+
       '</div></div>';
   }).join('');
-  var notasPage = (evitar || recs || prox) ? '<div class="doc-page" style="background:#FAF8F4">' +
-    pgHdr('Notas finales', nombre) +
-    (evitar ? '<div class="avoid-box"><div class="avoid-title">Alimentos a evitar</div><ul class="avoid-list">' + nl2li(evitar, 'avoid-item') + '</ul></div>' : '') +
-    (recs ? '<div class="avoid-box"><div class="avoid-title">Recomendaciones generales</div><div class="recs-text">' + esc(recs) + '</div></div>' : '') +
-    (prox ? '<div class="next-consult"><div><div class="nc-label">Próxima consulta</div><div class="nc-date">' + esc(prox) + '</div></div></div>' : '') +
-    '<div class="doc-sig"><div class="sig-name">Lic. Agustina Villegas</div><div class="sig-role">Nutricionista</div></div>' +
-    '</div>' : '';
-  return '<div class="ag-doc" id="doc-plan">' +
-    buildCover('Plan de\nalimentación', nombre, fecha, 'gen_cv_plan', objetivo || '') +
-    '<div class="doc-page" style="background:#FAF8F4">' +
-    pgHdr('Plan de alimentación', nombre) +
-    objBox +
-    '<div class="sec-label' + (objBox ? '' : ' first') + '">Distribución nutricional</div>' +
-    macrosTbl + bars +
-    '</div>' +
-    '<div class="doc-page">' +
-    pgHdr('Plan de alimentación', nombre) +
-    '<div class="sec-label first">Comidas del día</div>' +
-    (mealsHtml || '<p style="font-size:11px;color:#8C7E78">Agrega comidas desde el formulario.</p>') +
-    '</div>' + notasPage + '</div>';
+
+  /* Porciones page */
+  var porcPg = '';
+  if (porcOn && porcs.length) {
+    var porcSub = val('plan-porc-sub');
+    porcPg = '<div class="doc-page" style="background:#FAF8F4">'+
+      pgHdr('Porciones e intercambios', nombre)+
+      '<div class="sec-label first">Porciones e intercambios</div>'+
+      (porcSub?'<div class="intro-box">'+esc(porcSub)+'</div>':'')+
+      porcs.map(function(p){
+        return '<div class="porc-pg-block">'+
+          '<div class="porc-pg-title">'+esc(p.nom)+'</div>'+
+          '<div class="porc-pg-items">'+esc(p.items)+'</div>'+
+          (p.note?'<div class="porc-pg-note">'+esc(p.note)+'</div>':'')+
+          '</div>';
+      }).join('')+'</div>';
+  }
+
+  /* Crudos/cocidos page */
+  var crudoPg = '';
+  if (crudoOn && (crudos.length || medidas.length)) {
+    var crudoNota = val('plan-crudo-nota');
+    crudoPg = '<div class="doc-page">'+
+      pgHdr('Alimentos crudos y cocidos', nombre)+
+      '<div class="sec-label first">Alimentos crudos y cocidos</div>'+
+      (crudoNota?'<div class="intro-box">'+esc(crudoNota)+'</div>':'')+
+      (crudos.length?'<table class="crudos-tbl"><thead><tr><th>Alimento</th><th>Crudo</th><th>Cocido</th></tr></thead><tbody>'+
+        crudos.map(function(c){return '<tr><td>'+esc(c.food)+'</td><td>'+esc(c.crudo)+'</td><td>'+esc(c.cocido)+'</td></tr>';}).join('')+
+        '</tbody></table>':'')+
+      (medidas.length?'<div class="sec-label">Equivalencias de medidas</div>'+
+        '<table class="medidas-tbl"><thead><tr><th>Equivalencia A</th><th>Equivalencia B</th></tr></thead><tbody>'+
+        medidas.map(function(m){return '<tr><td>'+esc(m.a)+'</td><td>'+esc(m.b)+'</td></tr>';}).join('')+
+        '</tbody></table>':'')+
+      '</div>';
+  }
+
+  /* Ideas de comidas page */
+  var ideasPg = '';
+  if (ideasOn && ideas.length) {
+    ideasPg = '<div class="doc-page" style="background:#FAF8F4">'+
+      pgHdr('Ideas de comidas', nombre)+
+      '<div class="sec-label first">Ideas de comidas</div>'+
+      ideas.map(function(x){
+        return '<div class="ideas-block">'+
+          '<div class="ideas-cat-title">'+esc(x.cat)+'</div>'+
+          '<ul class="ideas-list">'+nl2li(x.items,'ideas-item')+'</ul>'+
+          '</div>';
+      }).join('')+'</div>';
+  }
+
+  /* Notas page */
+  var notasPage = (evitar||recs||prox)?'<div class="doc-page" style="background:#FAF8F4">'+
+    pgHdr('Notas finales', nombre)+
+    (evitar?'<div class="avoid-box"><div class="avoid-title">Alimentos a evitar</div><ul class="avoid-list">'+nl2li(evitar,'avoid-item')+'</ul></div>':'')+
+    (recs?'<div class="avoid-box"><div class="avoid-title">Recomendaciones generales</div><div class="recs-text">'+esc(recs)+'</div></div>':'')+
+    (prox?'<div class="next-consult"><div><div class="nc-label">Próxima consulta</div><div class="nc-date">'+esc(prox)+'</div></div></div>':'')+
+    '<div class="doc-sig"><div class="sig-name">Lic. Agustina Villegas</div><div class="sig-role">Nutricionista</div></div>'+
+    '</div>':'';
+
+  /* Page order: Cover → Macros summary → Macronutrientes pages → Distribución → Porciones → Crudos → Ideas → Notas */
+  return '<div class="ag-doc" id="doc-plan">'+
+    buildCover('Plan de\nalimentación', nombre, fecha, 'gen_cv_plan', objetivo||'')+
+    '<div class="doc-page" style="background:#FAF8F4">'+
+    pgHdr('Plan de alimentación', nombre)+
+    objBox+
+    '<div class="sec-label'+(objBox?'':' first')+'">Distribución nutricional</div>'+
+    macrosTbl+bars+
+    '</div>'+
+    macrosPgs+
+    '<div class="doc-page">'+
+    pgHdr('Plan de alimentación', nombre)+
+    '<div class="sec-label first">Distribución diaria</div>'+
+    (mealsHtml||'<p style="font-size:11px;color:#8C7E78">Agrega comidas desde el formulario.</p>')+
+    '</div>'+
+    porcPg+crudoPg+ideasPg+notasPage+
+    '</div>';
 }
 
 var upPlan = deb(function() {
@@ -741,7 +1220,7 @@ var upPlan = deb(function() {
   var n = meals.length;
   $('plan-info').textContent = n + ' comida' + (n !== 1 ? 's' : '');
   scaleDoc('pw-plan', 'preview-plan');
-}, 150);
+}, 200);
 
 /* ============================================================
    PDF DOWNLOAD
@@ -788,6 +1267,11 @@ document.addEventListener('DOMContentLoaded', function() {
   renderRecForm();
   initCats();
   initMeals();
+  renderMacros4Form();
+  initPorcs();
+  initCrudos();
+  renderIdeasForm();
+  updatePlanSavesUI();
   upRec();
   upSup();
   upPlan();
