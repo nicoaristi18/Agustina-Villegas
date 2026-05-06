@@ -244,6 +244,7 @@ a{text-decoration:none;color:inherit;}
       <p>Completá tus datos y te contactamos por WhatsApp para coordinar el envío y el pago.</p>
       <div class="h-modal-order" id="orderSummary"></div>
       <div class="h-fg"><label>Nombre completo</label><input type="text" id="m-name" placeholder="Tu nombre y apellido"></div>
+      <div class="h-fg"><label>Email</label><input type="email" id="m-email" placeholder="tu@email.com"></div>
       <div class="h-fg"><label>WhatsApp</label><input type="tel" id="m-phone" placeholder="+598 09X XXX XXX"></div>
       <div class="h-fg"><label>Localidad / Zona</label><input type="text" id="m-zone" placeholder="Ej: Tarariras, Colonia..."></div>
       <div class="h-modal-btns">
@@ -318,10 +319,12 @@ function openCheckout(){
 function closeModal(){document.getElementById("modalBg").classList.remove("open");}
 async function submitOrder(){
   const name=document.getElementById("m-name").value.trim();
+  const email=document.getElementById("m-email").value.trim();
   const phone=document.getElementById("m-phone").value.trim();
-  if(!name||!phone){alert("Completá nombre y WhatsApp.");return;}
+  if(!name||!email||!phone){alert("Completá nombre, email y WhatsApp.");return;}
   const total=cart.reduce((a,b)=>a+b.price,0);
-  const orderData={name,phone,zone:document.getElementById("m-zone").value,items:cart.map(i=>i.label),total,date:new Date().toISOString()};
+  const orderData={id:Date.now()+'_'+Math.random().toString(36).slice(2,8),name,email,phone,zone:document.getElementById("m-zone").value,items:cart.map(i=>i.label),total,date:new Date().toISOString(),status:'pending'};
+  if(!window.storage){const KEY_MAP={'agustina_blocked_slots':'ag:blocked_slots','agustina_bookings_v2':'ag:bookings','agustina_users':'ag:users','agustina_content':'ag:content','habito_orders':'ag:habito_orders'};const LEGACY=new Set(Object.keys(KEY_MAP));function kvKey(k){return KEY_MAP[k]||k;}window.storage={async get(k){const kk=kvKey(k);try{const r=await fetch('/api/kv?op=get&key='+encodeURIComponent(kk),{cache:'no-store'});if(r.ok){const d=await r.json();if(d.value!==null&&d.value!==undefined){const sv=typeof d.value==='string'?d.value:JSON.stringify(d.value);localStorage.setItem('__kv_'+k,sv);return{value:sv};}}}catch(e){}if(LEGACY.has(k)){try{const r=await fetch('/api/data?key='+encodeURIComponent(k),{cache:'no-store'});if(r.ok){const d=await r.json();if(d.value!==null&&d.value!==undefined){localStorage.setItem('__kv_'+k,d.value);return{value:d.value};}}}catch(e){}}const v=localStorage.getItem('__kv_'+k);return v!==null?{value:v}:null;},async set(k,v){const kk=kvKey(k);localStorage.setItem('__kv_'+k,v);let ok=false;try{const r=await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'set',key:kk,value:v})});ok=r.ok;}catch(e){}if(!ok&&LEGACY.has(k)){try{await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k,value:v})});}catch(e){}}},async lpush(k,v){const kk=kvKey(k);try{await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'lpush',key:kk,value:v})});}catch(e){}}};}
   try{const orders=(await(async()=>{try{const r=await window.storage.get("habito_orders");return r?JSON.parse(r.value):[];}catch{return[];}}))();orders.push(orderData);await window.storage.set("habito_orders",JSON.stringify(orders));}catch{}
   document.getElementById("modalOrder").style.display="none";
   document.getElementById("modalSuccess").style.display="block";

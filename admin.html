@@ -147,6 +147,105 @@ tbody tr:hover td{background:var(--cream);}
   opacity:0;transform:translateY(50px);transition:all .3s;pointer-events:none;
 }
 .toast.show{opacity:1;transform:translateY(0);}
+
+/* ── PORTFOLIO DE RECETAS ── */
+.port-toolbar{display:flex;gap:.7rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap;}
+.port-toolbar input{flex:1;min-width:160px;padding:.52rem .85rem;background:var(--white);border:1px solid var(--border);border-radius:9px;font-size:.82rem;outline:none;}
+.port-toolbar input:focus{border-color:var(--rose);}
+.port-add-btn{padding:.5rem 1rem;background:var(--rose-dark);color:#fff;border:none;border-radius:8px;font-size:.78rem;cursor:pointer;white-space:nowrap;}
+.port-add-btn:hover{background:var(--text);}
+.port-form{background:var(--white);border-radius:13px;border:1px solid var(--border);padding:1.2rem;margin-bottom:1rem;display:none;}
+.port-form.on{display:block;}
+.port-form h3{font-size:.85rem;font-weight:500;margin-bottom:.9rem;}
+.port-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;}
+.port-form-full{grid-column:span 2;}
+.port-form-actions{display:flex;gap:.5rem;margin-top:.7rem;}
+.port-recipe-row{display:flex;align-items:center;gap:.8rem;padding:.65rem .9rem;border-bottom:1px solid var(--border);font-size:.82rem;}
+.port-recipe-row:last-child{border-bottom:none;}
+.port-recipe-name{flex:1;font-weight:500;}
+.port-recipe-tags{display:flex;gap:4px;}
+.port-tag{font-size:.6rem;padding:1px 7px;border-radius:20px;}
+.port-tag-sec{background:var(--blush);color:var(--rose-deep);}
+.port-tag-tacc{background:var(--sage-pale);color:var(--sage);}
+.port-recipe-actions{display:flex;gap:.3rem;}
+
+/* ── MI AGENDA (bloqueo de horarios) ── */
+.agenda-picker{display:flex;gap:.8rem;align-items:center;margin-bottom:1.2rem;flex-wrap:wrap;}
+.agenda-picker input[type="date"]{padding:.55rem .9rem;background:var(--cream);border:1px solid var(--border);border-radius:9px;font-size:.83rem;outline:none;font-family:'DM Sans',sans-serif;color:var(--text);}
+.agenda-picker input[type="date"]:focus{border-color:var(--rose);}
+.agenda-slots{display:grid;grid-template-columns:repeat(5,1fr);gap:.42rem;}
+@media(max-width:700px){.agenda-slots{grid-template-columns:repeat(4,1fr);}}
+.as-slot{padding:.58rem .3rem;text-align:center;border:1.5px solid var(--border);border-radius:9px;font-size:.77rem;cursor:pointer;transition:all .2s;background:var(--white);user-select:none;line-height:1.3;}
+.as-slot:hover:not(.booked){border-color:var(--rose);background:var(--blush);}
+.as-slot.blocked{background:var(--blush);border-color:var(--rose-dark);color:var(--rose-deep);font-weight:600;}
+.as-slot.booked{background:var(--sage-pale);border-color:var(--sage-light);color:var(--sage);cursor:default;font-size:.7rem;}
+.as-legend{display:flex;gap:1.2rem;font-size:.72rem;color:var(--text-muted);margin-bottom:.9rem;flex-wrap:wrap;}
+.as-legend span{display:flex;align-items:center;gap:.35rem;}
+.as-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+
+/* ── ENCUESTA INICIAL ── */
+.surv-intro{background:var(--white);border-radius:13px;border:1px solid var(--border);padding:1.1rem 1.2rem;margin-bottom:1rem;}
+.surv-intro h3{font-size:.85rem;font-weight:500;margin-bottom:.3rem;}
+.surv-intro p{font-size:.76rem;color:var(--text-muted);line-height:1.5;}
+.surv-manual-row{display:flex;gap:.7rem;align-items:flex-end;margin-top:.9rem;flex-wrap:wrap;}
+.surv-manual-row .fi{flex:1;min-width:160px;}
+.surv-row{display:flex;justify-content:space-between;align-items:center;padding:.62rem .9rem;border-bottom:1px solid var(--border);font-size:.82rem;}
+.surv-row:last-child{border-bottom:none;}
+.surv-row-info .sn{font-weight:500;}
+.surv-row-info .se{font-size:.71rem;color:var(--text-muted);}
+.btn-surv{font-size:.7rem;padding:.3rem .85rem;border-radius:50px;background:var(--sage-pale);color:var(--sage);border:1px solid var(--sage-light);cursor:pointer;white-space:nowrap;transition:all .2s;}
+.btn-surv:hover{background:var(--sage);color:#fff;}
+
+/* ── CLIENTES ── */
+.cl-search-row{display:flex;gap:.7rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap;}
+.cl-search-row input{flex:1;min-width:180px;padding:.52rem .85rem;background:var(--white);border:1px solid var(--border);border-radius:9px;font-size:.82rem;outline:none;}
+.cl-search-row input:focus{border-color:var(--rose);}
+.cl-card{background:var(--white);border-radius:13px;border:1px solid var(--border);margin-bottom:.85rem;overflow:hidden;}
+.cl-card-hd{
+  display:flex;align-items:center;gap:.9rem;
+  padding:.82rem 1.1rem;cursor:pointer;
+  transition:background .15s;
+}
+.cl-card-hd:hover{background:var(--cream);}
+.cl-avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--blush);display:flex;align-items:center;justify-content:center;
+  font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--rose-deep);flex-shrink:0;
+}
+.cl-name{font-weight:500;font-size:.88rem;}
+.cl-meta{font-size:.7rem;color:var(--text-muted);margin-top:.08rem;}
+.cl-badge-count{margin-left:auto;font-size:.65rem;padding:.15rem .6rem;border-radius:50px;background:var(--blush);color:var(--rose-deep);font-weight:500;white-space:nowrap;}
+.cl-chevron{color:var(--text-muted);font-size:.75rem;transition:transform .2s;flex-shrink:0;}
+.cl-card-hd.open .cl-chevron{transform:rotate(180deg);}
+.cl-plans-list{border-top:1px solid var(--border);display:none;}
+.cl-plans-list.on{display:block;}
+.cl-plan-row{
+  display:flex;align-items:center;gap:.8rem;
+  padding:.62rem 1.1rem;border-bottom:1px solid var(--border);
+  font-size:.8rem;
+}
+.cl-plan-row:last-child{border-bottom:none;}
+.cl-plan-date{color:var(--text-muted);font-size:.72rem;min-width:90px;}
+.cl-plan-name{flex:1;font-weight:500;}
+.cl-plan-actions{display:flex;gap:.4rem;}
+.btn-open-plan{
+  font-size:.65rem;padding:.2rem .7rem;border-radius:50px;
+  border:1px solid var(--rose-dark);color:var(--rose-dark);
+  background:transparent;cursor:pointer;transition:all .18s;white-space:nowrap;
+}
+.btn-open-plan:hover{background:var(--rose-dark);color:#fff;}
+.btn-del-plan{
+  font-size:.65rem;padding:.2rem .7rem;border-radius:50px;
+  border:1px solid rgba(163,45,45,.3);color:var(--red);
+  background:transparent;cursor:pointer;transition:all .18s;white-space:nowrap;
+}
+.btn-del-plan:hover{background:var(--red);color:#fff;}
+.cl-empty{text-align:center;padding:2.5rem;color:var(--text-muted);font-style:italic;font-size:.82rem;}
+.cl-gen-btn{
+  padding:.5rem 1rem;background:var(--rose-dark);color:#fff;
+  border:none;border-radius:8px;font-size:.78rem;cursor:pointer;white-space:nowrap;
+}
+.cl-gen-btn:hover{background:var(--text);}
 </style>
 </head>
 <body>
@@ -175,8 +274,20 @@ tbody tr:hover td{background:var(--cream);}
     <div class="sb-div"></div>
     <div class="sb-sec">Gestión</div>
     <button class="sb-btn" onclick="go('creditos',this)"><span class="ic">🎟</span>Créditos</button>
+    <button class="sb-btn" onclick="go('precios',this)"><span class="ic">💲</span>Precios</button>
+    <button class="sb-btn" onclick="go('cupones',this)"><span class="ic">🏷</span>Cupones</button>
     <button class="sb-btn" onclick="go('contenido',this)"><span class="ic">✏️</span>Contenido web</button>
     <button class="sb-btn" onclick="go('pedidos',this)"><span class="ic">📦</span>Pedidos Hábito</button>
+    <button class="sb-btn" onclick="go('agenda',this)"><span class="ic">🗓</span>Mi agenda</button>
+    <button class="sb-btn" onclick="go('portafolio',this)"><span class="ic">📚</span>Portfolio recetas</button>
+    <button class="sb-btn" onclick="go('encuesta',this)"><span class="ic">📋</span>Encuesta inicial</button>
+    <button class="sb-btn" onclick="go('newsletter',this)"><span class="ic">📨</span>Newsletter</button>
+    <div class="sb-div"></div>
+    <div class="sb-sec">Nutrición</div>
+    <button class="sb-btn" onclick="go('clientes',this)"><span class="ic">👤</span>Clientes</button>
+    <button class="sb-btn" onclick="go('historia',this)"><span class="ic">📋</span>Historia clínica</button>
+    <button class="sb-btn" onclick="go('resenas',this)"><span class="ic">⭐</span>Reseñas</button>
+    <button class="sb-btn" onclick="localStorage.setItem('gen_auth','1');window.open('generador.html','_blank')"><span class="ic">📄</span>Generador PDF</button>
     <div class="sb-foot">
       <div class="sb-div"></div>
       <button class="sb-link" onclick="location.href='index.html'">← Ver web pública</button>
@@ -195,6 +306,17 @@ tbody tr:hover td{background:var(--cream);}
           <div class="stat"><div class="stat-n" id="s2">—</div><div class="stat-l">Total reservas</div></div>
           <div class="stat"><div class="stat-n" id="s3">—</div><div class="stat-l">Pacientes registrados</div></div>
           <div class="stat"><div class="stat-n" id="s4">—</div><div class="stat-l">Pedidos Hábito</div></div>
+          <div class="stat"><div class="stat-n" id="s5">—</div><div class="stat-l">Reservas este mes</div></div>
+          <div class="stat"><div class="stat-n" id="s6" style="font-size:1.4rem;">—</div><div class="stat-l">Ingresos est. mes (UYU)</div></div>
+          <div class="stat"><div class="stat-n" id="s7">—</div><div class="stat-l">Nuevos pacientes mes</div></div>
+          <div class="stat"><div class="stat-n" id="s8">—</div><div class="stat-l">PDFs generados</div></div>
+        </div>
+        <!-- Mini chart: reservas últimas 4 semanas -->
+        <div class="tcard" style="margin-bottom:1.1rem;">
+          <div class="tcard-hd"><span class="tcard-title">Reservas — últimas 4 semanas</span></div>
+          <div style="padding:1rem 1.2rem 1.2rem;display:flex;align-items:flex-end;gap:1rem;">
+            <div id="chart-w" style="flex:1;display:flex;align-items:flex-end;gap:6px;height:80px;"></div>
+          </div>
         </div>
         <div class="tcard">
           <div class="tcard-hd">
@@ -205,6 +327,11 @@ tbody tr:hover td{background:var(--cream);}
             <thead><tr><th>Paciente</th><th>Servicio</th><th>Fecha</th><th>Hora</th><th>Modalidad</th><th>Comentario</th></tr></thead>
             <tbody id="d-rows"></tbody>
           </table></div>
+        </div>
+        <!-- Botón migración (oculto hasta que sea necesario) -->
+        <div id="migrationBox" style="display:none;margin-top:1rem;">
+          <div class="banner banner-amber">⚙️ <strong>Migración pendiente:</strong> los datos están en Edge Config. Hacé clic para migrarlos al nuevo sistema (Vercel KV). Solo es necesario hacerlo una vez.</div>
+          <button class="btn-save" style="margin-top:.6rem;" onclick="runMigration()">Migrar datos a Vercel KV</button>
         </div>
       </div>
     </div>
@@ -329,10 +456,116 @@ tbody tr:hover td{background:var(--cream);}
             </div>
           </div>
           <div class="tw"><table>
-            <thead><tr><th>Fecha</th><th>Cliente</th><th>WhatsApp</th><th>Productos</th><th>Total</th><th>Zona</th><th>Estado</th><th>Acción</th></tr></thead>
+            <thead><tr><th>Fecha</th><th>Cliente</th><th>Email</th><th>WhatsApp</th><th>Productos</th><th>Total</th><th>Zona</th><th>Estado</th><th>Acción</th></tr></thead>
             <tbody id="ped-rows"></tbody>
           </table></div>
         </div>
+      </div>
+    </div>
+
+    <!-- PORTFOLIO DE RECETAS -->
+    <div id="p-portafolio" class="panel">
+      <div class="ph"><h1>Portfolio de recetas</h1><p>Cargá las recetas una sola vez y reutilas en cualquier recetario de cliente</p></div>
+      <div class="pb">
+        <div class="port-toolbar">
+          <input type="text" id="port-search" placeholder="Buscar receta..." oninput="renderPortfolio(this.value)">
+          <button class="port-add-btn" onclick="openPortfolioForm()">＋ Nueva receta</button>
+        </div>
+
+        <!-- ADD / EDIT FORM -->
+        <div class="port-form" id="port-form">
+          <h3 id="port-form-title">Nueva receta</h3>
+          <input type="hidden" id="port-edit-id">
+          <div class="port-form-grid">
+            <div class="fi port-form-full"><label>Nombre de la receta</label><input id="pf-nombre" type="text" placeholder="Ej: Pancake de avena"></div>
+            <div class="fi"><label>Sección</label>
+              <select id="pf-sec">
+                <option value="des">Desayuno / Merienda</option>
+                <option value="alm">Almuerzo / Cena</option>
+                <option value="ext">Extra</option>
+              </select>
+            </div>
+            <div class="fi"><label>Porciones</label><input id="pf-por" type="text" placeholder="Ej: 4"></div>
+            <div class="fi port-form-full"><label>Ingredientes (uno por línea)</label><textarea id="pf-ing" rows="5" style="height:100px;resize:vertical;" placeholder="1 huevo&#10;1 taza de avena&#10;1 cdta de vainilla"></textarea></div>
+            <div class="fi port-form-full"><label>Preparación (un paso por línea)</label><textarea id="pf-prep" rows="5" style="height:100px;resize:vertical;" placeholder="Mezclar todos los ingredientes.&#10;Cocinar en sartén a fuego medio."></textarea></div>
+            <div class="fi port-form-full"><label>Info nutricional (opcional)</label><input id="pf-kcal" type="text" placeholder="Ej: 205 kcal · Prot: 5 g · Grasas: 7 g · CH: 31 g"></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;margin:.5rem 0;cursor:pointer;">
+            <input type="checkbox" id="pf-tacc"> Apto sin TACC
+          </label>
+          <div class="port-form-actions">
+            <button class="btn-act" onclick="submitPortfolioForm()">Guardar receta</button>
+            <button class="btn-xs btn-del" onclick="closePortfolioForm()">Cancelar</button>
+          </div>
+        </div>
+
+        <div class="tcard">
+          <div class="tcard-hd">
+            <span class="tcard-title">Todas las recetas</span>
+            <span class="badge b-rose" id="port-cnt">0</span>
+          </div>
+          <div id="port-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MI AGENDA -->
+    <div id="p-agenda" class="panel">
+      <div class="ph"><h1>Mi agenda</h1><p>Bloqueá horarios para que nadie pueda agendar en ese momento</p></div>
+      <div class="pb">
+        <div class="banner banner-amber">💡 Hacé clic en un horario libre para bloquearlo (rojo). Volvé a hacer clic para desbloquearlo. Los turnos ya reservados aparecen en verde y no se pueden modificar desde aquí.</div>
+        <div class="tcard">
+          <div class="tcard-hd">
+            <span class="tcard-title">Seleccioná una fecha</span>
+            <div class="agenda-picker">
+              <input type="date" id="agendaDate" onchange="loadAgenda()">
+              <button class="btn-act" onclick="clearDayBlocks()" style="background:var(--rose-dark);">Desbloquear todo el día</button>
+            </div>
+          </div>
+          <div style="padding:1rem 1.1rem;">
+            <div class="as-legend">
+              <span><span class="as-dot" style="border:1.5px solid #ccc;background:#fff;"></span>Libre</span>
+              <span><span class="as-dot" style="background:var(--blush);border:1.5px solid var(--rose-dark);"></span>Bloqueado por vos</span>
+              <span><span class="as-dot" style="background:var(--sage-pale);border:1.5px solid var(--sage-light);"></span>Turno reservado</span>
+            </div>
+            <div class="agenda-slots" id="agendaSlots"><p style="color:var(--text-muted);font-size:.8rem;">Elegí una fecha para ver los horarios.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENCUESTA INICIAL -->
+    <div id="p-encuesta" class="panel">
+      <div class="ph"><h1>Encuesta inicial</h1><p>Enviá el formulario de bienvenida a nuevas pacientes</p></div>
+      <div class="pb">
+        <div class="surv-intro">
+          <h3>¿Para qué sirve?</h3>
+          <p>Antes de la primera consulta podés enviarle a cada paciente nueva un formulario para conocerla mejor. El correo incluye un mensaje de bienvenida y el link al formulario de Google.</p>
+          <div class="surv-manual-row">
+            <div class="fi"><label>Nombre de la paciente</label><input id="surv-name" type="text" placeholder="Nombre y apellido"></div>
+            <div class="fi"><label>Email</label><input id="surv-email" type="email" placeholder="email@paciente.com"></div>
+            <button class="btn-act" onclick="sendSurvey()">✉ Enviar encuesta</button>
+          </div>
+        </div>
+        <div class="tcard">
+          <div class="tcard-hd"><span class="tcard-title">Pacientes registradas</span><span class="badge b-green" id="surv-cnt">0</span></div>
+          <div id="surv-list"><p style="padding:1.5rem;text-align:center;color:var(--text-muted);font-size:.8rem;">Cargando...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div id="p-clientes" class="panel">
+      <div class="ph">
+        <h1>Clientes</h1>
+        <p>Planes de alimentación guardados automáticamente al descargar cada PDF</p>
+      </div>
+      <div class="pb">
+        <div class="cl-search-row">
+          <input type="text" id="cl-search" placeholder="Buscar cliente..." oninput="renderClientes(this.value)">
+          <button class="cl-gen-btn" onclick="localStorage.setItem('gen_auth','1');window.open('generador.html','_blank')">＋ Nuevo plan</button>
+        </div>
+        <div id="cl-list"></div>
       </div>
     </div>
 
@@ -341,6 +574,8 @@ tbody tr:hover td{background:var(--cream);}
 
 <div class="toast" id="toast">✓ Guardado</div>
 
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init("eF8R0hxnnAPWRxx6i");</script>
 <script>
 const PASS = 'agustina2025';
 const MAIL = 'lic.agustinavillegase@gmail.com';
@@ -372,10 +607,39 @@ function go(name,btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('on'));
   document.getElementById('p-'+name).classList.add('on');
-  btn.classList.add('on');
-  ({reservas:loadReservas,creditos:loadCreditos,pedidos:loadPedidos,contenido:loadContent}[name]||function(){})();
+  if(btn) btn.classList.add('on');
+  ({reservas:loadReservas,creditos:loadCreditos,pedidos:loadPedidos,contenido:loadContent,agenda:loadAgenda,encuesta:loadEncuesta,clientes:renderClientes,portafolio:renderPortfolio}[name]||function(){})();
 }
 
+// window.storage shim — dual fallback: Vercel KV → Edge Config → localStorage
+// Cuando KV no está configurado usa Edge Config automáticamente
+if(!window.storage){
+  const KEY_MAP={'agustina_blocked_slots':'ag:blocked_slots','agustina_bookings_v2':'ag:bookings','agustina_users':'ag:users','agustina_content':'ag:content','habito_orders':'ag:habito_orders'};
+  const LEGACY=new Set(Object.keys(KEY_MAP));
+  function kvKey(k){return KEY_MAP[k]||k;}
+  window.storage={
+    async get(k){
+      const kk=kvKey(k);
+      // 1. Intentar Vercel KV
+      try{const r=await fetch('/api/kv?op=get&key='+encodeURIComponent(kk),{cache:'no-store'});
+        if(r.ok){const d=await r.json();if(d.value!==null&&d.value!==undefined){const sv=typeof d.value==='string'?d.value:JSON.stringify(d.value);localStorage.setItem('__kv_'+k,sv);return{value:sv};}}}catch(e){}
+      // 2. Fallback a Edge Config (claves legacy)
+      if(LEGACY.has(k)){try{const r=await fetch('/api/data?key='+encodeURIComponent(k),{cache:'no-store'});
+        if(r.ok){const d=await r.json();if(d.value!==null&&d.value!==undefined){localStorage.setItem('__kv_'+k,d.value);return{value:d.value};}}}catch(e){}}
+      // 3. Fallback a localStorage
+      const v=localStorage.getItem('__kv_'+k);return v!==null?{value:v}:null;
+    },
+    async set(k,v){
+      const kk=kvKey(k);localStorage.setItem('__kv_'+k,v);
+      // 1. Intentar KV
+      let ok=false;try{const r=await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'set',key:kk,value:v})});ok=r.ok;}catch(e){}
+      // 2. Si KV falla, usar Edge Config
+      if(!ok&&LEGACY.has(k)){try{await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k,value:v})});}catch(e){}}
+    },
+    async lpush(k,v){const kk=kvKey(k);try{await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'lpush',key:kk,value:v})});}catch(e){}},
+    async lrange(k,s,e){const kk=kvKey(k);try{const r=await fetch('/api/kv?op=lrange&key='+encodeURIComponent(kk)+'&start='+s+'&stop='+e,{cache:'no-store'});if(r.ok){const d=await r.json();return d.value||[];}}catch(e){}return[];}
+  };
+}
 async function st(key){try{const r=await window.storage.get(key);return r?JSON.parse(r.value):null;}catch{return null;}}
 async function sv(key,val){try{await window.storage.set(key,JSON.stringify(val));}catch{}}
 
@@ -507,25 +771,356 @@ function renderPed(data){
   document.getElementById('ped-rows').innerHTML=data.map(o=>{
     const phone=(o.phone||'').replace(/\D/g,'');
     const d=o.date?new Date(o.date).toLocaleDateString('es',{day:'numeric',month:'short'}):'—';
-    const msg=`Hola ${encodeURIComponent(o.name||'')}%2C+confirmo+tu+pedido+de+Hábito.+Total%3A+%24${o.total||0}.`;
+    const isConfirmed=o.status==='confirmed';
+    const badge=isConfirmed
+      ?`<span class="badge b-green">Confirmado</span>`
+      :`<span class="badge b-amber">Pendiente</span>`;
+    const oid=(o.id||'').replace(/'/g,"\\'");
+    const action=isConfirmed
+      ?`<span style="color:var(--text-muted);font-size:.78rem;">✓ Email enviado</span>`
+      :(o.email
+        ?`<button class="btn-xs btn-wa" onclick="confirmHabitoOrder('${oid}')">✉ Confirmar pedido</button>`
+        :`<span style="color:var(--text-muted);font-size:.78rem;">Sin email</span>`);
     return `<tr>
       <td class="td-sm">${d}</td>
       <td class="td-bold">${o.name||'—'}</td>
+      <td class="td-sm">${o.email||'—'}</td>
       <td>${phone?`<a href="https://wa.me/${phone}" target="_blank" style="color:var(--sage)">${o.phone}</a>`:'—'}</td>
       <td class="td-sm" style="max-width:180px;white-space:normal;">${(o.items||[]).join(', ')}</td>
       <td><strong>$${o.total||0}</strong></td>
       <td class="td-sm">${o.zone||'—'}</td>
-      <td><span class="badge b-amber">Pendiente</span></td>
-      <td>${phone?`<a href="https://wa.me/${phone}?text=${msg}" target="_blank" class="btn-xs btn-wa">Confirmar</a>`:'—'}</td>
+      <td>${badge}</td>
+      <td>${action}</td>
     </tr>`;
-  }).join('')||`<tr class="empty"><td colspan="8">No hay pedidos aún</td></tr>`;
+  }).join('')||`<tr class="empty"><td colspan="9">No hay pedidos aún</td></tr>`;
 }
 function filtPed(q){renderPed(q?_pedAll.filter(o=>(o.name||'').toLowerCase().includes(q.toLowerCase())||(o.zone||'').toLowerCase().includes(q.toLowerCase())):_pedAll);}
+
+async function confirmHabitoOrder(orderId){
+  const orders=await st('habito_orders')||[];
+  const idx=orders.findIndex(o=>o.id===orderId);
+  if(idx<0)return alert('Pedido no encontrado');
+  const o=orders[idx];
+  if(!o.email)return alert('El cliente no dejó email — confirmá por WhatsApp.');
+  if(!confirm(`Enviar email de confirmación a ${o.email}?\n\nProductos: ${(o.items||[]).join(', ')}\nTotal: $${o.total}`))return;
+
+  const params={
+    to_name:o.name||'',
+    to_email:o.email,
+    name:o.name||'',
+    email:o.email,
+    items:(o.items||[]).join(', '),
+    total:'$'+(o.total||0),
+    zone:o.zone||'',
+    phone:o.phone||'',
+    reply_to:o.email
+  };
+  try{
+    await emailjs.send('service_nnsgrl9','template_habito',params);
+    o.status='confirmed';
+    o.confirmedAt=new Date().toISOString();
+    orders[idx]=o;
+    await sv('habito_orders',orders);
+    _pedAll=orders.slice().reverse();
+    renderPed(_pedAll);
+    toast('✉ Pedido confirmado y email enviado a '+o.email);
+  }catch(e){
+    console.error('EmailJS pedido habito error:',e);
+    const msg=e&&e.text?e.text:(e&&e.message?e.message:JSON.stringify(e));
+    alert('No se pudo enviar el email.\n\nDetalle: '+msg+'\n\nVerificá en EmailJS:\n• Que el template "template_habito" exista en el service "service_nnsgrl9"\n• Variables que podés usar: {{to_name}}, {{to_email}}, {{items}}, {{total}}, {{zone}}, {{phone}}');
+  }
+}
 
 function toast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── PORTFOLIO DE RECETAS ──
+function getPortfolio() {
+  return JSON.parse(localStorage.getItem('ag_recipe_portfolio') || '[]');
+}
+function savePortfolio(arr) {
+  localStorage.setItem('ag_recipe_portfolio', JSON.stringify(arr));
+}
+
+function renderPortfolio(filter) {
+  filter = (filter || '').toLowerCase().trim();
+  const port = getPortfolio();
+  const secNames = { des: 'Desayuno', alm: 'Almuerzo/Cena', ext: 'Extra' };
+  document.getElementById('port-cnt').textContent = port.length;
+
+  const filtered = filter ? port.filter(r => r.nombre.toLowerCase().includes(filter)) : port;
+
+  const container = document.getElementById('port-list');
+  if (!filtered.length) {
+    container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);font-style:italic;font-size:.82rem;">' + (port.length ? 'Sin resultados.' : 'No hay recetas aún. Usá el botón "＋ Nueva receta" para empezar.') + '</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(r => `
+    <div class="port-recipe-row">
+      <div>
+        <div class="port-recipe-name">${r.nombre}</div>
+        <div class="port-recipe-tags" style="margin-top:3px;">
+          <span class="port-tag port-tag-sec">${secNames[r.seccion] || r.seccion}</span>
+          ${r.sinTACC ? '<span class="port-tag port-tag-tacc">Sin TACC</span>' : ''}
+          ${r.porciones ? `<span style="font-size:.65rem;color:var(--text-muted);">${r.porciones} porc.</span>` : ''}
+        </div>
+      </div>
+      <div class="port-recipe-actions" style="margin-left:auto;">
+        <button class="btn-xs btn-ok" onclick="openPortfolioForm('${r.id}')">Editar</button>
+        <button class="btn-xs btn-del" onclick="deletePortfolioRecipe('${r.id}')">Eliminar</button>
+      </div>
+    </div>`).join('');
+}
+
+function openPortfolioForm(id) {
+  const form = document.getElementById('port-form');
+  form.classList.add('on');
+  document.getElementById('port-edit-id').value = id || '';
+
+  if (id) {
+    const r = getPortfolio().find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('port-form-title').textContent = 'Editar receta';
+    document.getElementById('pf-nombre').value = r.nombre || '';
+    document.getElementById('pf-sec').value = r.seccion || 'des';
+    document.getElementById('pf-por').value = r.porciones || '';
+    document.getElementById('pf-ing').value = r.ingredientes || '';
+    document.getElementById('pf-prep').value = r.prep || '';
+    document.getElementById('pf-kcal').value = r.kcal || '';
+    document.getElementById('pf-tacc').checked = !!r.sinTACC;
+  } else {
+    document.getElementById('port-form-title').textContent = 'Nueva receta';
+    document.getElementById('pf-nombre').value = '';
+    document.getElementById('pf-sec').value = 'des';
+    document.getElementById('pf-por').value = '';
+    document.getElementById('pf-ing').value = '';
+    document.getElementById('pf-prep').value = '';
+    document.getElementById('pf-kcal').value = '';
+    document.getElementById('pf-tacc').checked = false;
+  }
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closePortfolioForm() {
+  document.getElementById('port-form').classList.remove('on');
+}
+
+function submitPortfolioForm() {
+  const nombre = document.getElementById('pf-nombre').value.trim();
+  if (!nombre) { alert('Ingresá el nombre de la receta.'); return; }
+
+  const port = getPortfolio();
+  const editId = document.getElementById('port-edit-id').value;
+  const recipe = {
+    id: editId || Date.now().toString(),
+    nombre,
+    seccion: document.getElementById('pf-sec').value,
+    porciones: document.getElementById('pf-por').value.trim(),
+    ingredientes: document.getElementById('pf-ing').value,
+    prep: document.getElementById('pf-prep').value,
+    kcal: document.getElementById('pf-kcal').value.trim(),
+    sinTACC: document.getElementById('pf-tacc').checked,
+  };
+
+  if (editId) {
+    const idx = port.findIndex(r => r.id === editId);
+    if (idx >= 0) port[idx] = recipe; else port.push(recipe);
+  } else {
+    port.push(recipe);
+  }
+
+  savePortfolio(port);
+  closePortfolioForm();
+  renderPortfolio(document.getElementById('port-search')?.value || '');
+  toast('✓ Receta guardada');
+}
+
+function deletePortfolioRecipe(id) {
+  if (!confirm('¿Eliminar esta receta del portfolio?')) return;
+  savePortfolio(getPortfolio().filter(r => r.id !== id));
+  renderPortfolio(document.getElementById('port-search')?.value || '');
+  toast('Receta eliminada');
+}
+
+// ── MI AGENDA ──
+async function loadAgenda(){
+  const inp=document.getElementById('agendaDate');
+  if(!inp.value){ inp.value=new Date().toISOString().split('T')[0]; }
+  const dateKey=inp.value;
+  const bk=await st('agustina_bookings_v2')||{};
+  const bl=await st('agustina_blocked_slots')||{};
+  const dayBk=bk[dateKey]||{};
+  const dayBl=bl[dateKey]||{};
+  const OPEN=8,CLOSE=20;
+  let html='';
+  for(let h=OPEN;h<CLOSE;h++){
+    for(let m=0;m<60;m+=30){
+      const label=(h<10?'0':'')+h+':'+(m===0?'00':'30');
+      const isBooked=!!dayBk[label];
+      const isBlocked=!!dayBl[label];
+      const bookedName=isBooked?(dayBk[label].name||'Reservado'):'';
+      if(isBooked){
+        html+=`<div class="as-slot booked" title="${bookedName}">${label}<br><span style="font-size:.65rem;">${bookedName.split(' ')[0]}</span></div>`;
+      } else if(isBlocked){
+        html+=`<div class="as-slot blocked" onclick="toggleBlock('${dateKey}','${label}')" title="Clic para desbloquear">${label}<br><span style="font-size:.65rem;">Bloqueado</span></div>`;
+      } else {
+        html+=`<div class="as-slot free" onclick="toggleBlock('${dateKey}','${label}')">${label}</div>`;
+      }
+    }
+  }
+  document.getElementById('agendaSlots').innerHTML=html;
+}
+async function toggleBlock(dateKey,time){
+  const bl=await st('agustina_blocked_slots')||{};
+  if(!bl[dateKey])bl[dateKey]={};
+  if(bl[dateKey][time]) delete bl[dateKey][time];
+  else bl[dateKey][time]=true;
+  await sv('agustina_blocked_slots',bl);
+  loadAgenda();
+}
+async function clearDayBlocks(){
+  const dateKey=document.getElementById('agendaDate').value;
+  if(!dateKey)return;
+  if(!confirm('¿Desbloquear todos los horarios de este día?'))return;
+  const bl=await st('agustina_blocked_slots')||{};
+  delete bl[dateKey];
+  await sv('agustina_blocked_slots',bl);
+  loadAgenda();
+  toast('Día desbloqueado');
+}
+
+// ── ENCUESTA INICIAL ──
+const SURVEY_URL='https://docs.google.com/forms/d/e/1FAIpQLSe8yCzzrWHLlZ-vWB0ktdj2VMhh-ouPBQp6had-84pieNbrRA/viewform?usp=dialog';
+async function loadEncuesta(){
+  const us=await st('agustina_users')||{};
+  const bk=await st('agustina_bookings_v2')||{};
+  const patients={};
+  for(const[email,u] of Object.entries(us)) patients[email]={name:u.name||'—',email};
+  for(const slots of Object.values(bk))
+    for(const v of Object.values(slots))
+      if(v&&v.email&&!patients[v.email]) patients[v.email]={name:v.name||'Paciente',email:v.email};
+  const list=Object.values(patients);
+  document.getElementById('surv-cnt').textContent=list.length;
+  if(!list.length){
+    document.getElementById('surv-list').innerHTML='<p style="padding:1.5rem;text-align:center;color:var(--text-muted);font-size:.8rem;">No hay pacientes aún.</p>';
+    return;
+  }
+  document.getElementById('surv-list').innerHTML=list.map(u=>`
+    <div class="surv-row">
+      <div class="surv-row-info">
+        <div class="sn">${u.name}</div>
+        <div class="se">${u.email}</div>
+      </div>
+      <button class="btn-surv" onclick="sendSurveyTo('${u.name.replace(/'/g,"\\'")}','${u.email}')">✉ Enviar encuesta</button>
+    </div>`).join('');
+}
+async function sendSurveyTo(name,email){
+  if(!email)return;
+  if(!confirm(`Enviar formulario de bienvenida a ${name||email}?`))return;
+  // Probamos varios nombres comunes para los parámetros del template — EmailJS hace match por nombre
+  const params={
+    to_name: name||'',
+    to_email: email,
+    name: name||'',
+    email: email,
+    patient_name: name||'',
+    patient_email: email,
+    survey_url: SURVEY_URL,
+    survey_link: SURVEY_URL,
+    link: SURVEY_URL,
+    reply_to: email
+  };
+  try{
+    await emailjs.send('service_nnsgrl9','template_survey',params);
+    toast('✉ Encuesta enviada a '+email);
+  }catch(e){
+    console.error('EmailJS encuesta error:',e);
+    const msg=e&&e.text?e.text:(e&&e.message?e.message:JSON.stringify(e));
+    alert('No se pudo enviar la encuesta.\n\nDetalle: '+msg+'\n\nVerificá en EmailJS:\n• Que el template "template_survey" exista en el service "service_nnsgrl9"\n• Que el template tenga el destinatario {{to_email}} o {{email}}\n• Que el contenido use {{survey_url}} o {{link}} para el formulario');
+  }
+}
+async function sendSurvey(){
+  const name=document.getElementById('surv-name').value.trim();
+  const email=document.getElementById('surv-email').value.trim();
+  if(!email){alert('Ingresá el email de la paciente.');return;}
+  await sendSurveyTo(name,email);
+  document.getElementById('surv-name').value='';
+  document.getElementById('surv-email').value='';
+}
+
+// ── CLIENTES ──
+function renderClientes(filter) {
+  filter = (filter || '').toLowerCase().trim();
+  const saves = JSON.parse(localStorage.getItem('ag_plan_saves') || '[]');
+
+  // Group by clientName
+  const clients = {};
+  saves.forEach(s => {
+    const key = (s.clientName || 'Sin nombre').trim();
+    if (!clients[key]) clients[key] = [];
+    clients[key].push(s);
+  });
+
+  const container = document.getElementById('cl-list');
+  if (!container) return;
+
+  const names = Object.keys(clients).sort();
+  const filtered = filter ? names.filter(n => n.toLowerCase().includes(filter)) : names;
+
+  if (!filtered.length) {
+    container.innerHTML = '<div class="cl-empty">No hay planes guardados aún.<br>Los planes se guardan automáticamente al descargar un PDF desde el Generador.</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(name => {
+    const plans = clients[name].sort((a, b) => b.savedTs - a.savedTs);
+    const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const lastDate = plans[0]?.savedAt || '—';
+    const plansHtml = plans.map(p => `
+      <div class="cl-plan-row">
+        <span class="cl-plan-date">${p.savedAt || '—'}</span>
+        <span class="cl-plan-name">Plan · ${p.savedAt || 'sin fecha'}</span>
+        <div class="cl-plan-actions">
+          <button class="btn-open-plan" onclick="openPlanInGenerator('${p.id}')">Abrir en generador</button>
+          <button class="btn-del-plan" onclick="deleteSave('${p.id}')">Eliminar</button>
+        </div>
+      </div>`).join('');
+
+    return `<div class="cl-card" id="cl-${name.replace(/\s/g,'_')}">
+      <div class="cl-card-hd" onclick="toggleClient(this)">
+        <div class="cl-avatar">${initials}</div>
+        <div>
+          <div class="cl-name">${name}</div>
+          <div class="cl-meta">Último plan: ${lastDate}</div>
+        </div>
+        <span class="cl-badge-count">${plans.length} plan${plans.length > 1 ? 'es' : ''}</span>
+        <span class="cl-chevron">▾</span>
+      </div>
+      <div class="cl-plans-list">${plansHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleClient(hd) {
+  hd.classList.toggle('open');
+  hd.nextElementSibling.classList.toggle('on');
+}
+
+function openPlanInGenerator(planId) {
+  localStorage.setItem('gen_auth', '1');
+  localStorage.setItem('ag_load_plan_id', planId);
+  window.open('generador.html', '_blank');
+}
+
+function deleteSave(planId) {
+  if (!confirm('¿Eliminar este plan? No se puede deshacer.')) return;
+  const saves = JSON.parse(localStorage.getItem('ag_plan_saves') || '[]');
+  localStorage.setItem('ag_plan_saves', JSON.stringify(saves.filter(s => s.id !== planId)));
+  renderClientes(document.getElementById('cl-search')?.value || '');
 }
 
 // Auto-boot

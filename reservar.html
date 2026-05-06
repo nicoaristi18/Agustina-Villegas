@@ -202,16 +202,16 @@
     </div>
     <div class="nav-btns">
       <button class="btn-back" onclick="goStep(2)">← Volver</button>
-      <button class="btn-primary" onclick="confirmBooking()">Confirmar reserva ✓</button>
+      <button class="btn-primary" id="btnConfirm" onclick="confirmBooking()">Ir a pagar →</button>
     </div>
   </div>
 
   <!-- STEP 4 -->
   <div id="panel4" style="display:none;">
     <div class="success-box">
-      <div class="success-icon">✅</div>
-      <h2>¡Turno <em>confirmado!</em></h2>
-      <p>Tu reserva quedó registrada. Agustina se va a comunicar con vos para confirmar los detalles finales por WhatsApp o email.</p>
+      <div class="success-icon" id="s4-icon">✅</div>
+      <h2 id="s4-title">¡Pago <em>confirmado!</em></h2>
+      <p id="s4-msg">Tu turno quedó reservado y el pago fue procesado. Te enviamos un email de confirmación.</p>
       <div class="success-detail" id="success-detail"></div>
       <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
         <button class="btn-primary" onclick="location.href='index.html'">Volver al inicio</button>
@@ -239,16 +239,103 @@ let sel={svc:'',dur:0,price:'',type:'',date:null,time:'',dateStr:'',modality:'on
 const OPEN_H=8,CLOSE_H=20;
 let curYear=new Date().getFullYear(),curMonth=new Date().getMonth();
 
-// Pre-select from URL params
-window.addEventListener('DOMContentLoaded',()=>{
-  const params=new URLSearchParams(window.location.search);
-  const key=params.get('svc');
-  if(key){
-    const el=document.querySelector(`.svc-opt[data-key="${key}"]`);
-    if(el){el.click();}
+// Pre-select from URL params + manejar retorno de MercadoPago
+window.addEventListener('DOMContentLoaded', async () => {
+  const params = new URLSearchParams(window.location.search);
+  const payment = params.get('payment');
+
+  // ── Retorno desde MercadoPago ──
+  if (payment) {
+    history.replaceState({}, '', '/reservar'); // limpiar URL
+    const raw = sessionStorage.getItem('pending_booking');
+    const bookingData = raw ? JSON.parse(raw) : null;
+    sessionStorage.removeItem('pending_booking');
+
+    if (payment === 'success' && bookingData) {
+      // Guardar reserva confirmada
+      const bookings = await getBookings();
+      if (!bookings[bookingData.dateKey]) bookings[bookingData.dateKey] = {};
+      const modLabel = bookingData.type === 'masaje' ? 'Presencial' : (bookingData.modality === 'online' ? 'Online (videollamada)' : 'Presencial');
+      bookings[bookingData.dateKey][bookingData.time] = {
+        dur: bookingData.dur, svc: bookingData.svc,
+        name: bookingData.name, email: bookingData.email,
+        phone: bookingData.phone, notes: bookingData.notes,
+        modality: modLabel, paid: true
+      };
+      await saveBookings(bookings);
+      // Email de confirmación
+      try {
+        await emailjs.send('service_nnsgrl9','template_4pmzmjm',{
+          patient_name: bookingData.name, patient_email: bookingData.email,
+          service: bookingData.svc, date: bookingData.dateStr,
+          time: bookingData.time, modality: modLabel
+        });
+      } catch(e){}
+      // Mostrar éxito
+      document.getElementById('s4-icon').textContent = '✅';
+      document.getElementById('s4-title').innerHTML = '¡Pago <em>confirmado!</em>';
+      document.getElementById('s4-msg').textContent = 'Tu turno quedó reservado y el pago fue procesado. Te enviamos un email de confirmación.';
+      document.getElementById('success-detail').innerHTML =
+        `<p><strong>Servicio:</strong> ${bookingData.svc}</p>
+         <p><strong>Fecha:</strong> ${bookingData.dateStr}</p>
+         <p><strong>Horario:</strong> ${bookingData.time}</p>
+         <p><strong>Paciente:</strong> ${bookingData.name}</p>`;
+      goStep(4);
+
+    } else if (payment === 'pending' && bookingData) {
+      // Pago pendiente — guardar con estado pendiente
+      const bookings = await getBookings();
+      if (!bookings[bookingData.dateKey]) bookings[bookingData.dateKey] = {};
+      bookings[bookingData.dateKey][bookingData.time] = {
+        dur: bookingData.dur, svc: bookingData.svc, name: bookingData.name,
+        email: bookingData.email, phone: bookingData.phone, paid: false, status: 'pending'
+      };
+      await saveBookings(bookings);
+      document.getElementById('s4-icon').textContent = '⏳';
+      document.getElementById('s4-title').innerHTML = 'Pago <em>pendiente</em>';
+      document.getElementById('s4-msg').textContent = 'Tu pago está siendo procesado. Una vez confirmado, tu turno quedará registrado. Te avisaremos por email.';
+      document.getElementById('success-detail').innerHTML =
+        `<p><strong>Servicio:</strong> ${bookingData.svc}</p><p><strong>Fecha:</strong> ${bookingData.dateStr} ${bookingData.time}</p>`;
+      goStep(4);
+
+    } else if (payment === 'failure') {
+      // Pago fallido — mostrar mensaje
+      const errBox = document.createElement('div');
+      errBox.style.cssText = 'background:#FCEBEB;border:1px solid #F09595;border-radius:14px;padding:1.2rem 1.5rem;margin-bottom:1.5rem;text-align:center;';
+      errBox.innerHTML = '<strong style="color:#A32D2D;">El pago no fue procesado.</strong><br><span style="font-size:.88rem;color:#A32D2D;">Por favor intentá de nuevo o contactá a Agustina directamente.</span>';
+      document.querySelector('.res-wrap').insertBefore(errBox, document.querySelector('.steps'));
+    }
+    return;
+  }
+
+  // Pre-seleccionar servicio desde URL
+  const key = params.get('svc');
+  if (key) {
+    const el = document.querySelector(`.svc-opt[data-key="${key}"]`);
+    if (el) el.click();
   }
 });
 
+if(!window.storage){
+  const KEY_MAP={'agustina_blocked_slots':'ag:blocked_slots','agustina_bookings_v2':'ag:bookings','agustina_users':'ag:users','agustina_content':'ag:content','habito_orders':'ag:habito_orders'};
+  const LEGACY=new Set(Object.keys(KEY_MAP));
+  function kvKey(k){return KEY_MAP[k]||k;}
+  window.storage={
+    async get(k){
+      const kk=kvKey(k);
+      try{const r=await fetch('/api/kv?op=get&key='+encodeURIComponent(kk),{cache:'no-store'});if(r.ok){const d=await r.json();if(d.value!==null&&d.value!==undefined){const sv=typeof d.value==='string'?d.value:JSON.stringify(d.value);localStorage.setItem('__kv_'+k,sv);return{value:sv};}}}catch(e){}
+      if(LEGACY.has(k)){try{const r=await fetch('/api/data?key='+encodeURIComponent(k),{cache:'no-store'});if(r.ok){const d=await r.json();if(d.value!==null&&d.value!==undefined){localStorage.setItem('__kv_'+k,d.value);return{value:d.value};}}}catch(e){}}
+      const v=localStorage.getItem('__kv_'+k);return v!==null?{value:v}:null;
+    },
+    async set(k,v){
+      const kk=kvKey(k);localStorage.setItem('__kv_'+k,v);
+      let ok=false;try{const r=await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'set',key:kk,value:v})});ok=r.ok;}catch(e){}
+      if(!ok&&LEGACY.has(k)){try{await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k,value:v})});}catch(e){}}
+    },
+    async lpush(k,v){const kk=kvKey(k);try{await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'lpush',key:kk,value:v})});}catch(e){}},
+    async lrange(k,s,e){const kk=kvKey(k);try{const r=await fetch('/api/kv?op=lrange&key='+encodeURIComponent(kk)+'&start='+s+'&stop='+e,{cache:'no-store'});if(r.ok){const d=await r.json();return d.value||[];}}catch(e){}return[];}
+  };
+}
 async function getBookings(){
   try{const r=await window.storage.get('agustina_bookings_v2');return r?JSON.parse(r.value):{};}catch{return {};}
 }
@@ -333,32 +420,55 @@ async function selectDate(d){
   await renderSlots();
 }
 
+async function getBlockedSlots(){
+  try{const r=await window.storage.get('agustina_blocked_slots');return r?JSON.parse(r.value):{};}catch{return {};}
+}
+
 async function renderSlots(){
-  const bookings=await getBookings();
-  const dateKey=sel.date.toISOString().split('T')[0];
-  const dayBookings=bookings[dateKey]||{};
-  const gap=sel.type==='masaje'?15:60;
-  const slots=[];
-  for(let h=OPEN_H;h<CLOSE_H;h++){
-    for(let m=0;m<60;m+=30){
-      const endMin=h*60+m+sel.dur;
-      if(endMin>CLOSE_H*60)break;
-      const label=(h<10?'0':'')+h+':'+(m===0?'00':'30');
-      let blocked=false;
-      for(const[btime,bdata] of Object.entries(dayBookings)){
-        const[bh,bm]=btime.split(':').map(Number);
-        const bStart=bh*60+bm;
-        const bdur=typeof bdata==='object'?bdata.dur:bdata;
-        const bEnd=bStart+bdur+gap;
-        const sStart=h*60+m;
-        const sEnd=sStart+sel.dur;
-        if(sStart<bEnd&&sEnd>bStart){blocked=true;break;}
+  const [bookings, blockedSlots] = await Promise.all([getBookings(), getBlockedSlots()]);
+  const dateKey = sel.date.toISOString().split('T')[0];
+  const dayBookings = bookings[dateKey] || {};
+  const dayBlocked  = blockedSlots[dateKey] || {};
+  const gap = sel.type==='masaje' ? 15 : 60;
+
+  // No se puede reservar dentro de las próximas 24 horas
+  const now = new Date();
+  const cutoff = new Date(now.getTime() + 24*60*60*1000); // ahora + 24h
+
+  const slots = [];
+  for(let h=OPEN_H; h<CLOSE_H; h++){
+    for(let m=0; m<60; m+=30){
+      const sStart = h*60+m;
+      const sEnd   = sStart+sel.dur;
+      if(sEnd > CLOSE_H*60) break;
+      const label = (h<10?'0':'')+h+':'+(m===0?'00':'30');
+      let blocked = false;
+
+      // 1. Bloqueo de 24 horas desde ahora
+      const slotDate = new Date(sel.date.getFullYear(), sel.date.getMonth(), sel.date.getDate(), h, m);
+      if(slotDate < cutoff) { blocked = true; }
+
+      // 2. Horarios bloqueados por Agustina en el admin
+      if(!blocked && dayBlocked[label]) { blocked = true; }
+
+      // 3. Conflicto con reservas existentes
+      if(!blocked){
+        for(const [btime,bdata] of Object.entries(dayBookings)){
+          const [bh,bm] = btime.split(':').map(Number);
+          const bStart = bh*60+bm;
+          const bdur   = typeof bdata==='object' ? bdata.dur : bdata;
+          const bEnd   = bStart+bdur+gap;
+          if(sStart<bEnd && sEnd>bStart){ blocked=true; break; }
+        }
       }
-      slots.push({label,blocked});
+
+      slots.push({label, blocked});
     }
   }
-  document.getElementById('slotsTitle').textContent='Horarios disponibles — '+sel.dateStr;
-  document.getElementById('slotsGrid').innerHTML=slots.map(s=>`<div class="slot${s.blocked?' blocked':''}"${!s.blocked?` onclick="selectSlot('${s.label}')"`:''}>${s.label}</div>`).join('');
+  document.getElementById('slotsTitle').textContent = 'Horarios disponibles — '+sel.dateStr;
+  document.getElementById('slotsGrid').innerHTML = slots.map(s=>
+    `<div class="slot${s.blocked?' blocked':''}"${!s.blocked?` onclick="selectSlot('${s.label}')"`:''}>${s.label}</div>`
+  ).join('');
   sel.time='';
   document.getElementById('btn2').disabled=true;
 }
@@ -370,45 +480,53 @@ function selectSlot(t){
 }
 
 async function confirmBooking(){
-  const name=document.getElementById('f-name').value.trim();
-  const last=document.getElementById('f-last').value.trim();
-  const email=document.getElementById('f-email').value.trim();
+  const name  = document.getElementById('f-name').value.trim();
+  const last  = document.getElementById('f-last').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const phone = (document.getElementById('f-phone')||{value:''}).value.trim();
+  const notes = (document.getElementById('f-notes')||{value:''}).value.trim();
   if(!name||!last||!email){alert('Por favor completá nombre, apellido y email.');return;}
-  const bookings=await getBookings();
-  const dateKey=sel.date.toISOString().split('T')[0];
-  if(!bookings[dateKey])bookings[dateKey]={};
-  const phone=document.getElementById('f-phone')?document.getElementById('f-phone').value.trim():'';
-  const notes=document.getElementById('f-notes')?document.getElementById('f-notes').value.trim():'';
-  const modLabel2=sel.type==='masaje'?'Presencial':(sel.modality==='online'?'Online (videollamada)':'Presencial');
-  bookings[dateKey][sel.time]={dur:sel.dur,svc:sel.svc,name:name+' '+last,email:email,phone:phone,notes:notes,modality:modLabel2};
-  await saveBookings(bookings);
-  const modLabel=sel.type==='masaje'?'Presencial':(sel.modality==='online'?'Online':'Presencial');
-  document.getElementById('success-detail').innerHTML=
-    `<p><strong>Servicio:</strong> ${sel.svc}</p>
-     <p><strong>Modalidad:</strong> ${modLabel}</p>
-     <p><strong>Fecha:</strong> ${sel.dateStr}</p>
-     <p><strong>Horario:</strong> ${sel.time}</p>
-     <p><strong>Paciente:</strong> ${name} ${last}</p>
-     <p><strong>Contacto:</strong> ${email}</p>`;
-  // Send confirmation email
+
+  const btn = document.getElementById('btnConfirm');
+  btn.disabled = true; btn.textContent = 'Procesando…';
+
+  // Guardar datos de reserva en sessionStorage (persiste durante el redirect a MP y la vuelta)
+  const dateKey = sel.date.toISOString().split('T')[0];
+  const bookingData = {
+    dateKey, time: sel.time, dateStr: sel.dateStr,
+    svc: sel.svc, dur: sel.dur, price: sel.price,
+    type: sel.type, modality: sel.modality,
+    name: name+' '+last, email, phone, notes
+  };
+  sessionStorage.setItem('pending_booking', JSON.stringify(bookingData));
+
+  // Precio numérico (ej: '$2.500' → 2500)
+  const priceNum = parseInt((sel.price||'0').replace(/[^0-9]/g,''), 10) || 1;
+  const modLabel = sel.type==='masaje'?'Presencial':(sel.modality==='online'?'Online':'Presencial');
+
   try {
-    await emailjs.send(
-      'service_nnsgrl9',
-      'template_4pmzmjm',
-      {
-        patient_name: name + ' ' + last,
-        patient_email: email,
-        service: sel.svc,
-        date: sel.dateStr,
-        time: sel.time,
-        modality: sel.type==='masaje'?'Presencial':(sel.modality==='online'?'Online (videollamada)':'Presencial'),
-      }
-    );
-    console.log('Email de confirmación enviado a', email);
-  } catch(err) {
-    console.warn('No se pudo enviar email:', err);
+    const r = await fetch('/api/create-preference', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        title: `${sel.svc} — ${modLabel} · ${sel.dateStr} ${sel.time}`,
+        amount: priceNum,
+        name: name+' '+last,
+        email,
+        bookingRef: `${dateKey}_${sel.time}_${email}`
+      })
+    });
+    const data = await r.json();
+    if(data.init_point){
+      window.location.href = data.init_point; // redirige a MercadoPago
+    } else {
+      throw new Error(data.error || 'No se pudo iniciar el pago');
+    }
+  } catch(err){
+    sessionStorage.removeItem('pending_booking');
+    btn.disabled=false; btn.textContent='Ir a pagar →';
+    alert('Error al conectar con el sistema de pago:\n'+err.message+'\n\nPor favor contactá a Agustina directamente.');
   }
-  goStep(4);
 }
 
 function newBooking(){
@@ -422,26 +540,5 @@ function newBooking(){
 renderCal();
 </script>
 
-<script>
-async function sendConfirmationEmail(bookingData) {
-  try {
-    await emailjs.send(
-      'service_nnsgrl9',
-      'template_4pmzmjm',
-      {
-        patient_name: bookingData.name,
-        patient_email: bookingData.email,
-        service: bookingData.svc,
-        date: bookingData.date,
-        time: bookingData.time,
-        modality: bookingData.modality || 'Presencial',
-      }
-    );
-    console.log('Email de confirmación enviado');
-  } catch(err) {
-    console.error('Error enviando email:', err);
-  }
-}
-</script>
 </body>
 </html>

@@ -99,7 +99,7 @@
         <div class="fg"><label>Contraseña</label><input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres"></div>
         <div class="fg"><label>Repetir contraseña</label><input type="password" id="reg-pass2" placeholder="Repetí tu contraseña"></div>
         <button class="f-submit" onclick="doRegister()">Crear cuenta</button>
-        <p class="f-note">Al registrarte, Agustina activará tus créditos una vez confirmado el pago por WhatsApp.</p>
+        <p class="f-note">Una vez que completes tu pago, Agustina activará tus créditos en un plazo de 24 hs.</p>
       </div>
     </div>
 
@@ -165,6 +165,27 @@ function showError(msg) {
 }
 function hideError() { document.getElementById('errorMsg').style.display='none'; }
 
+// window.storage shim — dual fallback: Vercel KV → Edge Config → localStorage
+if(!window.storage){
+  const KEY_MAP={'agustina_blocked_slots':'ag:blocked_slots','agustina_bookings_v2':'ag:bookings','agustina_users':'ag:users','agustina_content':'ag:content','habito_orders':'ag:habito_orders'};
+  const LEGACY=new Set(Object.keys(KEY_MAP));
+  function kvKey(k){return KEY_MAP[k]||k;}
+  window.storage={
+    async get(k){
+      const kk=kvKey(k);
+      try{const r=await fetch('/api/kv?op=get&key='+encodeURIComponent(kk),{cache:'no-store'});if(r.ok){const d=await r.json();if(d.value!==null&&d.value!==undefined){const sv=typeof d.value==='string'?d.value:JSON.stringify(d.value);localStorage.setItem('__kv_'+k,sv);return{value:sv};}}}catch(e){}
+      if(LEGACY.has(k)){try{const r=await fetch('/api/data?key='+encodeURIComponent(k),{cache:'no-store'});if(r.ok){const d=await r.json();if(d.value!==null&&d.value!==undefined){localStorage.setItem('__kv_'+k,d.value);return{value:d.value};}}}catch(e){}}
+      const v=localStorage.getItem('__kv_'+k);return v!==null?{value:v}:null;
+    },
+    async set(k,v){
+      const kk=kvKey(k);localStorage.setItem('__kv_'+k,v);
+      let ok=false;try{const r=await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'set',key:kk,value:v})});ok=r.ok;}catch(e){}
+      if(!ok&&LEGACY.has(k)){try{await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k,value:v})});}catch(e){}}
+    },
+    async lpush(k,v){const kk=kvKey(k);try{await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'lpush',key:kk,value:v})});}catch(e){}},
+    async lrange(k,s,e){const kk=kvKey(k);try{const r=await fetch('/api/kv?op=lrange&key='+encodeURIComponent(kk)+'&start='+s+'&stop='+e,{cache:'no-store'});if(r.ok){const d=await r.json();return d.value||[];}}catch(e){}return[];}
+  };
+}
 // Storage helpers
 async function getUsers() {
   try { const r = await window.storage.get('agustina_users'); return r ? JSON.parse(r.value) : {}; } catch { return {}; }
