@@ -950,7 +950,22 @@ function setMacroImg(mi, ji, inp) {
   var r = new FileReader();
   r.onload = function(e) {
     macros4[mi].imgs[ji] = e.target.result;
-    renderMacros4Form();
+    // Actualizar el thumbnail in-place para no colapsar el card abierto
+    var container = inp.parentElement;
+    var thumb = container.querySelector('img');
+    if (thumb) {
+      thumb.src = e.target.result;
+    } else {
+      var d = document.createElement('div');
+      d.style.marginTop = '.25rem';
+      var img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.height = '32px';
+      img.style.borderRadius = '4px';
+      img.style.border = '1px solid var(--border)';
+      d.appendChild(img);
+      container.appendChild(d);
+    }
     upPlan();
   };
   r.readAsDataURL(f);
@@ -1065,7 +1080,25 @@ function setIdeaImg(id, ji, inp) {
   var r = new FileReader();
   r.onload = function(e) {
     var x = ideas.find(function(x){ return x.id === id; });
-    if (x) { x.imgs[ji] = e.target.result; renderIdeasForm(); upPlan(); }
+    if (!x) return;
+    x.imgs[ji] = e.target.result;
+    // Actualizar thumbnail in-place sin colapsar el card
+    var container = inp.parentElement;
+    var thumb = container.querySelector('img');
+    if (thumb) {
+      thumb.src = e.target.result;
+    } else {
+      var d = document.createElement('div');
+      d.style.marginTop = '.2rem';
+      var img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.height = '32px';
+      img.style.borderRadius = '4px';
+      img.style.border = '1px solid var(--border)';
+      d.appendChild(img);
+      container.appendChild(d);
+    }
+    upPlan();
   };
   r.readAsDataURL(f);
 }
@@ -1438,7 +1471,6 @@ async function dlPDF(docId, filename, btnId) {
       jsPDF: {unit: 'pt', format: [595.28, 841.89], orientation: 'portrait'},
       pagebreak: {
         mode: 'legacy',
-        before: '.doc-page, .macro-pg',
         avoid: ['.meal-blk', '.rec-block', '.porc-pg-row', '.ideas-photo-page',
                 '.avoid-box', '.cat-block', '.obj-box', '.next-consult']
       }
