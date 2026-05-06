@@ -246,20 +246,38 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 .macro-sub-items{font-size:10px;color:rgba(255,255,255,.62);font-weight:300;line-height:1.75;white-space:pre-line;}
 .macro-sub-note{font-size:9px;color:rgba(255,255,255,.38);font-style:italic;margin-top:7px;line-height:1.5;}
 
-/* PORCIONES PAGE (PDF) */
-.porc-pg-block{margin-bottom:16px;break-inside:avoid;page-break-inside:avoid;}
-.porc-pg-title{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:400;color:#2A2118;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid rgba(169,138,130,.2);padding-bottom:4px;margin-bottom:6px;}
-.porc-pg-items{font-size:10px;font-weight:300;color:#2A2118;line-height:1.7;white-space:pre-line;}
-.porc-pg-note{font-size:9px;color:#8C7E78;font-style:italic;margin-top:5px;padding:5px 9px;background:#FAF8F4;border-radius:5px;line-height:1.55;}
+/* PORCIONES E INTERCAMBIOS (PDF) — nuevo diseño con cuadro + pills */
+.porc-pg-row{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px;break-inside:avoid;page-break-inside:avoid;}
+.porc-pg-cat-box{width:78px;flex-shrink:0;background:rgba(169,138,130,.1);border:1.5px solid rgba(169,138,130,.28);border-radius:8px;display:flex;align-items:center;justify-content:center;padding:10px 6px;min-height:80px;align-self:stretch;}
+.porc-pg-cat-name{font-family:'Cormorant Garamond',serif;font-size:11px;font-weight:500;color:#2A2118;text-transform:uppercase;letter-spacing:.07em;writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);text-align:center;}
+.porc-pg-items-col{flex:1;}
+.porc-pg-pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px;}
+.porc-pg-pill{font-size:9px;font-weight:400;color:#2A2118;background:#FAF8F4;border:1px solid rgba(169,138,130,.22);border-radius:20px;padding:3.5px 9px;white-space:nowrap;}
+.porc-pg-note-txt{font-size:8.5px;color:#8C7E78;font-style:italic;line-height:1.5;margin-top:4px;padding:4px 8px;background:rgba(169,138,130,.07);border-radius:5px;}
 
-/* CRUDOS TABLE (PDF) */
-.crudos-tbl{width:100%;border-collapse:collapse;font-size:10px;margin-bottom:18px;}
-.crudos-tbl th{background:#2A2118;color:#fff;padding:7px 10px;text-align:left;font-size:8px;letter-spacing:.07em;text-transform:uppercase;font-weight:400;}
-.crudos-tbl td{padding:6px 10px;border-bottom:1px solid rgba(169,138,130,.1);font-weight:300;}
-.crudos-tbl tr:nth-child(even) td{background:#FAF8F4;}
-.medidas-tbl{width:100%;border-collapse:collapse;font-size:10px;margin-top:8px;}
-.medidas-tbl th{background:#F0E6DF;color:#A8706A;padding:6px 10px;font-size:8px;letter-spacing:.07em;text-transform:uppercase;font-weight:500;text-align:left;}
-.medidas-tbl td{padding:5px 10px;border-bottom:1px solid rgba(169,138,130,.08);font-weight:300;}
+/* CRUDOS Y COCIDOS (PDF) — celdas redondeadas */
+.crudos-sec-title{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:400;color:#A8706A;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid rgba(169,138,130,.2);padding-bottom:4px;margin-bottom:10px;margin-top:0;}
+.crudos-tbl2{width:100%;border-collapse:separate;border-spacing:4px;margin-bottom:14px;}
+.crudos-tbl2 th{background:#2A2118;color:#fff;padding:6px 12px;font-size:8px;letter-spacing:.08em;text-transform:uppercase;font-weight:400;border-radius:5px;text-align:center;}
+.crudos-tbl2 td{padding:5px 12px;font-size:10px;font-weight:300;color:#2A2118;background:#FAF8F4;border-radius:20px;text-align:center;border:1px solid rgba(169,138,130,.12);}
+.medidas-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:0;}
+.medidas-pair{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:300;color:#2A2118;}
+.medidas-pill{flex:1;text-align:center;padding:4px 8px;background:#FAF8F4;border:1px solid rgba(169,138,130,.15);border-radius:20px;font-size:9.5px;}
+.medidas-eq{font-size:9px;color:#A8706A;}
+
+/* MACRONUTRIENTES: imagen grid (PDF) */
+.macro-img-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:20px;}
+.macro-img-cell{border-radius:10px;overflow:hidden;height:120px;}
+.macro-img-cell img{width:100%;height:100%;object-fit:cover;display:block;}
+
+/* IDEAS CON FOTOS (PDF) */
+.ideas-photo-page{width:595px;min-height:842px;position:relative;background:#fff;break-before:page;page-break-before:always;padding:0;}
+.ideas-photo-header{padding:40px 52px 24px;background:var(--cream,#F5F0E8);}
+.ideas-photo-cat{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:#2A2118;line-height:1;}
+.ideas-photo-sub{font-size:11px;font-weight:300;color:#8C7E78;margin-top:4px;}
+.ideas-photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;}
+.ideas-photo-grid-item{height:320px;overflow:hidden;}
+.ideas-photo-grid-item img{width:100%;height:100%;object-fit:cover;display:block;}
 
 /* INTERCAMBIO 2-COL (meals PDF) */
 .meal-interc-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0;}
@@ -864,29 +882,36 @@ function renderMealsForm() {
 
 /* MACRONUTRIENTES 4 PAGES */
 var DEF_MACROS4 = [
-  { key:'prot', label:'PROTEÍNAS',
+  { key:'prot', label:'PROTEÍNAS', s2on:true, imgs:['','','',''],
     desc:'Las proteínas son esenciales para la construcción y reparación de tejidos, síntesis de enzimas y hormonas, y mantenimiento del sistema inmune.',
     s1t:'Proteínas animales', s1s:'Carnes magras, pollo sin piel, pescado, huevos, lácteos descremados', s1i:'',
     s2t:'Proteínas vegetales', s2s:'Legumbres, tofu, tempeh, semillas, frutos secos', s2i:'' },
-  { key:'gras', label:'GRASAS',
+  { key:'gras', label:'GRASAS', s2on:true, imgs:['','','',''],
     desc:'Las grasas son fuente de energía concentrada, forman parte de las membranas celulares y permiten la absorción de vitaminas liposolubles A, D, E y K.',
     s1t:'Grasas saludables', s1s:'Palta, aceite de oliva, frutos secos, semillas, pescados grasos', s1i:'',
     s2t:'Grasas a limitar', s2s:'Grasas trans, frituras, productos ultraprocesados, embutidos grasos', s2i:'' },
-  { key:'carb', label:'CARBOHIDRATOS',
+  { key:'carb', label:'CARBOHIDRATOS', s2on:true, imgs:['','','',''],
     desc:'Los carbohidratos son la principal fuente de energía del organismo, especialmente para el cerebro y el sistema nervioso.',
     s1t:'Carbohidratos complejos', s1s:'Arroz integral, avena, legumbres, pan integral, papa, batata', s1i:'',
     s2t:'Carbohidratos simples', s2s:'Frutas, miel (con moderación), azúcar natural de la fruta', s2i:'' },
-  { key:'fibr', label:'FIBRA',
+  { key:'fibr', label:'FIBRA', s2on:true, imgs:['','','',''],
     desc:'La fibra regula el tránsito intestinal, controla el colesterol y la glucemia, y favorece la saciedad prolongada.',
     s1t:'Fibra soluble', s1s:'Avena, manzana, pera, legumbres, zanahoria, semillas de chía', s1i:'',
     s2t:'Fibra insoluble', s2s:'Salvado de trigo, vegetales de hoja, semillas de lino, nueces', s2i:'' }
 ];
-var macros4 = DEF_MACROS4.map(function(m){ return Object.assign({}, m); });
+var macros4 = DEF_MACROS4.map(function(m){ return {key:m.key,label:m.label,s2on:m.s2on,imgs:m.imgs.slice(),desc:m.desc,s1t:m.s1t,s1s:m.s1s,s1i:m.s1i,s2t:m.s2t,s2s:m.s2s,s2i:m.s2i}; });
 
 function renderMacros4Form() {
   var el = $('macros4-list');
   if (!el) return;
   el.innerHTML = macros4.map(function(m, i) {
+    var imgInputs = [0,1,2,3].map(function(j) {
+      return '<div class="fg" style="margin:0">' +
+        '<label>Imagen '+(j+1)+'</label>' +
+        '<input type="file" accept="image/*" onchange="setMacroImg('+i+','+j+',this)">' +
+        (m.imgs[j] ? '<div style="margin-top:.25rem"><img src="'+m.imgs[j]+'" style="height:32px;border-radius:4px;border:1px solid var(--border)"></div>' : '') +
+        '</div>';
+    });
     return '<div class="rcard" style="margin-bottom:.65rem">' +
       '<div class="rcard-head" onclick="toggleCard(\'mc4-' + i + '\')">' +
       '<span class="rcard-title">' + m.label + '</span>' +
@@ -894,15 +919,42 @@ function renderMacros4Form() {
       '</div>' +
       '<div class="rcard-body" id="mc4-' + i + '" style="display:none">' +
       '<div class="fg"><label>Descripción</label><textarea rows="3" oninput="syncMacro4(' + i + ',\'desc\',this.value)">' + esc(m.desc) + '</textarea></div>' +
-      '<div class="fg"><label>Subtítulo bloque 1</label><input type="text" value="' + esc(m.s1t) + '" oninput="syncMacro4(' + i + ',\'s1t\',this.value)"></div>' +
-      '<div class="fg"><label>Contenido bloque 1</label><textarea rows="2" oninput="syncMacro4(' + i + ',\'s1s\',this.value)">' + esc(m.s1s) + '</textarea></div>' +
-      '<div class="fg"><label>Subtítulo bloque 2</label><input type="text" value="' + esc(m.s2t) + '" oninput="syncMacro4(' + i + ',\'s2t\',this.value)"></div>' +
-      '<div class="fg"><label>Contenido bloque 2</label><textarea rows="2" oninput="syncMacro4(' + i + ',\'s2s\',this.value)">' + esc(m.s2s) + '</textarea></div>' +
+      '<div style="border:1px solid var(--border);border-radius:8px;padding:.6rem .7rem;margin-bottom:.6rem">' +
+      '<div style="font-size:.6rem;letter-spacing:.07em;text-transform:uppercase;color:var(--rose-dark);margin-bottom:.4rem">Bloque 1</div>' +
+      '<div class="fg"><label>Subtítulo</label><input type="text" value="' + esc(m.s1t) + '" oninput="syncMacro4(' + i + ',\'s1t\',this.value)"></div>' +
+      '<div class="fg" style="margin:0"><label>Contenido</label><textarea rows="2" oninput="syncMacro4(' + i + ',\'s1s\',this.value)">' + esc(m.s1s) + '</textarea></div>' +
+      '</div>' +
+      '<div style="border:1px solid var(--border);border-radius:8px;padding:.6rem .7rem;margin-bottom:.6rem">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">' +
+      '<div style="font-size:.6rem;letter-spacing:.07em;text-transform:uppercase;color:var(--rose-dark)">Bloque 2 (opcional)</div>' +
+      '<label class="fg-check" style="margin:0"><input type="checkbox"'+(m.s2on?' checked':'')+' onchange="syncMacro4('+i+',\'s2on\',this.checked);renderMacros4Form()"> Mostrar</label>' +
+      '</div>' +
+      (m.s2on ?
+        '<div class="fg"><label>Subtítulo</label><input type="text" value="' + esc(m.s2t) + '" oninput="syncMacro4(' + i + ',\'s2t\',this.value)"></div>' +
+        '<div class="fg" style="margin:0"><label>Contenido</label><textarea rows="2" oninput="syncMacro4(' + i + ',\'s2s\',this.value)">' + esc(m.s2s) + '</textarea></div>'
+        : '<p style="font-size:.72rem;color:var(--text-muted);margin:0">Bloque 2 oculto — el bloque 1 queda centrado en la página.</p>') +
+      '</div>' +
+      '<div style="border:1px solid var(--border);border-radius:8px;padding:.6rem .7rem">' +
+      '<div style="font-size:.6rem;letter-spacing:.07em;text-transform:uppercase;color:var(--rose-dark);margin-bottom:.5rem">Imágenes de ejemplo (opcional, 2×2)</div>' +
+      '<div class="fg-row">' + imgInputs[0] + imgInputs[1] + '</div>' +
+      '<div class="fg-row" style="margin-top:.4rem">' + imgInputs[2] + imgInputs[3] + '</div>' +
+      '</div>' +
       '</div></div>';
   }).join('');
 }
 
 function syncMacro4(i, f, v) { macros4[i][f] = v; upPlan(); }
+
+function setMacroImg(mi, ji, inp) {
+  var f = inp.files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function(e) {
+    macros4[mi].imgs[ji] = e.target.result;
+    renderMacros4Form();
+    upPlan();
+  };
+  r.readAsDataURL(f);
+}
 
 /* PORCIONES E INTERCAMBIOS */
 var DEF_PORCS = [
@@ -1003,24 +1055,46 @@ var ideas = [];
 var ideaCtr = 0;
 
 function addIdeaSection() {
-  ideas.push({id:++ideaCtr, cat:'Nueva categoría', items:''});
+  ideas.push({id:++ideaCtr, cat:'Desayuno', sub:'Opciones prácticas', items:'', imgs:['','','','']});
   renderIdeasForm(); upPlan();
 }
 function removeIdea(id) { ideas = ideas.filter(function(x){ return x.id !== id; }); renderIdeasForm(); upPlan(); }
 function syncIdea(id, f, v) { var x = ideas.find(function(x){ return x.id === id; }); if (x) x[f] = v; upPlan(); }
+function setIdeaImg(id, ji, inp) {
+  var f = inp.files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function(e) {
+    var x = ideas.find(function(x){ return x.id === id; });
+    if (x) { x.imgs[ji] = e.target.result; renderIdeasForm(); upPlan(); }
+  };
+  r.readAsDataURL(f);
+}
 
 function renderIdeasForm() {
   var el = $('ideas-list');
   if (!el) return;
   if (!ideas.length) { el.innerHTML = '<p style="font-size:.74rem;color:var(--text-muted);text-align:center;padding:.4rem 0">Sin categorías aún</p>'; return; }
   el.innerHTML = ideas.map(function(x) {
+    var imgInputs = [0,1,2,3].map(function(j) {
+      return '<div class="fg" style="margin:0">' +
+        '<label>Foto '+(j+1)+'</label>' +
+        '<input type="file" accept="image/*" onchange="setIdeaImg('+x.id+','+j+',this)">' +
+        (x.imgs[j] ? '<img src="'+x.imgs[j]+'" style="margin-top:.2rem;height:32px;border-radius:4px;border:1px solid var(--border)">' : '') +
+        '</div>';
+    });
     return '<div class="idea-card">' +
       '<div class="idea-head">' +
-      '<input class="idea-cat-inp" type="text" value="' + esc(x.cat) + '" oninput="syncIdea(' + x.id + ',\'cat\',this.value)">' +
+      '<input class="idea-cat-inp" type="text" value="' + esc(x.cat) + '" placeholder="Desayuno" oninput="syncIdea(' + x.id + ',\'cat\',this.value)">' +
       '<button class="del-btn" onclick="removeIdea(' + x.id + ')">&#x2715;</button>' +
       '</div>' +
-      '<div style="padding:.5rem .7rem"><div class="fg" style="margin:0"><label>Ideas (una por línea)</label>' +
-      '<textarea rows="3" oninput="syncIdea(' + x.id + ',\'items\',this.value)">' + esc(x.items) + '</textarea></div></div></div>';
+      '<div style="padding:.55rem .7rem">' +
+      '<div class="fg"><label>Subtítulo</label><input type="text" value="'+esc(x.sub||'')+'" placeholder="Opciones prácticas" oninput="syncIdea('+x.id+',\'sub\',this.value)"></div>' +
+      '<div style="font-size:.6rem;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.45rem">4 fotos (cuadrícula 2×2)</div>' +
+      '<div class="fg-row">' + imgInputs[0] + imgInputs[1] + '</div>' +
+      '<div class="fg-row" style="margin-top:.35rem">' + imgInputs[2] + imgInputs[3] + '</div>' +
+      '<div class="fg" style="margin-top:.5rem"><label>Texto adicional (opcional, bajo las fotos)</label>' +
+      '<textarea rows="2" oninput="syncIdea(' + x.id + ',\'items\',this.value)">' + esc(x.items) + '</textarea></div>' +
+      '</div></div>';
   }).join('');
 }
 
@@ -1082,7 +1156,7 @@ function collectPlanData() {
     porcSub:val('plan-porc-sub'), crudoNota:val('plan-crudo-nota'),
     evitar:val('plan-evitar'), recs:val('plan-recs'), prox:val('plan-prox'),
     meals:JSON.parse(JSON.stringify(meals)),
-    macros4:JSON.parse(JSON.stringify(macros4)),
+    macros4:macros4.map(function(m){return {key:m.key,label:m.label,s2on:m.s2on,imgs:m.imgs.slice(),desc:m.desc,s1t:m.s1t,s1s:m.s1s,s1i:m.s1i,s2t:m.s2t,s2s:m.s2s,s2i:m.s2i};}),
     porcs:JSON.parse(JSON.stringify(porcs)),
     crudos:JSON.parse(JSON.stringify(crudos)),
     medidas:JSON.parse(JSON.stringify(medidas)),
@@ -1157,19 +1231,33 @@ function buildPlanDoc() {
   var macroLogo = getLogo();
   if (macrosOn) {
     macrosPgs = macros4.map(function(m) {
+      var hasImgs = m.imgs && m.imgs.some(function(x){ return !!x; });
+      var imgGrid = hasImgs
+        ? '<div class="macro-img-grid">' +
+          m.imgs.map(function(src) {
+            return '<div class="macro-img-cell">'+(src?'<img src="'+src+'" alt="">':'<div style="width:100%;height:100%;background:rgba(255,255,255,.06);border-radius:10px;border:1px solid rgba(255,255,255,.1)"></div>')+'</div>';
+          }).join('') + '</div>'
+        : '';
+      var subcols;
+      if (m.s2on) {
+        subcols = '<div class="macro-subcols">'+
+          '<div class="macro-subcol"><div class="macro-sub-title">'+esc(m.s1t)+'</div><div class="macro-sub-items">'+esc(m.s1s)+'</div>'+(m.s1i?'<div class="macro-sub-note">'+esc(m.s1i)+'</div>':'')+' </div>'+
+          '<div class="macro-subcol"><div class="macro-sub-title">'+esc(m.s2t)+'</div><div class="macro-sub-items">'+esc(m.s2s)+'</div>'+(m.s2i?'<div class="macro-sub-note">'+esc(m.s2i)+'</div>':'')+' </div>'+
+          '</div>';
+      } else {
+        subcols = '<div style="max-width:340px">'+
+          '<div class="macro-subcol"><div class="macro-sub-title">'+esc(m.s1t)+'</div><div class="macro-sub-items">'+esc(m.s1s)+'</div>'+(m.s1i?'<div class="macro-sub-note">'+esc(m.s1i)+'</div>':'')+' </div>'+
+          '</div>';
+      }
       return '<div class="macro-pg">'+
         '<div class="macro-pg-overlay"></div>'+
         '<div class="macro-pg-body">'+
         '<div class="macro-eyebrow">Macronutrientes &middot; '+esc(nombre)+'</div>'+
         '<div class="macro-pg-title">'+esc(m.label)+'</div>'+
         '<div class="macro-pg-desc">'+esc(m.desc)+'</div>'+
-        '<div class="macro-subcols">'+
-        '<div class="macro-subcol"><div class="macro-sub-title">'+esc(m.s1t)+'</div><div class="macro-sub-items">'+esc(m.s1s)+'</div>'+(m.s1i?'<div class="macro-sub-note">'+esc(m.s1i)+'</div>':'')+' </div>'+
-        '<div class="macro-subcol"><div class="macro-sub-title">'+esc(m.s2t)+'</div><div class="macro-sub-items">'+esc(m.s2s)+'</div>'+(m.s2i?'<div class="macro-sub-note">'+esc(m.s2i)+'</div>':'')+' </div>'+
-        '</div>'+
-        (macroLogo?'<div style="margin-top:28px">'+
-          '<img class="macro-logo-img" src="'+macroLogo+'" alt="Agustina Villegas">'+
-          '</div>':'')+
+        subcols+
+        imgGrid+
+        (macroLogo&&!hasImgs?'<div style="margin-top:24px"><img class="macro-logo-img" src="'+macroLogo+'" alt="Agustina Villegas"></div>':'')+
         '</div></div>';
     }).join('');
   }
@@ -1193,7 +1281,7 @@ function buildPlanDoc() {
       '</div></div>';
   }).join('');
 
-  /* Porciones page */
+  /* Porciones page — diseño con cuadro + pills */
   var porcPg = '';
   if (porcOn && porcs.length) {
     var porcSub = val('plan-porc-sub');
@@ -1202,44 +1290,71 @@ function buildPlanDoc() {
       '<div class="sec-label first">Porciones e intercambios</div>'+
       (porcSub?'<div class="intro-box">'+esc(porcSub)+'</div>':'')+
       porcs.map(function(p){
-        return '<div class="porc-pg-block">'+
-          '<div class="porc-pg-title">'+esc(p.nom)+'</div>'+
-          '<div class="porc-pg-items">'+esc(p.items)+'</div>'+
-          (p.note?'<div class="porc-pg-note">'+esc(p.note)+'</div>':'')+
-          '</div>';
+        var pills = (p.items||'').split('\n').map(function(line){ return line.trim(); }).filter(Boolean)
+          .map(function(line){ return '<span class="porc-pg-pill">'+esc(line)+'</span>'; }).join('');
+        return '<div class="porc-pg-row">'+
+          '<div class="porc-pg-cat-box"><div class="porc-pg-cat-name">'+esc(p.nom)+'</div></div>'+
+          '<div class="porc-pg-items-col">'+
+          '<div class="porc-pg-pills">'+pills+'</div>'+
+          (p.note?'<div class="porc-pg-note-txt">'+esc(p.note)+'</div>':'')+
+          '</div></div>';
       }).join('')+'</div>';
   }
 
-  /* Crudos/cocidos page */
+  /* Crudos/cocidos page — celdas redondeadas */
   var crudoPg = '';
   if (crudoOn && (crudos.length || medidas.length)) {
     var crudoNota = val('plan-crudo-nota');
     crudoPg = '<div class="doc-page">'+
       pgHdr('Alimentos crudos y cocidos', nombre)+
-      '<div class="sec-label first">Alimentos crudos y cocidos</div>'+
-      (crudoNota?'<div class="intro-box">'+esc(crudoNota)+'</div>':'')+
-      (crudos.length?'<table class="crudos-tbl"><thead><tr><th>Alimento</th><th>Crudo</th><th>Cocido</th></tr></thead><tbody>'+
-        crudos.map(function(c){return '<tr><td>'+esc(c.food)+'</td><td>'+esc(c.crudo)+'</td><td>'+esc(c.cocido)+'</td></tr>';}).join('')+
+      (crudos.length?
+        '<div class="crudos-sec-title">Alimentos crudos y cocidos</div>'+
+        (crudoNota?'<div style="font-size:9.5px;color:#8C7E78;margin-bottom:10px;font-style:italic">'+esc(crudoNota)+'</div>':'')+
+        '<table class="crudos-tbl2"><thead><tr><th style="text-align:left">Alimento</th><th>Crudo</th><th>Cocido</th></tr></thead><tbody>'+
+        crudos.map(function(c){return '<tr><td style="text-align:left;border-radius:20px 0 0 20px">'+esc(c.food)+'</td><td>'+esc(c.crudo)+'</td><td style="border-radius:0 20px 20px 0">'+esc(c.cocido)+'</td></tr>';}).join('')+
         '</tbody></table>':'')+
-      (medidas.length?'<div class="sec-label">Equivalencias de medidas</div>'+
-        '<table class="medidas-tbl"><thead><tr><th>Equivalencia A</th><th>Equivalencia B</th></tr></thead><tbody>'+
-        medidas.map(function(m){return '<tr><td>'+esc(m.a)+'</td><td>'+esc(m.b)+'</td></tr>';}).join('')+
-        '</tbody></table>':'')+
+      (medidas.length?
+        '<div class="crudos-sec-title" style="margin-top:16px">Equivalencias de medidas</div>'+
+        '<div class="medidas-grid">'+
+        medidas.map(function(m){
+          return '<div class="medidas-pair">'+
+            '<div class="medidas-pill">'+esc(m.a)+'</div>'+
+            '<div class="medidas-eq">=</div>'+
+            '<div class="medidas-pill">'+esc(m.b)+'</div>'+
+            '</div>';
+        }).join('')+'</div>':'')+
       '</div>';
   }
 
-  /* Ideas de comidas page */
+  /* Ideas de comidas — página con fotos 2×2 por categoría */
   var ideasPg = '';
   if (ideasOn && ideas.length) {
-    ideasPg = '<div class="doc-page" style="background:#FAF8F4">'+
-      pgHdr('Ideas de comidas', nombre)+
-      '<div class="sec-label first">Ideas de comidas</div>'+
-      ideas.map(function(x){
+    ideasPg = ideas.map(function(x) {
+      var hasPhotos = x.imgs && x.imgs.some(function(src){ return !!src; });
+      if (hasPhotos) {
+        var photoGrid = x.imgs.map(function(src){
+          return '<div class="ideas-photo-grid-item">'+(src?'<img src="'+src+'" alt="">':'<div style="width:100%;height:100%;background:#F5F0E8"></div>')+'</div>';
+        }).join('');
+        return '<div class="ideas-photo-page">'+
+          '<div class="ideas-photo-header">'+
+          pgHdr('Ideas de comidas', nombre)+
+          '<div class="ideas-photo-cat">'+esc(x.cat)+'</div>'+
+          (x.sub?'<div class="ideas-photo-sub">'+esc(x.sub)+'</div>':'')+
+          '</div>'+
+          '<div class="ideas-photo-grid">'+photoGrid+'</div>'+
+          (x.items&&x.items.trim()?'<div style="padding:14px 52px"><ul class="ideas-list">'+nl2li(x.items,'ideas-item')+'</ul></div>':'')+
+          '</div>';
+      } else {
         return '<div class="ideas-block">'+
-          '<div class="ideas-cat-title">'+esc(x.cat)+'</div>'+
+          '<div class="ideas-cat-title">'+esc(x.cat)+(x.sub?' <span style="font-size:10px;font-weight:300;color:#8C7E78;font-family:\'DM Sans\',sans-serif"> · '+esc(x.sub)+'</span>':'')+'</div>'+
           '<ul class="ideas-list">'+nl2li(x.items,'ideas-item')+'</ul>'+
           '</div>';
-      }).join('')+'</div>';
+      }
+    });
+    // Separar photo-pages de text-blocks
+    var photoPgs = ideasPg.filter(function(h){ return h.indexOf('ideas-photo-page')>-1; }).join('');
+    var textBlks = ideasPg.filter(function(h){ return h.indexOf('ideas-photo-page')===-1; }).join('');
+    ideasPg = photoPgs + (textBlks ? '<div class="doc-page" style="background:#FAF8F4">'+pgHdr('Ideas de comidas',nombre)+'<div class="sec-label first">Ideas de comidas</div>'+textBlks+'</div>' : '');
   }
 
   /* Notas page */
@@ -1293,16 +1408,12 @@ async function dlPDF(docId, filename, btnId) {
   var prevTxt = btn ? btn.textContent : '';
   if (btn) { btn.textContent = 'Generando…'; btn.disabled = true; }
 
-  // Guardar posición original
-  var origParent = docEl.parentNode;
-  var origNext = docEl.nextSibling;
-
-  // Mover al body sin transform para que html2canvas capture correctamente
-  docEl.style.setProperty('position', 'absolute', 'important');
-  docEl.style.setProperty('left', '-9999px', 'important');
-  docEl.style.setProperty('top', '0', 'important');
-  docEl.style.setProperty('width', '595px', 'important');
-  document.body.appendChild(docEl);
+  // Quitar el transform del wrapper para que html2canvas capture el elemento a tamaño real
+  var pi = docEl.closest('.prev-inner');
+  var prevT = pi ? pi.style.transform : '';
+  var prevM = pi ? pi.style.marginBottom : '';
+  var prevW = pi ? pi.style.width : '';
+  if (pi) { pi.style.transform = 'none'; pi.style.marginBottom = '0'; pi.style.width = '595px'; }
 
   try {
     await html2pdf().set({
@@ -1311,14 +1422,13 @@ async function dlPDF(docId, filename, btnId) {
       html2canvas: {
         scale: 2, useCORS: true, allowTaint: true,
         width: 595, windowWidth: 595,
-        logging: false, scrollX: 0, scrollY: 0,
-        imageTimeout: 15000
+        logging: false, imageTimeout: 15000
       },
       jsPDF: {unit: 'pt', format: [595.28, 841.89], orientation: 'portrait'},
       pagebreak: {
         mode: 'legacy',
         before: '.doc-page, .macro-pg',
-        avoid: ['.meal-blk', '.rec-block', '.porc-pg-block', '.ideas-block',
+        avoid: ['.meal-blk', '.rec-block', '.porc-pg-row', '.ideas-photo-page',
                 '.avoid-box', '.cat-block', '.obj-box', '.next-consult']
       }
     }).from(docEl).save();
@@ -1330,13 +1440,7 @@ async function dlPDF(docId, filename, btnId) {
     alert('Error al generar el PDF. Intentá nuevamente.');
     console.error(err);
   } finally {
-    // Siempre restaurar el elemento a su lugar original
-    docEl.style.removeProperty('position');
-    docEl.style.removeProperty('left');
-    docEl.style.removeProperty('top');
-    docEl.style.removeProperty('width');
-    if (origNext) { origParent.insertBefore(docEl, origNext); }
-    else { origParent.appendChild(docEl); }
+    if (pi) { pi.style.transform = prevT; pi.style.marginBottom = prevM; pi.style.width = prevW; }
     if (btn) { btn.textContent = prevTxt; btn.disabled = false; }
   } // end finally
 } // end dlPDF
