@@ -236,7 +236,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 /* MACRONUTRIENTES PAGE (PDF dark) */
 .macro-pg{width:595px;height:842px;overflow:hidden;padding:0;position:relative;background:#5A3D3A;break-before:page;page-break-before:always;}
 .macro-pg-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(160deg,rgba(43,33,24,.5) 0%,rgba(139,85,80,.25) 100%);}
-.macro-pg-body{position:relative;z-index:2;padding:52px 58px;height:842px;display:flex;flex-direction:column;}
+.macro-pg-body{position:relative;z-index:2;padding:52px 58px 290px;height:842px;display:flex;flex-direction:column;}
 .macro-eyebrow{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:300;margin-bottom:12px;}
 .macro-pg-title{font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:300;color:#fff;line-height:1.05;margin-bottom:20px;letter-spacing:-.01em;}
 .macro-pg-desc{font-size:11px;font-weight:300;color:rgba(255,255,255,.72);line-height:1.75;margin-bottom:32px;max-width:430px;}
@@ -265,8 +265,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 .medidas-pill{flex:1;text-align:center;padding:4px 8px;background:#FAF8F4;border:1px solid rgba(169,138,130,.15);border-radius:20px;font-size:9.5px;}
 .medidas-eq{font-size:9px;color:#A8706A;}
 
-/* MACRONUTRIENTES: imagen grid (PDF) */
-.macro-img-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto;flex-shrink:0;}
+/* MACRONUTRIENTES: imagen grid (PDF) — posicionado absolutamente al fondo */
+.macro-img-grid{position:absolute;left:58px;right:58px;bottom:52px;z-index:3;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .macro-img-cell{border-radius:10px;overflow:hidden;height:120px;}
 .macro-img-cell img{width:100%;height:100%;object-fit:cover;display:block;}
 
@@ -1289,9 +1289,10 @@ function buildPlanDoc() {
         '<div class="macro-pg-title">'+esc(m.label)+'</div>'+
         '<div class="macro-pg-desc">'+esc(m.desc)+'</div>'+
         subcols+
-        imgGrid+
         (macroLogo&&!hasImgs?'<div style="margin-top:24px"><img class="macro-logo-img" src="'+macroLogo+'" alt="Agustina Villegas"></div>':'')+
-        '</div></div>';
+        '</div>'+
+        imgGrid+
+        '</div>';
     }).join('');
   }
 
@@ -1464,11 +1465,12 @@ async function dlPDF(docId, filename, btnId) {
         scale: 2,
         useCORS: true,
         allowTaint: true,
+        width: 595,
+        windowWidth: 595,
         logging: false,
-        imageTimeout: 15000,
-        backgroundColor: '#ffffff'
+        imageTimeout: 15000
       },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      jsPDF: { unit: 'pt', format: [595.28, 841.89], orientation: 'portrait' },
       pagebreak: {
         mode: ['css', 'legacy'],
         avoid: ['.meal-blk', '.rec-block', '.porc-pg-row', '.ideas-photo-page',
