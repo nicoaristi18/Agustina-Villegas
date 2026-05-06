@@ -266,7 +266,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 .medidas-eq{font-size:9px;color:#A8706A;}
 
 /* MACRONUTRIENTES: imagen grid (PDF) */
-.macro-img-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto;}
+.macro-img-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto;flex-shrink:0;}
 .macro-img-cell{border-radius:10px;overflow:hidden;height:120px;}
 .macro-img-cell img{width:100%;height:100%;object-fit:cover;display:block;}
 
@@ -1441,40 +1441,40 @@ async function dlPDF(docId, filename, btnId) {
   var prevTxt = btn ? btn.textContent : '';
   if (btn) { btn.textContent = 'Generando…'; btn.disabled = true; }
 
-  // Overlay visual para tapar el clon mientras se genera
+  // Overlay loading
   var overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(43,33,24,.82);z-index:9999;display:flex;align-items:center;justify-content:center;';
   overlay.innerHTML = '<div style="background:#fff;padding:24px 36px;border-radius:14px;font-family:\'DM Sans\',sans-serif;text-align:center"><div style="font-size:14px;color:#2A2118;margin-bottom:5px;font-weight:500">Generando PDF…</div><div style="font-size:11px;color:#8C7E78">Esto puede tomar unos segundos</div></div>';
   document.body.appendChild(overlay);
 
-  // Clonar el documento y posicionarlo en top:0 left:0 del body.
-  // Así html2canvas lo captura desde el origen del viewport sin offset de scroll.
-  var wrapper = document.createElement('div');
-  wrapper.style.cssText = 'position:absolute;top:0;left:0;width:595px;pointer-events:none;';
-  var clone = docEl.cloneNode(true);
-  wrapper.appendChild(clone);
-  document.body.insertBefore(wrapper, document.body.firstChild);
+  // Quitar transform del wrapper de preview para que html2canvas capture
+  // el elemento a tamaño real (sin scale) y con dimensiones correctas.
+  var pi = docEl.closest('.prev-inner');
+  var prevT = pi ? pi.style.transform : '';
+  if (pi) pi.style.transform = 'none';
 
-  // Esperar dos frames para que el DOM se pinte
   await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); });
 
   try {
     await html2pdf().set({
       margin: 0,
       filename: filename,
+      image: { type: 'jpeg', quality: 0.95 },
       html2canvas: {
-        scale: 2, useCORS: true, allowTaint: true,
-        width: 595, windowWidth: 595,
-        scrollX: 0, scrollY: 0,
-        logging: false, imageTimeout: 15000
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        imageTimeout: 15000,
+        backgroundColor: '#ffffff'
       },
-      jsPDF: {unit: 'pt', format: [595.28, 841.89], orientation: 'portrait'},
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
       pagebreak: {
-        mode: 'legacy',
+        mode: ['css', 'legacy'],
         avoid: ['.meal-blk', '.rec-block', '.porc-pg-row', '.ideas-photo-page',
                 '.avoid-box', '.cat-block', '.obj-box', '.next-consult']
       }
-    }).from(clone).save();
+    }).from(docEl).save();
 
     var tipo = docId === 'doc-rec' ? 'recetario' : docId === 'doc-sup' ? 'recomendados' : 'plan';
     var cId = tipo === 'recetario' ? 'rec-nombre' : tipo === 'recomendados' ? 'sup-nombre' : 'plan-nombre';
@@ -1483,11 +1483,11 @@ async function dlPDF(docId, filename, btnId) {
     alert('Error al generar el PDF. Intentá nuevamente.');
     console.error(err);
   } finally {
-    if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+    if (pi) pi.style.transform = prevT;
     if (document.body.contains(overlay)) document.body.removeChild(overlay);
     if (btn) { btn.textContent = prevTxt; btn.disabled = false; }
-  } // end finally
-} // end dlPDF
+  }
+}
 
 /* ============================================================
    INIT
