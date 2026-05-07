@@ -949,7 +949,10 @@ function setMacroImg(mi, ji, inp) {
   var f = inp.files[0]; if (!f) return;
   var r = new FileReader();
   r.onload = function(e) {
+    // Defensa: si imgs no existe (plan viejo cargado), inicializar
+    if (!macros4[mi].imgs) macros4[mi].imgs = ['','','',''];
     macros4[mi].imgs[ji] = e.target.result;
+    console.log('[setMacroImg] saved', mi, ji, 'len:', e.target.result.length);
     // Actualizar el thumbnail in-place para no colapsar el card abierto
     var container = inp.parentElement;
     var thumb = container.querySelector('img');
@@ -1460,28 +1463,28 @@ async function dlPDF(docId, filename, btnId) {
   await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); });
 
   try {
-    // Usar unit:'px' con hotfix px_scaling: jsPDF convierte px↔pt a 72dpi
-    // (en lugar de 96dpi default) → 1px lógico = 1pt en el PDF.
-    // Esto hace que el canvas de 595×842px llene exactamente la página.
+    // Diagnóstico: medir el elemento real
+    var rect = docEl.getBoundingClientRect();
+    console.log('[dlPDF] docEl size:', rect.width, 'x', rect.height);
+    console.log('[dlPDF] docEl offsetWidth:', docEl.offsetWidth, 'offsetHeight:', docEl.offsetHeight);
+
+    // Config MÍNIMO de html2pdf — sin overrides que puedan interferir.
+    // jsPDF maneja la conversión px→pt internamente y addImage llena la página.
     await html2pdf().set({
       margin: 0,
       filename: filename,
-      image: { type: 'jpeg', quality: 0.95 },
+      image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        width: 595,
-        windowWidth: 595,
-        logging: false,
-        imageTimeout: 15000,
+        logging: true,           // logs para diagnóstico
         backgroundColor: '#ffffff'
       },
       jsPDF: {
-        unit: 'px',
-        format: [595, 842],
-        orientation: 'portrait',
-        hotfixes: ['px_scaling']
+        unit: 'pt',
+        format: 'a4',
+        orientation: 'portrait'
       },
       pagebreak: {
         mode: ['css', 'legacy'],
