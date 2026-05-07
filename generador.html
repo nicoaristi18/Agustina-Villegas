@@ -905,6 +905,7 @@ function renderMacros4Form() {
   var el = $('macros4-list');
   if (!el) return;
   el.innerHTML = macros4.map(function(m, i) {
+    if (!m.imgs) m.imgs = ['','','',''];
     var imgInputs = [0,1,2,3].map(function(j) {
       return '<div class="fg" style="margin:0">' +
         '<label>Imagen '+(j+1)+'</label>' +
@@ -1463,35 +1464,81 @@ async function dlPDF(docId, filename, btnId) {
   await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); });
 
   try {
-    // Diagnóstico: medir el elemento real
-    var rect = docEl.getBoundingClientRect();
-    console.log('[dlPDF] docEl size:', rect.width, 'x', rect.height);
+    // Diagnóstico
     console.log('[dlPDF] docEl offsetWidth:', docEl.offsetWidth, 'offsetHeight:', docEl.offsetHeight);
 
-    // Config MÍNIMO de html2pdf — sin overrides que puedan interferir.
-    // jsPDF maneja la conversión px→pt internamente y addImage llena la página.
-    await html2pdf().set({
-      margin: 0,
-      filename: filename,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: true,           // logs para diagnóstico
-        backgroundColor: '#ffffff'
-      },
-      jsPDF: {
-        unit: 'pt',
-        format: 'a4',
-        orientation: 'portrait'
-      },
-      pagebreak: {
-        mode: ['css', 'legacy'],
-        avoid: ['.meal-blk', '.rec-block', '.porc-pg-row', '.ideas-photo-page',
-                '.avoid-box', '.cat-block', '.obj-box', '.next-consult']
-      }
-    }).from(docEl).save();
+    // Acceder a html2canvas y jsPDF (incluidos en html2pdf.bundle.min.js)
+    var h2c = window.html2canvas;
+    var JSPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+
+    if (!h2c || !JSPDF) {
+      console.error('[dlPDF] missing libs', !!h2c, !!JSPDF);
+      throw new Error('html2canvas o jsPDF no disponibles');
+    }
+    console.log('[dlPDF] libs ok, JSPDF version:', JSPDF.version || JSPDF.API && JSPDF.API.version || '?');
+
+    var SCALE = 2;
+    var PAGE_W = 595;   // ancho lógico de página en CSS px = pt (mapeo 1:1)
+    var PAGE_H = 842;   // alto lógico de página en CSS px
+
+    // Capturar TODO el documento como un canvas
+    var fullCanvas = await h2c(docEl, {
+      scale: SCALE,
+      useCORS: true,
+      allowTaint: true,
+      width: PAGE_W,
+      windowWidth: PAGE_W,
+      logging: false,
+      imageTimeout: 15000,
+      backgroundColor: '#ffffff'
+    });
+
+    console.log('[dlPDF] captured canvas:', fullCanvas.width, 'x', fullCanvas.height);
+
+    // PDF con dimensiones en pt que matchean el canvas 1:1 (1 css px = 1 pt)
+    var pdf = new JSPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: [PAGE_W, PAGE_H]
+    });
+
+    // Identificar boundaries de páginas en el documento original
+    var pageEls = docEl.querySelectorAll('.doc-page, .macro-pg, .ideas-photo-page');
+    var docTop = docEl.getBoundingClientRect().top;
+    var breaks = [];
+    pageEls.forEach(function(el) {
+      breaks.push(Math.round(el.getBoundingClientRect().top - docTop));
+    });
+    breaks.push(docEl.offsetHeight);
+
+    console.log('[dlPDF] page breaks:', breaks);
+
+    // Renderizar página por página
+    for (var i = 0; i < breaks.length - 1; i++) {
+      var startY = breaks[i];
+      var endY = breaks[i + 1];
+      var sliceH = Math.min(endY - startY, PAGE_H);
+      if (sliceH <= 0) continue;
+      if (i > 0) pdf.addPage([PAGE_W, PAGE_H], 'portrait');
+
+      // Sub-canvas con la región de esta página
+      var sub = document.createElement('canvas');
+      sub.width = PAGE_W * SCALE;
+      sub.height = PAGE_H * SCALE;
+      var ctx = sub.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, sub.width, sub.height);
+      ctx.drawImage(fullCanvas,
+        0, startY * SCALE, PAGE_W * SCALE, sliceH * SCALE,
+        0, 0,              PAGE_W * SCALE, sliceH * SCALE);
+
+      var imgData = sub.toDataURL('image/jpeg', 0.95);
+      // addImage con dimensiones en pt = matchean exactamente la página
+      pdf.addImage(imgData, 'JPEG', 0, 0, PAGE_W, PAGE_H);
+    }
+
+    pdf.save(filename);
+    console.log('[dlPDF] saved successfully');
 
     var tipo = docId === 'doc-rec' ? 'recetario' : docId === 'doc-sup' ? 'recomendados' : 'plan';
     var cId = tipo === 'recetario' ? 'rec-nombre' : tipo === 'recomendados' ? 'sup-nombre' : 'plan-nombre';
