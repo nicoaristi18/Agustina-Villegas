@@ -1265,12 +1265,15 @@ function buildPlanDoc() {
   if (macrosOn) {
     macrosPgs = macros4.map(function(m) {
       var hasImgs = m.imgs && m.imgs.some(function(x){ return !!x; });
-      var imgGrid = hasImgs
-        ? '<div class="macro-img-grid">' +
-          m.imgs.map(function(src) {
-            return '<div class="macro-img-cell">'+(src?'<img src="'+src+'" alt="">':'<div style="width:100%;height:100%;background:rgba(255,255,255,.06);border-radius:10px;border:1px solid rgba(255,255,255,.1)"></div>')+'</div>';
-          }).join('') + '</div>'
-        : '';
+      // Siempre renderizamos el grid: con imágenes si las hay, con placeholders si no.
+      var imgGrid = '<div class="macro-img-grid">' +
+        m.imgs.map(function(src) {
+          return '<div class="macro-img-cell">' +
+            (src
+              ? '<img src="'+src+'" alt="">'
+              : '<div style="width:100%;height:100%;background:rgba(255,255,255,.06);border-radius:10px;border:1px dashed rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.3);font-size:9px;letter-spacing:.1em;text-transform:uppercase">imagen</div>') +
+            '</div>';
+        }).join('') + '</div>';
       var subcols;
       if (m.s2on) {
         subcols = '<div class="macro-subcols">'+
@@ -1448,8 +1451,7 @@ async function dlPDF(docId, filename, btnId) {
   overlay.innerHTML = '<div style="background:#fff;padding:24px 36px;border-radius:14px;font-family:\'DM Sans\',sans-serif;text-align:center"><div style="font-size:14px;color:#2A2118;margin-bottom:5px;font-weight:500">Generando PDF…</div><div style="font-size:11px;color:#8C7E78">Esto puede tomar unos segundos</div></div>';
   document.body.appendChild(overlay);
 
-  // Quitar transform del wrapper de preview para que html2canvas capture
-  // el elemento a tamaño real (sin scale) y con dimensiones correctas.
+  // Quitar transform del wrapper de preview
   var pi = docEl.closest('.prev-inner');
   var prevT = pi ? pi.style.transform : '';
   if (pi) pi.style.transform = 'none';
@@ -1457,26 +1459,73 @@ async function dlPDF(docId, filename, btnId) {
   await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); });
 
   try {
-    await html2pdf().set({
-      margin: 0,
-      filename: filename,
-      image: { type: 'jpeg', quality: 0.95 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        width: 595,
-        windowWidth: 595,
-        logging: false,
-        imageTimeout: 15000
-      },
-      jsPDF: { unit: 'pt', format: [595.28, 841.89], orientation: 'portrait' },
-      pagebreak: {
-        mode: ['css', 'legacy'],
-        avoid: ['.meal-blk', '.rec-block', '.porc-pg-row', '.ideas-photo-page',
-                '.avoid-box', '.cat-block', '.obj-box', '.next-consult']
-      }
-    }).from(docEl).save();
+    // Acceder a html2canvas y jsPDF (incluidos en el bundle de html2pdf)
+    var h2c = window.html2canvas;
+    var JSPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+
+    var SCALE = 2;
+    var PAGE_W_PX = 595;   // ancho lógico de cada página en CSS px
+    var PAGE_H_PX = 842;   // alto lógico de cada página en CSS px
+
+    // Capturar TODO el documento como un solo canvas grande
+    var fullCanvas = await h2c(docEl, {
+      scale: SCALE,
+      useCORS: true,
+      allowTaint: true,
+      width: PAGE_W_PX,
+      windowWidth: PAGE_W_PX,
+      logging: false,
+      imageTimeout: 15000,
+      backgroundColor: '#ffffff'
+    });
+
+    // PDF con dimensiones exactas en pt que matchean el canvas (1px lógico = 1pt)
+    // 595pt × 842pt es muy cercano a A4 (595.28 × 841.89) y permite que el canvas
+    // mapee 1:1 sin escalado raro.
+    var pdf = new JSPDF({ orientation: 'portrait', unit: 'pt', format: [PAGE_W_PX, PAGE_H_PX] });
+
+    // Buscar todos los "page boundaries" en el documento original.
+    // Cada .doc-page, .macro-pg o .ideas-photo-page debe empezar en una página nueva.
+    var pageEls = docEl.querySelectorAll('.doc-page, .macro-pg, .ideas-photo-page');
+    var docElTop = docEl.getBoundingClientRect().top;
+    var breaks = []; // posiciones Y (en CSS px lógicos) donde empieza cada página
+    pageEls.forEach(function(el) {
+      var top = el.getBoundingClientRect().top - docElTop;
+      breaks.push(Math.round(top));
+    });
+    breaks.push(docEl.offsetHeight); // final del documento
+
+    // Render página por página
+    for (var i = 0; i < breaks.length - 1; i++) {
+      var startY = breaks[i];           // px lógicos
+      var endY   = breaks[i + 1];       // px lógicos
+      var sliceH = Math.min(endY - startY, PAGE_H_PX); // máximo PAGE_H_PX por página
+
+      if (sliceH <= 0) continue;
+      if (i > 0) pdf.addPage([PAGE_W_PX, PAGE_H_PX], 'portrait');
+
+      // Crear sub-canvas con esta porción
+      var sub = document.createElement('canvas');
+      sub.width = PAGE_W_PX * SCALE;
+      sub.height = PAGE_H_PX * SCALE;
+      var ctx = sub.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, sub.width, sub.height);
+
+      // Copiar la región correspondiente del fullCanvas
+      var srcY = startY * SCALE;
+      var srcH = sliceH * SCALE;
+      ctx.drawImage(fullCanvas,
+        0, srcY, PAGE_W_PX * SCALE, srcH,    // source rect (en px físicos del fullCanvas)
+        0, 0,    PAGE_W_PX * SCALE, srcH     // destination rect (en sub-canvas)
+      );
+
+      var imgData = sub.toDataURL('image/jpeg', 0.95);
+      // addImage con dimensiones explícitas en pt → llena la página completa
+      pdf.addImage(imgData, 'JPEG', 0, 0, PAGE_W_PX, PAGE_H_PX);
+    }
+
+    pdf.save(filename);
 
     var tipo = docId === 'doc-rec' ? 'recetario' : docId === 'doc-sup' ? 'recomendados' : 'plan';
     var cId = tipo === 'recetario' ? 'rec-nombre' : tipo === 'recomendados' ? 'sup-nombre' : 'plan-nombre';
