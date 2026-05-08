@@ -1715,17 +1715,25 @@ function renderPortfolioModal(filter) {
     return;
   }
   var secLabel = {des:'Desayuno / Merienda', alm:'Almuerzo / Cena', extra:'Extra'};
-  /* Usamos índice numérico para evitar problemas de comillas con IDs string */
   list.innerHTML = _pmFiltered.map(function(r, i) {
     var sec = r.seccion || r.sec || 'extra';
-    return '<div onclick="addRecetaFromPortfolio(' + i + ')" style="display:flex;align-items:center;gap:.7rem;padding:.6rem .7rem;border-radius:8px;cursor:pointer;border:1px solid var(--border);margin-bottom:.4rem;transition:background .15s" onmouseover="this.style.background=\'var(--blush)\'" onmouseout="this.style.background=\'#fff\'">' +
+    return '<div data-pmidx="' + i + '" style="display:flex;align-items:center;gap:.7rem;padding:.6rem .7rem;border-radius:8px;cursor:pointer;border:1px solid rgba(169,138,130,.2);margin-bottom:.4rem;background:#fff;">' +
       '<div style="flex:1">' +
-      '<div style="font-size:.82rem;font-weight:500;color:var(--text)">' + esc(r.nombre||'Sin nombre') + '</div>' +
-      '<div style="font-size:.68rem;color:var(--text-muted);margin-top:1px">' + (secLabel[sec]||'Extra') + '</div>' +
+      '<div style="font-size:.82rem;font-weight:500;color:#2A2118">' + esc(r.nombre||'Sin nombre') + '</div>' +
+      '<div style="font-size:.68rem;color:#8C7E78;margin-top:1px">' + (secLabel[sec]||'Extra') + '</div>' +
       '</div>' +
-      '<div style="font-size:.72rem;color:var(--rose-dark);white-space:nowrap">+ Agregar</div>' +
+      '<div style="font-size:.72rem;color:#A8706A;font-weight:500;white-space:nowrap;background:#F0E6DF;padding:3px 10px;border-radius:20px;">+ Agregar</div>' +
       '</div>';
   }).join('');
+  /* Adjuntar listeners después de renderizar — más robusto que onclick inline */
+  list.querySelectorAll('[data-pmidx]').forEach(function(row) {
+    row.addEventListener('mouseenter', function(){ this.style.background = '#FAF8F4'; });
+    row.addEventListener('mouseleave', function(){ this.style.background = '#fff'; });
+    row.addEventListener('click', function(e) {
+      e.stopPropagation();
+      addRecetaFromPortfolio(parseInt(this.dataset.pmidx));
+    });
+  });
 }
 
 function addRecetaFromPortfolio(idx) {
