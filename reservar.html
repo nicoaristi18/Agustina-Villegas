@@ -577,15 +577,15 @@ function renderCal(){
   for(let d=1;d<=daysInMonth;d++){
     const dt=new Date(curYear,curMonth,d);
     const isPast=dt<today;
-    const isSun=dt.getDay()===0;
+    const isWeekend=dt.getDay()===0||dt.getDay()===6; // domingo o sábado
     const isSelected=sel.date&&sel.date.getDate()===d&&sel.date.getMonth()===curMonth&&sel.date.getFullYear()===curYear;
     const isToday=dt.getTime()===today.getTime();
     let cls='cal-day';
-    if(isPast||isSun)cls+=' past';
+    if(isPast||isWeekend)cls+=' past';
     else cls+=' available';
     if(isSelected)cls+=' selected';
     if(isToday)cls+=' today';
-    html+=`<div class="${cls}"${(!isPast&&!isSun)?` onclick="selectDate(${d})"`:''} >${d}</div>`;
+    html+=`<div class="${cls}"${(!isPast&&!isWeekend)?` onclick="selectDate(${d})"`:''} >${d}</div>`;
   }
   document.getElementById('calDays').innerHTML=html;
 }
