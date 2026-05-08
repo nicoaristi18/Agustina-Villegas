@@ -247,14 +247,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 .macro-sub-items{font-size:10px;color:rgba(255,255,255,.62);font-weight:300;line-height:1.75;white-space:pre-line;}
 .macro-sub-note{font-size:9px;color:rgba(255,255,255,.38);font-style:italic;margin-top:7px;line-height:1.5;}
 
-/* PORCIONES E INTERCAMBIOS (PDF) — nuevo diseño con cuadro + pills */
-.porc-pg-row{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px;break-inside:avoid;page-break-inside:avoid;}
-.porc-pg-cat-box{width:78px;flex-shrink:0;background:rgba(169,138,130,.1);border:1.5px solid rgba(169,138,130,.28);border-radius:8px;display:flex;align-items:center;justify-content:center;padding:10px 6px;min-height:80px;align-self:stretch;}
-.porc-pg-cat-name{font-family:'Cormorant Garamond',serif;font-size:11px;font-weight:500;color:#2A2118;text-transform:uppercase;letter-spacing:.07em;writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);text-align:center;}
-.porc-pg-items-col{flex:1;}
+/* PORCIONES E INTERCAMBIOS (PDF) — diseño horizontal sin writing-mode (compatible html2canvas) */
+.porc-pg-row{margin-bottom:13px;break-inside:avoid;page-break-inside:avoid;}
+.porc-pg-cat-hdr{font-family:'Cormorant Garamond',serif;font-size:12px;font-weight:500;color:#A8706A;text-transform:uppercase;letter-spacing:.09em;border-bottom:1.5px solid rgba(169,138,130,.22);padding-bottom:4px;margin-bottom:6px;}
 .porc-pg-pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px;}
 .porc-pg-pill{font-size:9px;font-weight:400;color:#2A2118;background:#FAF8F4;border:1px solid rgba(169,138,130,.22);border-radius:20px;padding:3.5px 9px;white-space:nowrap;}
 .porc-pg-note-txt{font-size:8.5px;color:#8C7E78;font-style:italic;line-height:1.5;margin-top:4px;padding:4px 8px;background:rgba(169,138,130,.07);border-radius:5px;}
+
+/* DAY BLOCK (multi-day plan form) */
+.day-block{border:1.5px solid var(--border2);border-radius:10px;margin-bottom:.7rem;overflow:hidden;}
+.day-head{background:var(--rose-deep);padding:.42rem .65rem;display:flex;align-items:center;gap:.45rem;}
+.day-label-inp{flex:1;border:none;background:transparent;font-size:.78rem;font-weight:500;color:#fff;font-family:'DM Sans',sans-serif;outline:none;}
+.day-label-inp::placeholder{color:rgba(255,255,255,.5);}
+.day-body{padding:.55rem .65rem;}
 
 /* CRUDOS Y COCIDOS (PDF) — celdas redondeadas */
 .crudos-sec-title{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:400;color:#A8706A;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid rgba(169,138,130,.2);padding-bottom:4px;margin-bottom:10px;margin-top:0;}
@@ -332,7 +337,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
     <div class="fsec">
       <div class="fsec-title">Recetas</div>
       <div id="recetas-list"></div>
-      <button class="add-btn" onclick="addReceta()">+ Agregar receta</button>
+      <div style="display:flex;gap:.4rem;margin-top:.3rem">
+        <button class="add-btn" style="flex:1" onclick="addReceta()">+ Nueva receta</button>
+        <button class="add-btn" style="flex:1" onclick="openPortfolioModal()">&#128218; Desde portfolio</button>
+      </div>
     </div>
   </div>
   <div class="prev-col">
@@ -438,9 +446,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
       <div id="macros4-list"></div>
     </div>
     <div class="fsec">
-      <div class="fsec-title">Comidas del d&iacute;a</div>
+      <div class="fsec-title">Distribuci&oacute;n diaria</div>
       <div id="meals-list"></div>
-      <button class="add-btn" id="btn-add-meal" onclick="addMeal()">+ Agregar comida</button>
+      <div style="display:flex;gap:.4rem;margin-top:.3rem">
+        <button class="add-btn" style="flex:1" onclick="addDay()">&#43; Duplicar d&iacute;a</button>
+        <button class="add-btn" style="flex:1" onclick="addEmptyDay()">&#43; D&iacute;a vac&iacute;o</button>
+      </div>
     </div>
     <div class="fsec" id="fsec-porcs" style="display:none">
       <div class="fsec-title">Porciones e intercambios</div>
@@ -484,6 +495,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
     <div class="prev-wrap" id="pw-plan">
       <div class="prev-inner" id="preview-plan"></div>
     </div>
+  </div>
+</div>
+
+<!-- PORTFOLIO MODAL -->
+<div id="portfolio-modal" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(43,33,24,.72);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;width:520px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.25);">
+    <div style="padding:1rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;flex-shrink:0;">
+      <div style="flex:1;font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:400;color:var(--rose-deep)">Portfolio de recetas</div>
+      <input id="pm-search" type="text" placeholder="Buscar..." oninput="filterPortfolioModal(this.value)" style="padding:.35rem .65rem;border:1px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.77rem;outline:none;width:160px">
+      <button onclick="closePortfolioModal()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--text-muted);padding:.1rem .3rem">&times;</button>
+    </div>
+    <div id="pm-list" style="overflow-y:auto;flex:1;padding:.6rem .8rem;"></div>
+    <div style="padding:.7rem 1.2rem;border-top:1px solid var(--border);font-size:.68rem;color:var(--text-muted);flex-shrink:0">Clic en una receta para agregarla al recetario</div>
   </div>
 </div>
 
@@ -831,53 +855,97 @@ function planToggleSec(cb, secId) {
   upPlan();
 }
 
-/* MEALS */
+/* MEALS — multi-day plan */
 var DEF_MEALS = ['Desayuno','Almuerzo','Merienda','Cena'];
-var meals = [];
+var days = [];
+var dayCtr = 0;
 var mealCtr = 0;
 
-function initMeals() {
-  meals = DEF_MEALS.map(function(n) { return {id:++mealCtr, nombre:n, hora:'', intercambio:'', ejemplo:'', foods:'', nota:''}; });
-  renderMealsForm();
+function _mkMeal(nombre) { return {id:++mealCtr, nombre:nombre||'Comida', hora:'', intercambio:'', ejemplo:'', foods:'', nota:''}; }
+
+function initDays() {
+  dayCtr = 0; mealCtr = 0;
+  days = [{id:++dayCtr, label:'Día 1', meals:DEF_MEALS.map(_mkMeal)}];
+  renderDaysForm();
 }
 
-function addMeal() {
-  if (meals.length >= 7) return;
-  meals.push({id:++mealCtr, nombre:'Colación', hora:'', intercambio:'', ejemplo:'', foods:'', nota:''});
-  renderMealsForm();
+/* Add a new day cloning the last day's meals (same names + hours) */
+function addDay() {
+  var src = days[days.length - 1];
+  var newMeals = src.meals.map(function(m){
+    return {id:++mealCtr, nombre:m.nombre, hora:m.hora, intercambio:'', ejemplo:'', foods:'', nota:''};
+  });
+  days.push({id:++dayCtr, label:'Día '+(days.length+1), meals:newMeals});
+  renderDaysForm(); upPlan();
+}
+
+/* Add a blank day */
+function addEmptyDay() {
+  days.push({id:++dayCtr, label:'Día '+(days.length+1), meals:DEF_MEALS.map(_mkMeal)});
+  renderDaysForm(); upPlan();
+}
+
+function removeDay(did) {
+  if (days.length <= 1) return;
+  if (!confirm('¿Eliminar este día?')) return;
+  days = days.filter(function(d){ return d.id !== did; });
+  renderDaysForm(); upPlan();
+}
+
+function syncDayLabel(did, v) {
+  var d = days.find(function(d){ return d.id === did; });
+  if (d) d.label = v;
   upPlan();
-  if (meals.length >= 7) { var b = $('btn-add-meal'); if (b) b.disabled = true; }
 }
 
-function removeMeal(id) {
-  meals = meals.filter(function(m){ return m.id !== id; });
-  renderMealsForm();
-  upPlan();
-  var b = $('btn-add-meal'); if (b) b.disabled = false;
+function addMealToDay(did) {
+  var d = days.find(function(d){ return d.id === did; });
+  if (!d || d.meals.length >= 8) return;
+  d.meals.push(_mkMeal('Colación'));
+  renderDaysForm(); upPlan();
 }
 
-function syncMeal(id, f, v) {
-  var m = meals.find(function(m){ return m.id === id; });
+function removeMealFromDay(did, mid) {
+  var d = days.find(function(d){ return d.id === did; });
+  if (!d) return;
+  d.meals = d.meals.filter(function(m){ return m.id !== mid; });
+  renderDaysForm(); upPlan();
+}
+
+function syncMealInDay(did, mid, f, v) {
+  var d = days.find(function(d){ return d.id === did; });
+  if (!d) return;
+  var m = d.meals.find(function(m){ return m.id === mid; });
   if (m) m[f] = v;
   upPlan();
 }
 
-function renderMealsForm() {
+function renderDaysForm() {
   var el = $('meals-list');
   if (!el) return;
-  el.innerHTML = meals.map(function(m) {
-    return '<div class="meal-card">' +
-      '<div class="meal-head">' +
-      '<input class="meal-name-inp" type="text" value="' + esc(m.nombre) + '" oninput="syncMeal(' + m.id + ',\'nombre\',this.value)">' +
-      '<button class="del-btn" onclick="removeMeal(' + m.id + ')">&#x2715;</button>' +
+  el.innerHTML = days.map(function(d) {
+    var mealCards = d.meals.map(function(m) {
+      return '<div class="meal-card">' +
+        '<div class="meal-head">' +
+        '<input class="meal-name-inp" type="text" value="' + esc(m.nombre) + '" oninput="syncMealInDay(' + d.id + ',' + m.id + ',\'nombre\',this.value)">' +
+        '<button class="del-btn" onclick="removeMealFromDay(' + d.id + ',' + m.id + ')">&#x2715;</button>' +
+        '</div>' +
+        '<div class="meal-body">' +
+        '<div class="fg"><label>Hora sugerida</label><input type="text" value="' + esc(m.hora) + '" placeholder="8:00 hs" oninput="syncMealInDay(' + d.id + ',' + m.id + ',\'hora\',this.value)"></div>' +
+        '<div class="fg"><label>Grupo de intercambio</label><textarea rows="2" placeholder="1 intercambio de lácteo" oninput="syncMealInDay(' + d.id + ',' + m.id + ',\'intercambio\',this.value)">' + esc(m.intercambio||'') + '</textarea></div>' +
+        '<div class="fg"><label>Ejemplo de alimento</label><textarea rows="2" placeholder="200cc yogur descremado" oninput="syncMealInDay(' + d.id + ',' + m.id + ',\'ejemplo\',this.value)">' + esc(m.ejemplo||'') + '</textarea></div>' +
+        '<div class="fg"><label>Alimentos adicionales (uno por línea)</label><textarea rows="2" placeholder="Frutas de estación" oninput="syncMealInDay(' + d.id + ',' + m.id + ',\'foods\',this.value)">' + esc(m.foods||'') + '</textarea></div>' +
+        '<div class="fg"><label>Nota (opcional)</label><input type="text" value="' + esc(m.nota) + '" placeholder="Podés sustituir por…" oninput="syncMealInDay(' + d.id + ',' + m.id + ',\'nota\',this.value)"></div>' +
+        '</div></div>';
+    }).join('');
+    return '<div class="day-block">' +
+      '<div class="day-head">' +
+      '<input class="day-label-inp" type="text" value="' + esc(d.label) + '" placeholder="Día 1" oninput="syncDayLabel(' + d.id + ',this.value)">' +
+      '<button class="add-btn" style="width:auto;padding:.22rem .55rem;margin:0;font-size:.67rem;border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.75);background:transparent" onclick="addMealToDay(' + d.id + ')">+ Comida</button>' +
+      (days.length > 1 ? '<button class="del-btn" style="color:rgba(255,255,255,.55)" onclick="removeDay(' + d.id + ')">&#x2715;</button>' : '') +
       '</div>' +
-      '<div class="meal-body">' +
-      '<div class="fg"><label>Hora sugerida</label><input type="text" value="' + esc(m.hora) + '" placeholder="8:00 hs" oninput="syncMeal(' + m.id + ',\'hora\',this.value)"></div>' +
-      '<div class="fg"><label>Grupo de intercambio</label><textarea rows="2" placeholder="1 intercambio de lácteo&#10;2 intercambios de panificado" oninput="syncMeal(' + m.id + ',\'intercambio\',this.value)">' + esc(m.intercambio||'') + '</textarea></div>' +
-      '<div class="fg"><label>Ejemplo de alimento</label><textarea rows="2" placeholder="200cc yogur descremado&#10;2 rebanadas pan integral" oninput="syncMeal(' + m.id + ',\'ejemplo\',this.value)">' + esc(m.ejemplo||'') + '</textarea></div>' +
-      '<div class="fg"><label>Alimentos adicionales (uno por línea)</label><textarea rows="2" placeholder="Frutas de estación" oninput="syncMeal(' + m.id + ',\'foods\',this.value)">' + esc(m.foods||'') + '</textarea></div>' +
-      '<div class="fg"><label>Nota (opcional)</label><input type="text" value="' + esc(m.nota) + '" placeholder="Podés sustituir por…" oninput="syncMeal(' + m.id + ',\'nota\',this.value)"></div>' +
-      '</div></div>';
+      '<div class="day-body">' + mealCards + '</div>' +
+      '</div>';
   }).join('');
 }
 
@@ -1193,7 +1261,8 @@ function collectPlanData() {
     ideasOn:!!($('plan-ideas-on')&&$('plan-ideas-on').checked),
     porcSub:val('plan-porc-sub'), crudoNota:val('plan-crudo-nota'),
     evitar:val('plan-evitar'), recs:val('plan-recs'), prox:val('plan-prox'),
-    meals:JSON.parse(JSON.stringify(meals)),
+    days:JSON.parse(JSON.stringify(days)),
+    meals:JSON.parse(JSON.stringify(days[0]?days[0].meals:[])),
     macros4:macros4.map(function(m){return {key:m.key,label:m.label,s2on:m.s2on,imgs:m.imgs.slice(),desc:m.desc,s1t:m.s1t,s1s:m.s1s,s1i:m.s1i,s2t:m.s2t,s2s:m.s2s,s2i:m.s2i};}),
     porcs:JSON.parse(JSON.stringify(porcs)),
     crudos:JSON.parse(JSON.stringify(crudos)),
@@ -1215,7 +1284,18 @@ function applyPlanData(d) {
   setCb('plan-crudo-on',d.crudoOn);setCb('plan-ideas-on',d.ideasOn);
   setV('plan-porc-sub',d.porcSub);setV('plan-crudo-nota',d.crudoNota);
   setV('plan-evitar',d.evitar);setV('plan-recs',d.recs);setV('plan-prox',d.prox);
-  if(d.meals){meals=d.meals;renderMealsForm();}
+  /* Backward-compat: prefer d.days, fall back to wrapping d.meals in single day */
+  if(d.days && d.days.length){
+    days=d.days;
+    dayCtr=Math.max.apply(null,days.map(function(day){return day.id||0;}))||days.length;
+    var allMIds=[].concat.apply([],days.map(function(day){return (day.meals||[]).map(function(m){return m.id||0;});}));
+    mealCtr=allMIds.length?Math.max.apply(null,allMIds):0;
+  } else if(d.meals){
+    days=[{id:1,label:'Día 1',meals:d.meals}];
+    dayCtr=1;
+    mealCtr=d.meals.length?Math.max.apply(null,d.meals.map(function(m){return m.id||0;})):0;
+  }
+  renderDaysForm();
   if(d.macros4){macros4=d.macros4;renderMacros4Form();}
   if(d.porcs){porcs=d.porcs;renderPorcsForm();}
   if(d.crudos)crudos=d.crudos;if(d.medidas)medidas=d.medidas;
@@ -1305,8 +1385,8 @@ function buildPlanDoc() {
     }).join('');
   }
 
-  /* Meals HTML */
-  var mealsHtml = meals.map(function(m) {
+  /* Build HTML for a single meal */
+  function buildOneMeal(m) {
     var hasI = m.intercambio && m.intercambio.trim();
     var hasE = m.ejemplo && m.ejemplo.trim();
     var hasF = m.foods && m.foods.trim();
@@ -1322,7 +1402,26 @@ function buildPlanDoc() {
       (hasF?'<ul class="meal-alims">'+nl2li(m.foods,'meal-alim')+'</ul>':'')+
       (m.nota?'<div class="meal-nota">'+esc(m.nota)+'</div>':'')+
       '</div></div>';
-  }).join('');
+  }
+
+  /* Meals HTML — single day or multi-day (each day = one doc-page) */
+  var mealsPages;
+  if (days.length <= 1) {
+    var onlyDay = days[0] || {label:'Día 1', meals:[]};
+    mealsPages = '<div class="doc-page">'+
+      pgHdr('Plan de alimentación', nombre)+
+      '<div class="sec-label first">Distribución diaria</div>'+
+      (onlyDay.meals.map(buildOneMeal).join('')||'<p style="font-size:11px;color:#8C7E78">Agrega comidas desde el formulario.</p>')+
+      '</div>';
+  } else {
+    mealsPages = days.map(function(d) {
+      return '<div class="doc-page">'+
+        pgHdr('Plan de alimentación', nombre)+
+        '<div class="sec-label first">'+esc(d.label||'Día')+'</div>'+
+        ((d.meals||[]).map(buildOneMeal).join('')||'<p style="font-size:11px;color:#8C7E78">Sin comidas.</p>')+
+        '</div>';
+    }).join('');
+  }
 
   /* Porciones page — diseño con cuadro + pills */
   var porcPg = '';
@@ -1336,11 +1435,10 @@ function buildPlanDoc() {
         var pills = (p.items||'').split('\n').map(function(line){ return line.trim(); }).filter(Boolean)
           .map(function(line){ return '<span class="porc-pg-pill">'+esc(line)+'</span>'; }).join('');
         return '<div class="porc-pg-row">'+
-          '<div class="porc-pg-cat-box"><div class="porc-pg-cat-name">'+esc(p.nom)+'</div></div>'+
-          '<div class="porc-pg-items-col">'+
+          '<div class="porc-pg-cat-hdr">'+esc(p.nom)+'</div>'+
           '<div class="porc-pg-pills">'+pills+'</div>'+
           (p.note?'<div class="porc-pg-note-txt">'+esc(p.note)+'</div>':'')+
-          '</div></div>';
+          '</div>';
       }).join('')+'</div>';
   }
 
@@ -1413,7 +1511,7 @@ function buildPlanDoc() {
     sigBlock+
     '</div>':'';
 
-  /* Page order: Cover → Macros summary → Macronutrientes pages → Distribución → Porciones → Crudos → Ideas → Notas */
+  /* Page order: Cover → Macros summary → Macronutrientes pages → Distribución (one page per day) → Porciones → Crudos → Ideas → Notas */
   return '<div class="ag-doc" id="doc-plan">'+
     buildCover('Plan de\nalimentación', nombre, fecha, 'gen_cv_plan', objetivo||'')+
     '<div class="doc-page" style="background:#FAF8F4">'+
@@ -1423,11 +1521,7 @@ function buildPlanDoc() {
     macrosTbl+bars+
     '</div>'+
     macrosPgs+
-    '<div class="doc-page">'+
-    pgHdr('Plan de alimentación', nombre)+
-    '<div class="sec-label first">Distribución diaria</div>'+
-    (mealsHtml||'<p style="font-size:11px;color:#8C7E78">Agrega comidas desde el formulario.</p>')+
-    '</div>'+
+    mealsPages+
     porcPg+crudoPg+ideasPg+notasPage+
     '</div>';
 }
@@ -1436,8 +1530,9 @@ var upPlan = deb(function() {
   var el = $('preview-plan');
   if (!el) return;
   el.innerHTML = buildPlanDoc();
-  var n = meals.length;
-  $('plan-info').textContent = n + ' comida' + (n !== 1 ? 's' : '');
+  var nDays = days.length;
+  var nMeals = days.reduce(function(s,d){ return s+(d.meals?d.meals.length:0); }, 0);
+  $('plan-info').textContent = nDays + (nDays!==1?' días':' día') + ' · ' + nMeals + (nMeals!==1?' comidas':' comida');
   scaleDoc('pw-plan', 'preview-plan');
 }, 200);
 
@@ -1544,6 +1639,32 @@ async function dlPDF(docId, filename, btnId) {
     var tipo = docId === 'doc-rec' ? 'recetario' : docId === 'doc-sup' ? 'recomendados' : 'plan';
     var cId = tipo === 'recetario' ? 'rec-nombre' : tipo === 'recomendados' ? 'sup-nombre' : 'plan-nombre';
     try { await window.storage.lpush('ag:pdf_stats', JSON.stringify({ts: new Date().toISOString(), tipo:tipo, cliente:val(cId)||'—'})); } catch(e){}
+
+    /* Auto-save plan state after every PDF download */
+    if (docId === 'doc-plan') {
+      try {
+        var snap = collectPlanData();
+        var now = new Date();
+        var dateStr = now.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'2-digit'});
+        var timeStr = now.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'});
+        var pNombre = val('plan-nombre') || 'Sin nombre';
+        snap._name = pNombre + ' — auto ' + dateStr + ' ' + timeStr;
+        snap._ts = now.toISOString();
+        snap._auto = true;
+        var arr = JSON.parse(localStorage.getItem('ag_plan_saves') || '[]');
+        /* Keep at most 3 auto-saves per patient (remove oldest) */
+        var samePatientAutos = arr.filter(function(s){ return s._auto && (s._name||'').startsWith(pNombre + ' — auto'); });
+        if (samePatientAutos.length >= 3) {
+          var toRemove = samePatientAutos.slice(2);
+          arr = arr.filter(function(s){ return toRemove.indexOf(s) === -1; });
+        }
+        arr.unshift(snap);
+        if (arr.length > 60) arr = arr.slice(0, 60);
+        localStorage.setItem('ag_plan_saves', JSON.stringify(arr));
+        updatePlanSavesUI();
+        console.log('[dlPDF] auto-saved plan:', snap._name);
+      } catch(ae) { console.warn('[dlPDF] auto-save error:', ae); }
+    }
   } catch(err) {
     alert('Error al generar el PDF. Intentá nuevamente.');
     console.error(err);
@@ -1553,6 +1674,84 @@ async function dlPDF(docId, filename, btnId) {
     if (btn) { btn.textContent = prevTxt; btn.disabled = false; }
   }
 }
+
+/* ============================================================
+   PORTFOLIO MODAL (Recetario ← admin portfolio)
+   ============================================================ */
+function getAdminPortfolio() {
+  try { return JSON.parse(localStorage.getItem('ag_recipe_portfolio') || '[]'); } catch(e) { return []; }
+}
+
+function openPortfolioModal() {
+  var modal = $('portfolio-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  var searchEl = $('pm-search');
+  if (searchEl) searchEl.value = '';
+  renderPortfolioModal('');
+}
+
+function closePortfolioModal() {
+  var modal = $('portfolio-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function filterPortfolioModal(q) {
+  renderPortfolioModal(q);
+}
+
+function renderPortfolioModal(filter) {
+  var list = $('pm-list');
+  if (!list) return;
+  var port = getAdminPortfolio();
+  var q = (filter || '').toLowerCase().trim();
+  if (q) port = port.filter(function(r){ return (r.nombre||'').toLowerCase().indexOf(q) !== -1; });
+  if (!port.length) {
+    list.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--text-muted);font-size:.8rem">' +
+      (getAdminPortfolio().length ? 'Sin resultados para "' + esc(filter) + '".' : 'El portfolio está vacío. Agregá recetas desde el Admin → Portfolio de recetas.') +
+      '</div>';
+    return;
+  }
+  var secLabel = {des:'Desayuno / Merienda', alm:'Almuerzo / Cena', extra:'Extra'};
+  list.innerHTML = port.map(function(r) {
+    var sec = r.seccion || r.sec || 'extra';
+    return '<div onclick="addRecetaFromPortfolio(' + JSON.stringify(r.id) + ')" style="display:flex;align-items:center;gap:.7rem;padding:.6rem .7rem;border-radius:8px;cursor:pointer;border:1px solid var(--border);margin-bottom:.4rem;transition:background .15s" onmouseover="this.style.background=\'var(--blush)\'" onmouseout="this.style.background=\'#fff\'">' +
+      '<div style="flex:1">' +
+      '<div style="font-size:.82rem;font-weight:500;color:var(--text)">' + esc(r.nombre||'Sin nombre') + '</div>' +
+      '<div style="font-size:.68rem;color:var(--text-muted);margin-top:1px">' + (secLabel[sec]||'Extra') + '</div>' +
+      '</div>' +
+      '<div style="font-size:.72rem;color:var(--rose-dark);white-space:nowrap">+ Agregar</div>' +
+      '</div>';
+  }).join('');
+}
+
+function addRecetaFromPortfolio(portId) {
+  var port = getAdminPortfolio();
+  var r = port.find(function(p){ return p.id === portId; });
+  if (!r) return;
+  recCtr++;
+  /* Map admin portfolio fields to receta object */
+  var secMap = {des:'desayuno', alm:'almuerzo', extra:'extra'};
+  recetas.push({
+    id: recCtr,
+    nombre: r.nombre || '',
+    sec: secMap[r.seccion||r.sec] || 'extra',
+    porciones: r.porciones || '1',
+    ing: r.ingredientes || '',
+    prep: r.prep || r.preparacion || '',
+    tacc: !!r.tacc,
+    kcal: r.kcal || ''
+  });
+  renderRecForm();
+  upRec();
+  closePortfolioModal();
+}
+
+/* Close modal on backdrop click */
+document.addEventListener('click', function(e) {
+  var modal = $('portfolio-modal');
+  if (modal && e.target === modal) closePortfolioModal();
+});
 
 /* ============================================================
    INIT
@@ -1566,7 +1765,7 @@ document.addEventListener('DOMContentLoaded', function() {
   updateLogoUI();
   renderRecForm();
   initCats();
-  initMeals();
+  initDays();
   renderMacros4Form();
   initPorcs();
   initCrudos();
