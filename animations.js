@@ -139,7 +139,7 @@
   var nav = document.getElementById('nav');
   if (nav) {
     function toggleNav() {
-      nav.classList.toggle('scrolled', window.scrollY > 50);
+      nav.classList.toggle('scrolled', window.scrollY > 60);
     }
     window.addEventListener('scroll', toggleNav, { passive: true });
     toggleNav();
