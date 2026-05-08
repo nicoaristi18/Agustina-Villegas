@@ -363,31 +363,53 @@ const PRICES = {
 function fmtPrice(n){ return '$'+parseInt(n).toLocaleString('es'); }
 
 async function loadKVPrices(){
+  let stored = null;
+
+  // 1. Intentar Vercel KV
   try {
     const r = await fetch('/api/kv?op=get&key=ag:prices', {cache:'no-store'});
-    if (!r.ok) return;
-    const d = await r.json();
-    if (!d.value) return;
-    const stored = typeof d.value === 'string' ? JSON.parse(d.value) : d.value;
-    // Mapeo de claves del admin → claves internas
-    const MAP = {
-      consulta:'consulta', control:'control', plan:'plan', isak:'isak',
-      cuerpo:'cuerpo', descontrac:'descontrac', relajante:'relajante',
-      drenaje:'drenaje', deportivo:'deportivo', embarazo:'embarazo'
-    };
-    for (const [adminKey, localKey] of Object.entries(MAP)) {
-      const val = parseInt(stored[adminKey] || stored['pr-'+adminKey] || stored[localKey]);
-      if (val > 0) PRICES[localKey] = val;
+    if (r.ok) {
+      const d = await r.json();
+      if (d.value) stored = typeof d.value === 'string' ? JSON.parse(d.value) : d.value;
     }
-    // Actualizar precios en el DOM
-    document.querySelectorAll('.svc-opt[data-key]').forEach(el => {
-      const key = el.dataset.key;
-      if (PRICES[key]) {
-        const priceEl = el.querySelector('.svc-opt-price');
-        if (priceEl) priceEl.textContent = fmtPrice(PRICES[key]);
+  } catch(e) {}
+
+  // 2. Fallback: Edge Config (siempre disponible)
+  if (!stored) {
+    try {
+      const r = await fetch('/api/data?key=agustina_prices', {cache:'no-store'});
+      if (r.ok) {
+        const d = await r.json();
+        if (d.value) stored = typeof d.value === 'string' ? JSON.parse(d.value) : d.value;
       }
-    });
-  } catch(e) { /* mantener defaults si falla */ }
+    } catch(e) {}
+  }
+
+  // 3. Fallback: localStorage (mismo navegador que el admin)
+  if (!stored) {
+    try {
+      const ls = localStorage.getItem('__kv_ag:prices');
+      if (ls) stored = JSON.parse(ls);
+    } catch(e) {}
+  }
+
+  if (!stored) return; // usar defaults hardcodeados
+
+  // Aplicar precios al objeto PRICES
+  const KEYS = ['consulta','control','plan','isak','cuerpo','descontrac','relajante','drenaje','deportivo','embarazo'];
+  KEYS.forEach(k => {
+    const val = parseInt(stored[k]);
+    if (val > 0) PRICES[k] = val;
+  });
+
+  // Actualizar precios visibles en el DOM
+  document.querySelectorAll('.svc-opt[data-key]').forEach(el => {
+    const key = el.dataset.key;
+    if (PRICES[key]) {
+      const priceEl = el.querySelector('.svc-opt-price');
+      if (priceEl) priceEl.textContent = fmtPrice(PRICES[key]);
+    }
+  });
 }
 
 // Pre-select from URL params + manejar retorno de MercadoPago

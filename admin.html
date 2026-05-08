@@ -1380,13 +1380,31 @@ function deleteSave(planId) {
 // ── PRECIOS ──
 const PR_FIELDS=['consulta','control','plan','isak','cuerpo','descontrac','relajante','drenaje','deportivo','embarazo','plan2','plan3','plan6','hab-ener1','hab-ener12','hab-prot1','hab-prot12'];
 async function loadPrecios(){
-  const p=await st('ag:prices')||{};
+  // Intentar KV primero, luego Edge Config como fallback
+  let p = await st('ag:prices') || null;
+  if (!p) {
+    try {
+      const r = await fetch('/api/data?key=agustina_prices', {cache:'no-store'});
+      if (r.ok) { const d = await r.json(); if (d.value) p = JSON.parse(d.value); }
+    } catch(e) {}
+  }
+  p = p || {};
   PR_FIELDS.forEach(k=>{const el=document.getElementById('pr-'+k);if(el&&p[k])el.value=p[k];});
 }
 async function savePrecios(){
   const p={};
   PR_FIELDS.forEach(k=>{const el=document.getElementById('pr-'+k);if(el&&el.value.trim())p[k]=el.value.trim();});
-  await sv('ag:prices',p);
+  const pStr = JSON.stringify(p);
+  // Guardar en KV (si disponible)
+  await sv('ag:prices', p);
+  // Guardar en Edge Config (siempre — es el fallback confiable)
+  try {
+    await fetch('/api/data', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({key:'agustina_prices', value: pStr})
+    });
+  } catch(e) {}
   toast('Precios guardados correctamente');
 }
 
