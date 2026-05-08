@@ -267,7 +267,7 @@
       <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.8rem;font-weight:500;">¿Cómo querés la consulta?</p>
       <div class="modality-row">
         <button class="mod-btn active" id="mod-online" onclick="setModality('online')">💻 Online (videollamada)</button>
-        <button class="mod-btn" id="mod-presencial" onclick="setModality('presencial')">📍 Presencial — Montevideo</button>
+        <button class="mod-btn" id="mod-presencial" onclick="setModality('presencial')">Presencial — Tarariras, Colonia</button>
       </div>
     </div>
     <div class="cal-grid">
@@ -466,7 +466,7 @@ function goStep(n){
   if(n===2)renderCal();
   if(n===3){
     document.getElementById('cs-svc').textContent=sel.svc;
-    document.getElementById('cs-mod').textContent=sel.type==='masaje'?'Presencial — Montevideo':(sel.modality==='online'?'Online (videollamada)':'Presencial — Montevideo');
+    document.getElementById('cs-mod').textContent=sel.type==='masaje'?'Presencial — Tarariras, Colonia':(sel.modality==='online'?'Online (videollamada)':'Presencial — Tarariras, Colonia');
     document.getElementById('cs-date').textContent=sel.dateStr;
     document.getElementById('cs-time').textContent=sel.time;
     document.getElementById('cs-dur').textContent=sel.dur+' minutos';
