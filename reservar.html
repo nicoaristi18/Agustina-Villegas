@@ -352,8 +352,48 @@ let sel={svc:'',dur:0,price:'',type:'',date:null,time:'',dateStr:'',modality:'on
 const OPEN_H=8,CLOSE_H=20;
 let curYear=new Date().getFullYear(),curMonth=new Date().getMonth();
 
+// ── PRECIOS desde Vercel KV ──
+// Defaults hardcodeados — se sobreescriben si KV tiene valores
+const PRICES = {
+  consulta: 1200, plan: 2500, control: 800, isak: 1100,
+  cuerpo: 1100, descontrac: 890, relajante: 800,
+  drenaje: 750, deportivo: 890, embarazo: 800
+};
+
+function fmtPrice(n){ return '$'+parseInt(n).toLocaleString('es'); }
+
+async function loadKVPrices(){
+  try {
+    const r = await fetch('/api/kv?op=get&key=ag:prices', {cache:'no-store'});
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d.value) return;
+    const stored = typeof d.value === 'string' ? JSON.parse(d.value) : d.value;
+    // Mapeo de claves del admin → claves internas
+    const MAP = {
+      consulta:'consulta', control:'control', plan:'plan', isak:'isak',
+      cuerpo:'cuerpo', descontrac:'descontrac', relajante:'relajante',
+      drenaje:'drenaje', deportivo:'deportivo', embarazo:'embarazo'
+    };
+    for (const [adminKey, localKey] of Object.entries(MAP)) {
+      const val = parseInt(stored[adminKey] || stored['pr-'+adminKey] || stored[localKey]);
+      if (val > 0) PRICES[localKey] = val;
+    }
+    // Actualizar precios en el DOM
+    document.querySelectorAll('.svc-opt[data-key]').forEach(el => {
+      const key = el.dataset.key;
+      if (PRICES[key]) {
+        const priceEl = el.querySelector('.svc-opt-price');
+        if (priceEl) priceEl.textContent = fmtPrice(PRICES[key]);
+      }
+    });
+  } catch(e) { /* mantener defaults si falla */ }
+}
+
 // Pre-select from URL params + manejar retorno de MercadoPago
 window.addEventListener('DOMContentLoaded', async () => {
+  // Cargar precios desde KV primero
+  await loadKVPrices();
   const params = new URLSearchParams(window.location.search);
   const payment = params.get('payment');
 
@@ -483,7 +523,10 @@ function setModality(m){
 function selectSvc(el,name,dur,price,type){
   document.querySelectorAll('.svc-opt').forEach(o=>o.classList.remove('selected'));
   el.classList.add('selected');
-  sel.svc=name;sel.dur=dur;sel.price=price;sel.type=type;
+  // Usar precio de PRICES (cargado desde KV) si existe; si no, el default del onclick
+  const key = el.dataset.key;
+  const kvPrice = key && PRICES[key] ? fmtPrice(PRICES[key]) : price;
+  sel.svc=name;sel.dur=dur;sel.price=kvPrice;sel.type=type;
   sel.date=null;sel.time='';sel.dateStr='';
   document.getElementById('btn1').disabled=false;
   // Show modality for nutrition only
