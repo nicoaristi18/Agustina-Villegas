@@ -1678,6 +1678,8 @@ async function dlPDF(docId, filename, btnId) {
 /* ============================================================
    PORTFOLIO MODAL (Recetario ← admin portfolio)
    ============================================================ */
+var _pmFiltered = []; // lista visible actual (usada por índice en onclick)
+
 function getAdminPortfolio() {
   try { return JSON.parse(localStorage.getItem('ag_recipe_portfolio') || '[]'); } catch(e) { return []; }
 }
@@ -1703,19 +1705,20 @@ function filterPortfolioModal(q) {
 function renderPortfolioModal(filter) {
   var list = $('pm-list');
   if (!list) return;
-  var port = getAdminPortfolio();
+  var full = getAdminPortfolio();
   var q = (filter || '').toLowerCase().trim();
-  if (q) port = port.filter(function(r){ return (r.nombre||'').toLowerCase().indexOf(q) !== -1; });
-  if (!port.length) {
+  _pmFiltered = q ? full.filter(function(r){ return (r.nombre||'').toLowerCase().indexOf(q) !== -1; }) : full;
+  if (!_pmFiltered.length) {
     list.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--text-muted);font-size:.8rem">' +
-      (getAdminPortfolio().length ? 'Sin resultados para "' + esc(filter) + '".' : 'El portfolio está vacío. Agregá recetas desde el Admin → Portfolio de recetas.') +
+      (full.length ? 'Sin resultados para "' + esc(filter) + '".' : 'El portfolio está vacío. Agregá recetas desde el Admin → Portfolio de recetas.') +
       '</div>';
     return;
   }
   var secLabel = {des:'Desayuno / Merienda', alm:'Almuerzo / Cena', extra:'Extra'};
-  list.innerHTML = port.map(function(r) {
+  /* Usamos índice numérico para evitar problemas de comillas con IDs string */
+  list.innerHTML = _pmFiltered.map(function(r, i) {
     var sec = r.seccion || r.sec || 'extra';
-    return '<div onclick="addRecetaFromPortfolio(' + JSON.stringify(r.id) + ')" style="display:flex;align-items:center;gap:.7rem;padding:.6rem .7rem;border-radius:8px;cursor:pointer;border:1px solid var(--border);margin-bottom:.4rem;transition:background .15s" onmouseover="this.style.background=\'var(--blush)\'" onmouseout="this.style.background=\'#fff\'">' +
+    return '<div onclick="addRecetaFromPortfolio(' + i + ')" style="display:flex;align-items:center;gap:.7rem;padding:.6rem .7rem;border-radius:8px;cursor:pointer;border:1px solid var(--border);margin-bottom:.4rem;transition:background .15s" onmouseover="this.style.background=\'var(--blush)\'" onmouseout="this.style.background=\'#fff\'">' +
       '<div style="flex:1">' +
       '<div style="font-size:.82rem;font-weight:500;color:var(--text)">' + esc(r.nombre||'Sin nombre') + '</div>' +
       '<div style="font-size:.68rem;color:var(--text-muted);margin-top:1px">' + (secLabel[sec]||'Extra') + '</div>' +
@@ -1725,12 +1728,10 @@ function renderPortfolioModal(filter) {
   }).join('');
 }
 
-function addRecetaFromPortfolio(portId) {
-  var port = getAdminPortfolio();
-  var r = port.find(function(p){ return p.id === portId; });
+function addRecetaFromPortfolio(idx) {
+  var r = _pmFiltered[idx];
   if (!r) return;
   recCtr++;
-  /* Map admin portfolio fields to receta object */
   var secMap = {des:'desayuno', alm:'almuerzo', extra:'extra'};
   recetas.push({
     id: recCtr,
