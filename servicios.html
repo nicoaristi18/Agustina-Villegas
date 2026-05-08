@@ -178,6 +178,41 @@ function showTab(t,btn){
 const urlTab=new URLSearchParams(window.location.search).get("tab");
 const startTab=urlTab==="masajes"?"mas":"nut";
 showTab(startTab,document.getElementById("tab-"+startTab));
+
+// ── Cargar precios desde Edge Config / KV ──
+(async function loadSvcPrices(){
+  let prices = null;
+  // 1. Edge Config (siempre disponible)
+  try {
+    const r = await fetch('/api/data?key=agustina_prices', {cache:'no-store'});
+    if (r.ok) { const d = await r.json(); if (d.value) prices = typeof d.value==='string' ? JSON.parse(d.value) : d.value; }
+  } catch(e) {}
+  // 2. Vercel KV
+  if (!prices) {
+    try {
+      const r = await fetch('/api/kv?op=get&key=ag:prices', {cache:'no-store'});
+      if (r.ok) { const d = await r.json(); if (d.value) prices = typeof d.value==='string' ? JSON.parse(d.value) : d.value; }
+    } catch(e) {}
+  }
+  if (!prices) return;
+
+  function fmt(n){ return parseInt(n).toLocaleString('es'); }
+
+  // Cada .svc-price está dentro de un <a href="reservar.html?svc=KEY">
+  document.querySelectorAll('a[href*="svc="] .svc-price').forEach(el => {
+    const href = el.closest('a').getAttribute('href') || '';
+    const m = href.match(/svc=([^&]+)/);
+    if (!m) return;
+    const key = m[1];
+    const val = parseInt(prices[key]);
+    if (val > 0) {
+      // Mantener el <sup>$</sup> y reemplazar solo el número
+      const sup = el.querySelector('sup');
+      el.textContent = fmt(val);
+      if (sup) el.prepend(sup);
+    }
+  });
+})();
 </script>
 <script src="animations.js"></script>
 </body></html>
