@@ -5,32 +5,35 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <style>
-.plans-hero{padding:8rem 5rem 4rem;background:var(--white);}
-.plans-hero p{font-size:1rem;color:var(--text-muted);max-width:540px;line-height:1.85;font-weight:300;margin-top:1rem;}
-.plans-section{padding:3rem 5rem 5rem;background:var(--cream2);}
-.plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-bottom:2rem;}
-.plan-card{background:var(--white);border-radius:24px;padding:2.2rem;border:1px solid var(--border);position:relative;transition:all .35s;}
-.plan-card:hover{transform:translateY(-5px);box-shadow:0 20px 50px rgba(168,112,106,.14);}
+.plans-hero{padding:9rem 5rem 4.5rem;background:var(--white);position:relative;overflow:hidden;}
+.plans-hero::before{content:"";position:absolute;right:-2rem;top:0;bottom:0;width:35%;background:var(--cream2);clip-path:polygon(18% 0%,100% 0%,100% 100%,0% 100%);z-index:0;}
+.plans-hero>*{position:relative;z-index:1;}
+.plans-hero p{font-size:1rem;color:var(--text-muted);max-width:540px;line-height:1.9;font-weight:300;margin-top:1rem;}
+.plans-section{padding:3.5rem 5rem 6rem;background:var(--cream2);}
+.plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6rem;margin-bottom:2rem;}
+.plan-card{background:var(--white);border-radius:28px;padding:2.4rem;border:1px solid var(--border);position:relative;transition:box-shadow .4s ease,border-color .3s;cursor:none;}
+.plan-card:hover{box-shadow:0 28px 60px rgba(42,33,24,.12);border-color:var(--border2);}
 .plan-card.pop{background:var(--text);border-color:var(--text);}
-.pop-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--rose-dark);color:white;font-size:.68rem;padding:.28rem 1.1rem;border-radius:50px;letter-spacing:.1em;text-transform:uppercase;font-weight:500;white-space:nowrap;}
-.plan-name{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:400;margin-bottom:.2rem;}
+.plan-card.pop:hover{box-shadow:0 28px 60px rgba(42,33,24,.3);}
+.pop-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--rose-dark);color:white;font-size:.68rem;padding:.3rem 1.2rem;border-radius:50px;letter-spacing:.1em;text-transform:uppercase;font-weight:500;white-space:nowrap;box-shadow:0 4px 16px rgba(168,112,106,.3);}
+.plan-name{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:400;margin-bottom:.2rem;}
 .plan-card.pop .plan-name{color:white;}
-.plan-credits{display:inline-flex;align-items:center;gap:.4rem;font-size:.75rem;background:var(--sage-pale);color:var(--sage);padding:.2rem .7rem;border-radius:50px;border:1px solid var(--sage-light);margin-bottom:1rem;}
+.plan-credits{display:inline-flex;align-items:center;gap:.4rem;font-size:.75rem;background:var(--sage-pale);color:var(--sage);padding:.22rem .8rem;border-radius:50px;border:1px solid var(--sage-light);margin-bottom:1rem;}
 .plan-card.pop .plan-credits{background:rgba(122,158,126,.2);color:var(--sage-light);border-color:rgba(122,158,126,.3);}
 .plan-sub{font-size:.8rem;color:var(--text-muted);margin-bottom:1.4rem;font-style:italic;}
 .plan-card.pop .plan-sub{color:rgba(255,255,255,.5);}
-.plan-price{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:300;color:var(--rose-dark);line-height:1;}
+.plan-price{font-family:'Cormorant Garamond',serif;font-size:3.4rem;font-weight:300;color:var(--rose-dark);line-height:1;}
 .plan-card.pop .plan-price{color:#EEBDB8;}
-.plan-price sup{font-size:1.2rem;vertical-align:super;}
-.plan-period{font-size:.75rem;color:var(--text-muted);margin-bottom:1.8rem;margin-top:.2rem;}
+.plan-price sup{font-size:1.3rem;vertical-align:super;}
+.plan-period{font-size:.75rem;color:var(--text-muted);margin-bottom:1.9rem;margin-top:.25rem;}
 .plan-card.pop .plan-period{color:rgba(255,255,255,.4);}
-.plan-features{list-style:none;display:flex;flex-direction:column;gap:.65rem;margin-bottom:2rem;}
-.plan-features li{font-size:.83rem;color:var(--text-muted);display:flex;align-items:flex-start;gap:.6rem;font-weight:300;line-height:1.5;}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:.7rem;margin-bottom:2rem;}
+.plan-features li{font-size:.83rem;color:var(--text-muted);display:flex;align-items:flex-start;gap:.65rem;font-weight:300;line-height:1.55;}
 .plan-card.pop .plan-features li{color:rgba(255,255,255,.7);}
 .plan-features li::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--sage);flex-shrink:0;margin-top:7px;}
 .plan-card.pop .plan-features li::before{background:var(--rose);}
-.plan-cta{width:100%;padding:.9rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.83rem;letter-spacing:.04em;cursor:pointer;transition:all .3s;border:1px solid var(--rose);background:transparent;color:var(--rose-dark);}
-.plan-cta:hover{background:var(--rose-dark);color:white;border-color:var(--rose-dark);}
+.plan-cta{width:100%;padding:.95rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.82rem;letter-spacing:.05em;cursor:none;transition:all .4s ease;border:1.5px solid var(--rose);background:transparent;color:var(--rose-dark);}
+.plan-cta:hover{background:var(--rose-dark);color:white;border-color:var(--rose-dark);transform:translateY(-2px);box-shadow:0 8px 24px rgba(168,112,106,.25);}
 .plan-card.pop .plan-cta{background:var(--rose-dark);color:white;border-color:var(--rose-dark);}
 .plan-card.pop .plan-cta:hover{background:var(--rose);}
 .credits-info{background:var(--white);border-radius:20px;padding:2rem 2.5rem;border:1px solid var(--border);margin-top:1.5rem;}
@@ -157,4 +160,5 @@ function startPlan(planName, credits, price) {
   location.href = 'mi-cuenta.html?plan=' + encodeURIComponent(planName) + '&credits=' + credits + '&price=' + price;
 }
 </script>
+<script src="animations.js"></script>
 </body></html>

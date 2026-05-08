@@ -1,43 +1,46 @@
 <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Servicios | Lic. Agustina Villegas</title><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"></head><body>
 <style>
-.svc-hero{padding:8rem 5rem 4rem;background:var(--white);}
-.svc-hero p{font-size:1rem;color:var(--text-muted);max-width:540px;line-height:1.85;font-weight:300;margin-top:1rem;}
-.tabs-row{display:flex;gap:.4rem;background:var(--blush);padding:4px;border-radius:50px;display:inline-flex;margin-top:2rem;}
-.tab-btn{padding:.5rem 1.5rem;border-radius:50px;border:none;background:transparent;font-family:"DM Sans",sans-serif;font-size:.8rem;color:var(--text-muted);cursor:pointer;transition:all .3s;}
-.tab-btn.active{background:var(--white);color:var(--rose-deep);box-shadow:0 2px 8px rgba(168,112,106,.15);}
-.svc-body{padding:3rem 5rem 5rem;background:var(--white);}
+.svc-hero{padding:9rem 5rem 4.5rem;background:var(--white);position:relative;overflow:hidden;}
+.svc-hero::before{content:"";position:absolute;right:-2rem;top:0;bottom:0;width:35%;background:var(--cream2);clip-path:polygon(18% 0%,100% 0%,100% 100%,0% 100%);z-index:0;}
+.svc-hero>*{position:relative;z-index:1;}
+.svc-hero p{font-size:1rem;color:var(--text-muted);max-width:540px;line-height:1.9;font-weight:300;margin-top:1rem;}
+.tabs-row{display:inline-flex;gap:.3rem;background:var(--blush);padding:4px;border-radius:50px;margin-top:2.2rem;}
+.tab-btn{padding:.55rem 1.8rem;border-radius:50px;border:none;background:transparent;font-family:"DM Sans",sans-serif;font-size:.78rem;letter-spacing:.05em;color:var(--text-muted);cursor:none;transition:all .35s ease;}
+.tab-btn.active{background:var(--white);color:var(--rose-deep);box-shadow:0 2px 14px rgba(42,33,24,.1);}
+.svc-body{padding:3.5rem 5rem 6rem;background:var(--white);}
 .svc-panel{display:none;}.svc-panel.active{display:block;}
-.nut-bento{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto auto;gap:1.2rem;}
-.nut-card{background:var(--cream);border:1px solid var(--border);border-radius:20px;padding:1.8rem;cursor:pointer;transition:all .35s;position:relative;overflow:hidden;text-decoration:none;display:block;color:inherit;}
-.nut-card::after{content:"";position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--rose-dark);transform:scaleX(0);transform-origin:left;transition:transform .4s;}
-.nut-card:hover{transform:translateY(-4px);box-shadow:0 14px 36px rgba(168,112,106,.1);border-color:var(--border2);}.nut-card:hover::after{transform:scaleX(1);}
-.nut-card.main{grid-column:span 2;background:var(--rose-deep);border-color:var(--rose-deep);display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:center;padding:2.2rem;}
-.nut-card.main::after{background:rgba(255,255,255,.25);}
-.nut-card.main .card-img{border-radius:14px;overflow:hidden;height:200px;}
+.nut-bento{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto auto;gap:1.3rem;}
+.nut-card{background:var(--cream);border:1px solid var(--border);border-radius:22px;padding:2rem;cursor:none;transition:box-shadow .4s ease,border-color .3s;position:relative;overflow:hidden;text-decoration:none;display:block;color:inherit;}
+.nut-card::after{content:"";position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(to right,var(--rose-dark),var(--rose));transform:scaleX(0);transform-origin:left;transition:transform .5s ease;}
+.nut-card:hover{box-shadow:0 20px 56px rgba(42,33,24,.1);border-color:var(--border2);}.nut-card:hover::after{transform:scaleX(1);}
+.nut-card.main{grid-column:span 2;background:var(--rose-deep);border-color:var(--rose-deep);display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:center;padding:2.4rem;}
+.nut-card.main::after{background:rgba(255,255,255,.3);}
+.nut-card.main .card-img{border-radius:16px;overflow:hidden;height:210px;}
 .nut-card.main .card-img img{width:100%;height:100%;object-fit:cover;}
-.nut-card h3{font-family:"Cormorant Garamond",serif;font-size:1.2rem;font-weight:400;margin-bottom:.4rem;}
-.nut-card.main h3{color:white;font-size:1.5rem;}
-.nut-card p{font-size:.83rem;color:var(--text-muted);line-height:1.65;margin-bottom:1rem;font-weight:300;}
-.nut-card.main p{color:rgba(255,255,255,.75);}
-.svc-price{font-family:"Cormorant Garamond",serif;font-size:1.5rem;font-weight:400;color:var(--rose-dark);}
-.nut-card.main .svc-price{color:white;font-size:1.8rem;}
+.nut-card h3{font-family:"Cormorant Garamond",serif;font-size:1.25rem;font-weight:400;margin-bottom:.4rem;}
+.nut-card.main h3{color:white;font-size:1.55rem;}
+.nut-card p{font-size:.83rem;color:var(--text-muted);line-height:1.68;margin-bottom:1rem;font-weight:300;}
+.nut-card.main p{color:rgba(255,255,255,.72);}
+.svc-price{font-family:"Cormorant Garamond",serif;font-size:1.55rem;font-weight:400;color:var(--rose-dark);}
+.nut-card.main .svc-price{color:white;font-size:1.9rem;}
 .svc-dur{font-size:.72rem;color:var(--text-muted);margin-top:.15rem;}
-.nut-card.main .svc-dur{color:rgba(255,255,255,.6);}
-.svc-badge{display:inline-block;font-size:.68rem;padding:2px 8px;border-radius:50px;background:var(--sage-pale);color:var(--sage);border:1px solid var(--sage-light);margin-top:.6rem;margin-right:3px;}
+.nut-card.main .svc-dur{color:rgba(255,255,255,.58);}
+.svc-badge{display:inline-block;font-size:.68rem;padding:2px 9px;border-radius:50px;background:var(--sage-pale);color:var(--sage);border:1px solid var(--sage-light);margin-top:.6rem;margin-right:3px;}
 .nut-card.main .svc-badge{background:rgba(255,255,255,.15);color:rgba(255,255,255,.8);border-color:rgba(255,255,255,.2);}
-.card-reserve-hint{display:inline-flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--rose-dark);margin-top:.8rem;font-weight:500;}
-.mas-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}
-.mas-card{background:var(--cream);border:1px solid var(--border);border-radius:20px;padding:1.6rem 1.4rem;cursor:pointer;transition:all .35s;position:relative;overflow:hidden;text-decoration:none;display:block;color:inherit;}
-.mas-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--rose-dark);transform:scaleX(0);transform-origin:center;transition:transform .4s;}
-.mas-card:hover{transform:translateY(-4px);box-shadow:0 14px 36px rgba(168,112,106,.1);}.mas-card:hover::before{transform:scaleX(1);}
+.card-reserve-hint{display:inline-flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--rose-dark);margin-top:.8rem;font-weight:500;transition:gap .3s ease;}
+.nut-card:hover .card-reserve-hint{gap:.65rem;}
+.mas-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem;}
+.mas-card{background:var(--cream);border:1px solid var(--border);border-radius:22px;padding:1.8rem 1.6rem;cursor:none;transition:box-shadow .4s ease,border-color .3s;position:relative;overflow:hidden;text-decoration:none;display:block;color:inherit;}
+.mas-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,var(--rose-dark),var(--rose));transform:scaleX(0);transform-origin:center;transition:transform .5s ease;}
+.mas-card:hover{box-shadow:0 20px 56px rgba(42,33,24,.1);border-color:var(--border2);}.mas-card:hover::before{transform:scaleX(1);}
 .mas-card.hl{background:var(--rose-deep);border-color:var(--rose-deep);}
 .mas-card.hl h3{color:white;}.mas-card.hl p{color:rgba(255,255,255,.7);}
 .mas-card.hl .svc-price{color:white;}.mas-card.hl .svc-dur{color:rgba(255,255,255,.55);}
 .mas-card.hl .card-reserve-hint{color:rgba(255,255,255,.6);}
-.reserve-band{background:var(--blush);padding:3.5rem 5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:2rem;}
-.reserve-band h3{font-family:"Cormorant Garamond",serif;font-size:1.8rem;font-weight:300;}
+.reserve-band{background:var(--blush);padding:4rem 5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:2rem;}
+.reserve-band h3{font-family:"Cormorant Garamond",serif;font-size:2rem;font-weight:300;}
 .reserve-band h3 em{font-style:italic;color:var(--rose-dark);}
-@media(max-width:1000px){.svc-hero,.svc-body,.reserve-band{padding-left:1.5rem;padding-right:1.5rem;}.nut-bento{grid-template-columns:1fr;}.nut-card.main{grid-column:span 1;grid-template-columns:1fr;}.nut-card.main .card-img{display:none;}.mas-grid{grid-template-columns:1fr 1fr;}.reserve-band{flex-direction:column;text-align:center;}}
+@media(max-width:1000px){.svc-hero,.svc-body,.reserve-band{padding-left:1.5rem;padding-right:1.5rem;}.svc-hero::before{display:none;}.nut-bento{grid-template-columns:1fr;}.nut-card.main{grid-column:span 1;grid-template-columns:1fr;}.nut-card.main .card-img{display:none;}.mas-grid{grid-template-columns:1fr 1fr;}.reserve-band{flex-direction:column;text-align:center;}}
 @media(max-width:560px){.mas-grid{grid-template-columns:1fr;}}
 </style>
 </head><body>
@@ -170,4 +173,5 @@ const urlTab=new URLSearchParams(window.location.search).get("tab");
 const startTab=urlTab==="masajes"?"mas":"nut";
 showTab(startTab,document.getElementById("tab-"+startTab));
 </script>
+<script src="animations.js"></script>
 </body></html>
