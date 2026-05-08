@@ -196,6 +196,63 @@ tbody tr:hover td{background:var(--cream);}
 .btn-surv{font-size:.7rem;padding:.3rem .85rem;border-radius:50px;background:var(--sage-pale);color:var(--sage);border:1px solid var(--sage-light);cursor:pointer;white-space:nowrap;transition:all .2s;}
 .btn-surv:hover{background:var(--sage);color:#fff;}
 
+/* ── PRECIOS KV ── */
+.price-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.85rem;margin-bottom:1.1rem;}
+.price-card{background:var(--white);border-radius:13px;border:1px solid var(--border);overflow:hidden;}
+.price-card-hd{padding:.7rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--cream);}
+.price-card-title{font-size:.8rem;font-weight:500;}
+.price-card-body{padding:.85rem 1rem;}
+.pf-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;}
+.pf-row label{flex:1;font-size:.72rem;color:var(--text-muted);}
+.pf-row input{width:100px;padding:.38rem .65rem;border:1px solid var(--border);border-radius:7px;font-size:.82rem;background:var(--cream);outline:none;text-align:right;}
+.pf-row input:focus{border-color:var(--rose);}
+
+/* ── CUPONES ── */
+.cup-form{background:var(--white);border-radius:13px;border:1px solid var(--border);padding:1.1rem 1.2rem;margin-bottom:1rem;display:none;}
+.cup-form.on{display:block;}
+.cup-form h3{font-size:.85rem;font-weight:500;margin-bottom:.85rem;}
+.cup-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.7rem;}
+.cup-grid-full{grid-column:span 3;}
+
+/* ── NEWSLETTER ── */
+.nl-compose{background:var(--white);border-radius:13px;border:1px solid var(--border);padding:1.2rem;margin-bottom:1rem;}
+.nl-compose h3{font-size:.85rem;font-weight:500;margin-bottom:.75rem;}
+.nl-compose textarea{width:100%;padding:.6rem .85rem;background:var(--cream);border:1px solid var(--border);border-radius:9px;font-size:.82rem;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;min-height:100px;}
+.nl-compose textarea:focus{border-color:var(--rose);}
+.nl-row{display:flex;gap:.7rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:.8rem;}
+.nl-row .fi{flex:1;min-width:180px;}
+
+/* ── HISTORIA CLÍNICA ── */
+.hist-search{display:flex;gap:.7rem;margin-bottom:1rem;flex-wrap:wrap;}
+.hist-search input{flex:1;min-width:200px;padding:.52rem .85rem;background:var(--white);border:1px solid var(--border);border-radius:9px;font-size:.82rem;outline:none;}
+.hist-search input:focus{border-color:var(--rose);}
+.timeline{padding:.5rem 0;}
+.tl-item{display:flex;gap:1rem;margin-bottom:1.1rem;align-items:flex-start;}
+.tl-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;margin-top:.1rem;}
+.tl-icon-book{background:var(--sage-pale);color:var(--sage);}
+.tl-icon-pdf{background:var(--blush);color:var(--rose-deep);}
+.tl-icon-note{background:var(--amber-pale);color:var(--amber);}
+.tl-icon-hab{background:#EDE9FE;color:#7C3AED;}
+.tl-body{flex:1;background:var(--white);border-radius:9px;border:1px solid var(--border);padding:.6rem .9rem;}
+.tl-title{font-size:.82rem;font-weight:500;}
+.tl-time{font-size:.68rem;color:var(--text-muted);margin-top:.12rem;}
+.tl-data{font-size:.76rem;color:var(--text-muted);margin-top:.25rem;line-height:1.5;}
+.note-form{display:flex;gap:.6rem;margin-top:.85rem;align-items:flex-end;}
+.note-form textarea{flex:1;padding:.55rem .8rem;border:1px solid var(--border);border-radius:9px;font-size:.8rem;font-family:'DM Sans',sans-serif;resize:none;height:70px;outline:none;background:var(--cream);}
+.note-form textarea:focus{border-color:var(--rose);}
+
+/* ── RESEÑAS ── */
+.rev-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1rem;}
+.rev-tab{padding:.65rem 1.4rem;border:none;background:transparent;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;color:var(--text-muted);transition:all .2s;}
+.rev-tab.on{color:var(--rose-dark);border-bottom-color:var(--rose-dark);}
+.rev-card{background:var(--white);border-radius:11px;border:1px solid var(--border);padding:.9rem 1.1rem;margin-bottom:.7rem;}
+.rev-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.4rem;}
+.rev-name{font-weight:500;font-size:.88rem;flex:1;}
+.rev-stars{color:#F59E0B;font-size:.85rem;letter-spacing:.1em;}
+.rev-text{font-size:.82rem;color:var(--text-muted);line-height:1.6;margin-bottom:.5rem;}
+.rev-meta{font-size:.68rem;color:var(--text-muted);}
+.rev-actions{display:flex;gap:.5rem;margin-top:.65rem;}
+
 /* ── CLIENTES ── */
 .cl-search-row{display:flex;gap:.7rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap;}
 .cl-search-row input{flex:1;min-width:180px;padding:.52rem .85rem;background:var(--white);border:1px solid var(--border);border-radius:9px;font-size:.82rem;outline:none;}
@@ -331,7 +388,7 @@ tbody tr:hover td{background:var(--cream);}
         <!-- Botón migración (oculto hasta que sea necesario) -->
         <div id="migrationBox" style="display:none;margin-top:1rem;">
           <div class="banner banner-amber">⚙️ <strong>Migración pendiente:</strong> los datos están en Edge Config. Hacé clic para migrarlos al nuevo sistema (Vercel KV). Solo es necesario hacerlo una vez.</div>
-          <button class="btn-save" style="margin-top:.6rem;" onclick="runMigration()">Migrar datos a Vercel KV</button>
+          <button class="btn-act" style="margin-top:.6rem;" onclick="runMigration()">Migrar datos a Vercel KV</button>
         </div>
       </div>
     </div>
@@ -569,6 +626,159 @@ tbody tr:hover td{background:var(--cream);}
       </div>
     </div>
 
+    <!-- PRECIOS -->
+    <div id="p-precios" class="panel">
+      <div class="ph"><h1>Precios</h1><p>Modificá los precios — se actualizan en toda la web automáticamente</p></div>
+      <div class="pb">
+        <div class="banner banner-amber">💡 Los precios se guardan en la nube (Vercel KV). Al guardar, la página de reservas los lee automáticamente.</div>
+        <div class="price-grid">
+          <div class="price-card">
+            <div class="price-card-hd"><span class="price-card-title">Nutrición</span></div>
+            <div class="price-card-body">
+              <div class="pf-row"><label>Primera consulta</label><input id="pr-consulta" placeholder="1200"></div>
+              <div class="pf-row"><label>Consulta de control</label><input id="pr-control" placeholder="800"></div>
+              <div class="pf-row"><label>Plan de alimentación</label><input id="pr-plan" placeholder="2500"></div>
+              <div class="pf-row"><label>Medición ISAK</label><input id="pr-isak" placeholder="1100"></div>
+            </div>
+          </div>
+          <div class="price-card">
+            <div class="price-card-hd"><span class="price-card-title">Masajes</span></div>
+            <div class="price-card-body">
+              <div class="pf-row"><label>Cuerpo completo</label><input id="pr-cuerpo" placeholder="1100"></div>
+              <div class="pf-row"><label>Descontracturante</label><input id="pr-descontrac" placeholder="890"></div>
+              <div class="pf-row"><label>Relajante</label><input id="pr-relajante" placeholder="800"></div>
+              <div class="pf-row"><label>Drenaje linfático</label><input id="pr-drenaje" placeholder="750"></div>
+              <div class="pf-row"><label>Deportivo</label><input id="pr-deportivo" placeholder="890"></div>
+              <div class="pf-row"><label>Embarazadas</label><input id="pr-embarazo" placeholder="800"></div>
+            </div>
+          </div>
+          <div class="price-card">
+            <div class="price-card-hd"><span class="price-card-title">Planes</span></div>
+            <div class="price-card-body">
+              <div class="pf-row"><label>Plan 2 meses</label><input id="pr-plan2" placeholder="4100"></div>
+              <div class="pf-row"><label>Plan 3 meses</label><input id="pr-plan3" placeholder="5300"></div>
+              <div class="pf-row"><label>Plan 6 meses</label><input id="pr-plan6" placeholder="9700"></div>
+            </div>
+          </div>
+          <div class="price-card">
+            <div class="price-card-hd"><span class="price-card-title">Hábito</span></div>
+            <div class="price-card-body">
+              <div class="pf-row"><label>Energética × 1</label><input id="pr-hab-ener1" placeholder="55"></div>
+              <div class="pf-row"><label>Energética × 12</label><input id="pr-hab-ener12" placeholder="605"></div>
+              <div class="pf-row"><label>Proteica × 1</label><input id="pr-hab-prot1" placeholder="70"></div>
+              <div class="pf-row"><label>Proteica × 12</label><input id="pr-hab-prot12" placeholder="770"></div>
+            </div>
+          </div>
+        </div>
+        <button class="btn-act" onclick="savePrecios()">Guardar todos los precios</button>
+      </div>
+    </div>
+
+    <!-- CUPONES -->
+    <div id="p-cupones" class="panel">
+      <div class="ph"><h1>Cupones</h1><p>Descuentos para reservas — porcentaje, monto fijo o consulta gratis</p></div>
+      <div class="pb">
+        <div style="display:flex;gap:.7rem;margin-bottom:1rem;">
+          <button class="btn-act" onclick="openCuponForm()">＋ Nuevo cupón</button>
+        </div>
+        <div class="cup-form" id="cup-form">
+          <h3 id="cup-form-title">Nuevo cupón</h3>
+          <div class="cup-grid">
+            <div class="fi"><label>Código</label><input id="cup-code" placeholder="BIENVENIDA20" style="text-transform:uppercase"></div>
+            <div class="fi"><label>Tipo</label>
+              <select id="cup-type" onchange="updateCuponTypeUI()">
+                <option value="percent">% descuento</option>
+                <option value="fixed">Monto fijo (UYU)</option>
+                <option value="free">Consulta gratis</option>
+              </select>
+            </div>
+            <div class="fi" id="cup-value-wrap"><label>Valor</label><input id="cup-value" type="number" placeholder="20"></div>
+            <div class="fi"><label>Usos máx. (0 = ilimitado)</label><input id="cup-max" type="number" placeholder="0" value="0"></div>
+            <div class="fi"><label>Vence (dejar vacío = sin límite)</label><input id="cup-exp" type="date"></div>
+            <div class="fi"><label>Estado</label>
+              <select id="cup-active"><option value="1">Activo</option><option value="0">Inactivo</option></select>
+            </div>
+          </div>
+          <div style="display:flex;gap:.5rem;margin-top:.8rem;">
+            <button class="btn-act" onclick="saveCupon()">Guardar cupón</button>
+            <button class="btn-xs btn-del" onclick="closeCuponForm()" style="padding:.5rem 1rem;">Cancelar</button>
+          </div>
+        </div>
+        <div class="tcard">
+          <div class="tcard-hd"><span class="tcard-title">Todos los cupones</span><span class="badge b-rose" id="cup-cnt">0</span></div>
+          <div class="tw"><table>
+            <thead><tr><th>Código</th><th>Tipo</th><th>Descuento</th><th>Usos</th><th>Vence</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="cup-rows"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEWSLETTER -->
+    <div id="p-newsletter" class="panel">
+      <div class="ph"><h1>Newsletter</h1><p>Suscriptores y envío de emails masivos</p></div>
+      <div class="pb">
+        <div class="banner banner-amber">⚠️ EmailJS tiene límite de 200 emails/mes en el plan gratuito. Usá con moderación.</div>
+        <div class="nl-compose">
+          <h3>Enviar newsletter</h3>
+          <div class="nl-row">
+            <div class="fi" style="flex:2;"><label>Asunto</label><input id="nl-subject" placeholder="Novedades de mayo..."></div>
+          </div>
+          <textarea id="nl-body" placeholder="Cuerpo del email (texto plano o HTML básico)..."></textarea>
+          <div style="display:flex;gap:.7rem;align-items:center;margin-top:.7rem;flex-wrap:wrap;">
+            <button class="btn-act" onclick="sendNewsletter()">Enviar a todos los suscriptores activos</button>
+            <span id="nl-status" style="font-size:.75rem;color:var(--text-muted);"></span>
+          </div>
+        </div>
+        <div class="tcard">
+          <div class="tcard-hd">
+            <span class="tcard-title">Suscriptores</span>
+            <div class="tcard-right">
+              <button class="btn-xs btn-ok" onclick="exportNewsletter()">Exportar CSV</button>
+              <span class="badge b-green" id="nl-cnt">0</span>
+            </div>
+          </div>
+          <div class="tw"><table>
+            <thead><tr><th>Nombre</th><th>Email</th><th>Fecha alta</th><th>Origen</th><th>Estado</th><th>Acción</th></tr></thead>
+            <tbody id="nl-rows"></tbody>
+          </table></div>
+        </div>
+        <div style="margin-top:1rem;">
+          <h3 style="font-size:.85rem;font-weight:500;margin-bottom:.6rem;">Agregar suscriptor manualmente</h3>
+          <div style="display:flex;gap:.7rem;flex-wrap:wrap;">
+            <div class="fi"><label>Nombre</label><input id="nl-add-name" placeholder="María"></div>
+            <div class="fi"><label>Email</label><input id="nl-add-email" type="email" placeholder="maria@email.com"></div>
+            <div style="display:flex;align-items:flex-end;"><button class="btn-act" onclick="addNlSuscriptor()">Agregar</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORIA CLÍNICA -->
+    <div id="p-historia" class="panel">
+      <div class="ph"><h1>Historia clínica</h1><p>Timeline de eventos por paciente</p></div>
+      <div class="pb">
+        <div class="hist-search">
+          <input type="text" id="hist-search" placeholder="Buscar por email o nombre..." oninput="searchHistoria(this.value)">
+          <button class="btn-act" onclick="searchHistoria(document.getElementById('hist-search').value)">Buscar</button>
+        </div>
+        <div id="hist-result"></div>
+      </div>
+    </div>
+
+    <!-- RESEÑAS -->
+    <div id="p-resenas" class="panel">
+      <div class="ph"><h1>Reseñas</h1><p>Aprobá o rechazá las reseñas de pacientes</p></div>
+      <div class="pb">
+        <div class="rev-tabs">
+          <button class="rev-tab on" onclick="switchRevTab('pending',this)">Pendientes <span id="rev-cnt-pending" class="badge b-amber" style="margin-left:.3rem;">0</span></button>
+          <button class="rev-tab" onclick="switchRevTab('approved',this)">Publicadas <span id="rev-cnt-approved" class="badge b-green" style="margin-left:.3rem;">0</span></button>
+          <button class="rev-tab" onclick="switchRevTab('rejected',this)">Rechazadas <span id="rev-cnt-rejected" class="badge b-gray" style="margin-left:.3rem;">0</span></button>
+        </div>
+        <div id="rev-list"></div>
+      </div>
+    </div>
+
   </div><!-- /main-area -->
 </div><!-- /adminShell -->
 
@@ -606,9 +816,15 @@ function bootApp(){
 function go(name,btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('on'));
-  document.getElementById('p-'+name).classList.add('on');
+  const panel=document.getElementById('p-'+name);
+  if(panel) panel.classList.add('on');
   if(btn) btn.classList.add('on');
-  ({reservas:loadReservas,creditos:loadCreditos,pedidos:loadPedidos,contenido:loadContent,agenda:loadAgenda,encuesta:loadEncuesta,clientes:renderClientes,portafolio:renderPortfolio}[name]||function(){})();
+  ({reservas:loadReservas,creditos:loadCreditos,pedidos:loadPedidos,contenido:loadContent,
+    agenda:loadAgenda,encuesta:loadEncuesta,clientes:renderClientes,portafolio:renderPortfolio,
+    precios:loadPrecios,cupones:loadCupones,newsletter:loadNewsletter,
+    historia:()=>{ document.getElementById('hist-result').innerHTML=''; document.getElementById('hist-search').value=''; },
+    resenas:loadResenas
+  }[name]||function(){})();
 }
 
 // window.storage shim — dual fallback: Vercel KV → Edge Config → localStorage
@@ -656,18 +872,56 @@ async function loadDashboard(){
   const us=await st('agustina_users')||{};
   const od=await st('habito_orders')||[];
   const today=new Date().toISOString().split('T')[0];
-  let total=0; const up=[];
+  const thisMonth=today.slice(0,7); // "YYYY-MM"
+  const prices=await st('ag:prices')||{};
+  const basePrice=parseInt(prices.consulta||1200);
+
+  let total=0,monthCount=0,monthIncome=0; const up=[]; const allBk=[];
+  const seenEmailsMonth=new Set();
   for(const[d,slots] of Object.entries(bk))
     for(const[t,v] of Object.entries(slots)){
       total++;
       const b={date:d,time:t,...(typeof v==='object'?v:{})};
+      allBk.push(b);
       if(d>=today) up.push(b);
+      if(d.startsWith(thisMonth)){
+        monthCount++;
+        monthIncome+=basePrice;
+        if(b.email)seenEmailsMonth.add(b.email);
+      }
     }
   up.sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+
+  // mini chart — last 4 weeks
+  const now=new Date();
+  const weeks=[0,0,0,0];
+  allBk.forEach(b=>{
+    const diff=Math.floor((now-new Date(b.date))/(7*864e5));
+    if(diff>=0&&diff<4) weeks[3-diff]++;
+  });
+  const maxW=Math.max(...weeks,1);
+  document.getElementById('chart-w').innerHTML=weeks.map((n,i)=>{
+    const pct=Math.round((n/maxW)*100);
+    const labels=['sem-4','sem-3','sem-2','sem-1'];
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div style="font-size:.65rem;color:var(--text-muted);">${n}</div>
+      <div style="width:100%;height:${pct||2}%;background:var(--rose-dark);border-radius:3px 3px 0 0;transition:height .6s ease;min-height:2px;"></div>
+      <div style="font-size:.6rem;color:var(--text-muted);">${labels[i]}</div>
+    </div>`;
+  }).join('');
+
+  // pdf stats
+  let pdfCount=0;
+  try{const ps=await window.storage.lrange('ag:pdf_stats',0,-1);pdfCount=ps.length;}catch(e){}
+
   document.getElementById('s1').textContent=up.length;
   document.getElementById('s2').textContent=total;
   document.getElementById('s3').textContent=Object.keys(us).length;
   document.getElementById('s4').textContent=(od||[]).length;
+  document.getElementById('s5').textContent=monthCount;
+  document.getElementById('s6').textContent='$'+monthIncome.toLocaleString('es');
+  document.getElementById('s7').textContent=seenEmailsMonth.size;
+  document.getElementById('s8').textContent=pdfCount;
   document.getElementById('d-cnt').textContent=up.length;
   document.getElementById('d-rows').innerHTML=up.slice(0,8).map(b=>`
     <tr><td class="td-bold">${b.name||'—'}</td><td>${b.svc||'Consulta'}</td>
@@ -1121,6 +1375,360 @@ function deleteSave(planId) {
   const saves = JSON.parse(localStorage.getItem('ag_plan_saves') || '[]');
   localStorage.setItem('ag_plan_saves', JSON.stringify(saves.filter(s => s.id !== planId)));
   renderClientes(document.getElementById('cl-search')?.value || '');
+}
+
+// ── PRECIOS ──
+const PR_FIELDS=['consulta','control','plan','isak','cuerpo','descontrac','relajante','drenaje','deportivo','embarazo','plan2','plan3','plan6','hab-ener1','hab-ener12','hab-prot1','hab-prot12'];
+async function loadPrecios(){
+  const p=await st('ag:prices')||{};
+  PR_FIELDS.forEach(k=>{const el=document.getElementById('pr-'+k);if(el&&p[k])el.value=p[k];});
+}
+async function savePrecios(){
+  const p={};
+  PR_FIELDS.forEach(k=>{const el=document.getElementById('pr-'+k);if(el&&el.value.trim())p[k]=el.value.trim();});
+  await sv('ag:prices',p);
+  toast('Precios guardados correctamente');
+}
+
+// ── CUPONES ──
+function updateCuponTypeUI(){
+  const t=document.getElementById('cup-type').value;
+  document.getElementById('cup-value-wrap').style.display=t==='free'?'none':'';
+}
+function openCuponForm(code){
+  document.getElementById('cup-form').classList.add('on');
+  document.getElementById('cup-code').value=code||'';
+  document.getElementById('cup-type').value='percent';
+  document.getElementById('cup-value').value='';
+  document.getElementById('cup-max').value='0';
+  document.getElementById('cup-exp').value='';
+  document.getElementById('cup-active').value='1';
+  updateCuponTypeUI();
+  document.getElementById('cup-form').scrollIntoView({behavior:'smooth'});
+}
+function closeCuponForm(){document.getElementById('cup-form').classList.remove('on');}
+
+async function loadCupons_hash(){
+  const r=await fetch('/api/kv?op=hgetall&key=ag:coupons',{cache:'no-store'});
+  if(!r.ok)return{};
+  const d=await r.json();
+  const obj={};
+  if(d.value&&typeof d.value==='object'){
+    for(const[k,v] of Object.entries(d.value)){
+      try{obj[k]=typeof v==='string'?JSON.parse(v):v;}catch{obj[k]=v;}
+    }
+  }
+  return obj;
+}
+
+async function loadCupones(){
+  const cups=await loadCupons_hash();
+  const rows=Object.values(cups);
+  document.getElementById('cup-cnt').textContent=rows.length;
+  if(!rows.length){
+    document.getElementById('cup-rows').innerHTML=`<tr class="empty"><td colspan="7">No hay cupones aún</td></tr>`;
+    return;
+  }
+  document.getElementById('cup-rows').innerHTML=rows.map(c=>{
+    const typeLabel={percent:'%',fixed:'UYU fijo',free:'Gratis'}[c.type]||c.type;
+    const discount=c.type==='free'?'100%':c.type==='percent'?c.value+'%':'$'+c.value;
+    const exp=c.expires||'Sin límite';
+    const used=`${c.uses_current||0}/${c.uses_max>0?c.uses_max:'∞'}`;
+    const statusBadge=c.active?`<span class="badge b-green">Activo</span>`:`<span class="badge b-gray">Inactivo</span>`;
+    const code=(c.code||'').replace(/'/g,"\\'");
+    return `<tr>
+      <td class="td-bold">${c.code}</td>
+      <td class="td-sm">${typeLabel}</td>
+      <td>${discount}</td>
+      <td class="td-sm">${used}</td>
+      <td class="td-sm">${exp}</td>
+      <td>${statusBadge}</td>
+      <td><button class="btn-xs btn-ok" onclick="toggleCupon('${code}')">Activar/Inact.</button> <button class="btn-xs btn-del" onclick="deleteCupon('${code}')">Eliminar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function saveCupon(){
+  const code=document.getElementById('cup-code').value.trim().toUpperCase();
+  if(!code){alert('Ingresá un código.');return;}
+  const type=document.getElementById('cup-type').value;
+  const value=parseInt(document.getElementById('cup-value').value)||0;
+  const uses_max=parseInt(document.getElementById('cup-max').value)||0;
+  const expires=document.getElementById('cup-exp').value||null;
+  const active=document.getElementById('cup-active').value==='1';
+  const cup={code,type,value,uses_max,uses_current:0,expires,active};
+  await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'hset',key:'ag:coupons',field:code,value:JSON.stringify(cup)})});
+  closeCuponForm();
+  loadCupones();
+  toast('Cupón '+code+' guardado');
+}
+
+async function toggleCupon(code){
+  const cups=await loadCupons_hash();
+  const c=cups[code];if(!c)return;
+  c.active=!c.active;
+  await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'hset',key:'ag:coupons',field:code,value:JSON.stringify(c)})});
+  loadCupones();
+  toast(code+' '+(c.active?'activado':'desactivado'));
+}
+
+async function deleteCupon(code){
+  if(!confirm('¿Eliminar cupón '+code+'?'))return;
+  await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'hdel',key:'ag:coupons',field:code})});
+  loadCupones();
+  toast('Cupón eliminado');
+}
+
+// ── NEWSLETTER ──
+async function loadNl_hash(){
+  const r=await fetch('/api/kv?op=hgetall&key=ag:newsletter',{cache:'no-store'});
+  if(!r.ok)return{};
+  const d=await r.json();
+  const obj={};
+  if(d.value&&typeof d.value==='object'){
+    for(const[k,v] of Object.entries(d.value)){
+      try{obj[k]=typeof v==='string'?JSON.parse(v):v;}catch{obj[k]=v;}
+    }
+  }
+  return obj;
+}
+
+async function loadNewsletter(){
+  const subs=await loadNl_hash();
+  const rows=Object.values(subs);
+  const active=rows.filter(s=>s.activo!==false);
+  document.getElementById('nl-cnt').textContent=rows.length;
+  if(!rows.length){
+    document.getElementById('nl-rows').innerHTML=`<tr class="empty"><td colspan="6">No hay suscriptores aún</td></tr>`;
+    return;
+  }
+  document.getElementById('nl-rows').innerHTML=rows.map(s=>{
+    const email=(s.email||'').replace(/'/g,"\\'");
+    const actBadge=s.activo!==false?`<span class="badge b-green">Activo</span>`:`<span class="badge b-gray">Baja</span>`;
+    return `<tr>
+      <td class="td-bold">${s.nombre||'—'}</td>
+      <td class="td-sm">${s.email}</td>
+      <td class="td-sm">${s.fecha||'—'}</td>
+      <td class="td-sm">${s.origen||'manual'}</td>
+      <td>${actBadge}</td>
+      <td><button class="btn-xs btn-del" onclick="unsub('${email}')">Dar de baja</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function addNlSuscriptor(){
+  const nombre=document.getElementById('nl-add-name').value.trim();
+  const email=document.getElementById('nl-add-email').value.trim().toLowerCase();
+  if(!email){alert('Ingresá el email.');return;}
+  const sub={nombre,email,fecha:new Date().toISOString().split('T')[0],activo:true,origen:'manual'};
+  await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'hset',key:'ag:newsletter',field:email,value:JSON.stringify(sub)})});
+  document.getElementById('nl-add-name').value='';
+  document.getElementById('nl-add-email').value='';
+  loadNewsletter();
+  toast('Suscriptor agregado');
+}
+
+async function unsub(email){
+  if(!confirm('¿Dar de baja a '+email+'?'))return;
+  const subs=await loadNl_hash();
+  if(subs[email]){subs[email].activo=false;await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'hset',key:'ag:newsletter',field:email,value:JSON.stringify(subs[email])})});}
+  loadNewsletter();
+  toast('Suscriptor dado de baja');
+}
+
+function exportNewsletter(){
+  loadNl_hash().then(subs=>{
+    const rows=Object.values(subs).filter(s=>s.activo!==false);
+    const csv='Nombre,Email,Fecha,Origen\n'+rows.map(s=>`"${s.nombre||''}","${s.email}","${s.fecha||''}","${s.origen||''}"`).join('\n');
+    const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='newsletter.csv';a.click();
+  });
+}
+
+async function sendNewsletter(){
+  const subj=document.getElementById('nl-subject').value.trim();
+  const body=document.getElementById('nl-body').value.trim();
+  if(!subj||!body){alert('Completá el asunto y el cuerpo.');return;}
+  const subs=await loadNl_hash();
+  const active=Object.values(subs).filter(s=>s.activo!==false&&s.email);
+  if(!active.length){alert('No hay suscriptores activos.');return;}
+  if(!confirm(`¿Enviar newsletter a ${active.length} suscriptores?`))return;
+  const statusEl=document.getElementById('nl-status');
+  statusEl.textContent='Enviando…';
+  let sent=0,failed=0;
+  for(const s of active){
+    try{
+      await emailjs.send('service_nnsgrl9','template_newsletter',{to_name:s.nombre||'',to_email:s.email,email:s.email,subject:subj,message:body,body});
+      sent++;
+    }catch(e){failed++;}
+  }
+  statusEl.textContent=`Enviado a ${sent} / fallaron ${failed}`;
+  toast('Newsletter enviado a '+sent+' suscriptores');
+}
+
+// ── HISTORIA CLÍNICA ──
+const TL_ICONS={booking:'📅',pdf:'📄',habito_order:'🛒',note:'📝',email:'✉️',coupon:'🏷',measurement:'📏'};
+const TL_ICON_CLASSES={booking:'tl-icon-book',pdf:'tl-icon-pdf',note:'tl-icon-note',habito_order:'tl-icon-hab'};
+
+async function searchHistoria(q){
+  q=(q||'').trim().toLowerCase();
+  if(!q){document.getElementById('hist-result').innerHTML='<p style="color:var(--text-muted);font-size:.83rem;padding:.5rem 0;">Ingresá un email o nombre para buscar.</p>';return;}
+  document.getElementById('hist-result').innerHTML='<p style="color:var(--text-muted);font-size:.83rem;">Buscando…</p>';
+
+  // Find matching email from bookings
+  const bk=await st('agustina_bookings_v2')||{};
+  let matchEmail=null,matchName='';
+  for(const slots of Object.values(bk))
+    for(const v of Object.values(slots))
+      if(v&&typeof v==='object'){
+        if((v.email||'').toLowerCase().includes(q)||(v.name||'').toLowerCase().includes(q)){
+          matchEmail=v.email;matchName=v.name||v.email;break;
+        }
+      }
+  if(!matchEmail){
+    document.getElementById('hist-result').innerHTML='<p style="color:var(--text-muted);font-size:.83rem;">No se encontró ningún paciente con ese dato.</p>';return;
+  }
+
+  // Load historia from KV
+  const histKey='ag:historia:'+matchEmail;
+  let events=[];
+  try{
+    const raw=await window.storage.lrange(histKey,0,-1);
+    events=raw.map(r=>typeof r==='string'?JSON.parse(r):r).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  }catch(e){}
+
+  // Also build history from bookings
+  const bkEvents=[];
+  for(const[d,slots] of Object.entries(bk))
+    for(const[t,v] of Object.entries(slots))
+      if(v&&v.email===matchEmail)
+        bkEvents.push({id:d+'T'+t,ts:d+'T'+t+':00',type:'booking',data:{date:d,time:t,svc:v.svc,modality:v.modality}});
+
+  const allEvents=[...events];
+  // Merge bkEvents avoiding duplicates
+  bkEvents.forEach(be=>{if(!allEvents.find(e=>e.type==='booking'&&e.data&&e.data.date===be.data.date&&e.data.time===be.data.time))allEvents.push(be);});
+  allEvents.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+
+  // Note form
+  const noteFormHtml=`<div class="tcard" style="margin-bottom:1rem;">
+    <div class="tcard-hd"><span class="tcard-title">Nueva nota</span></div>
+    <div style="padding:.9rem 1.1rem;">
+      <div class="note-form">
+        <textarea id="nota-txt" placeholder="Escribí una nota clínica sobre esta consulta..."></textarea>
+        <button class="btn-act" onclick="saveNota('${matchEmail}','${matchName.replace(/'/g,"\\'")}')">Guardar nota</button>
+      </div>
+    </div>
+  </div>`;
+
+  if(!allEvents.length){
+    document.getElementById('hist-result').innerHTML=`<h3 style="font-size:1rem;margin-bottom:.8rem;font-family:'Cormorant Garamond',serif;">${matchName}</h3>${noteFormHtml}<p style="color:var(--text-muted);font-size:.83rem;">Sin eventos registrados aún.</p>`;
+    return;
+  }
+
+  const timelineHtml=allEvents.map(e=>{
+    const dt=e.ts?new Date(e.ts).toLocaleString('es',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    const icon=TL_ICONS[e.type]||'•';
+    const cls=TL_ICON_CLASSES[e.type]||'tl-icon-book';
+    let title='',detail='';
+    if(e.type==='booking'){const d=e.data||{};title='Reserva — '+(d.svc||'Consulta');detail=`${d.date||''} ${d.time||''} · ${d.modality||'Presencial'}`;}
+    else if(e.type==='note'){title='Nota clínica';detail=e.data&&e.data.text?e.data.text:'';}
+    else if(e.type==='pdf'){title='PDF generado';detail=e.data&&e.data.tipo?'Tipo: '+e.data.tipo:'';}
+    else if(e.type==='habito_order'){title='Pedido Hábito';detail=e.data&&e.data.items?(e.data.items).join(', '):'';}
+    else{title=e.type;detail=JSON.stringify(e.data||{}).slice(0,80);}
+    return `<div class="tl-item">
+      <div class="tl-icon ${cls}">${icon}</div>
+      <div class="tl-body">
+        <div class="tl-title">${title}</div>
+        <div class="tl-time">${dt}</div>
+        ${detail?`<div class="tl-data">${detail}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('hist-result').innerHTML=`
+    <h3 style="font-size:1.1rem;margin-bottom:.9rem;font-family:'Cormorant Garamond',serif;">${matchName} <span style="font-size:.75rem;color:var(--text-muted);font-family:'DM Sans',sans-serif;">${matchEmail}</span></h3>
+    ${noteFormHtml}
+    <div class="tcard">
+      <div class="tcard-hd"><span class="tcard-title">Timeline (${allEvents.length} eventos)</span></div>
+      <div style="padding:1rem 1.1rem;"><div class="timeline">${timelineHtml}</div></div>
+    </div>`;
+}
+
+async function saveNota(email,nombre){
+  const txt=document.getElementById('nota-txt')?.value?.trim();
+  if(!txt){alert('Escribí alguna nota antes de guardar.');return;}
+  const event={id:Date.now().toString(),ts:new Date().toISOString(),type:'note',data:{text:txt,author:'Agustina'}};
+  await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'lpush',key:'ag:historia:'+email,value:JSON.stringify(event)})});
+  toast('Nota guardada');
+  searchHistoria(email);
+}
+
+// ── RESEÑAS ──
+let _revTab='pending';
+async function loadResenas(){
+  const raw=await window.storage.lrange('ag:reviews',0,-1);
+  const reviews=raw.map(r=>typeof r==='string'?JSON.parse(r):r);
+  const byStatus={pending:[],approved:[],rejected:[]};
+  reviews.forEach(r=>{(byStatus[r.status]||byStatus.pending).push(r);});
+  document.getElementById('rev-cnt-pending').textContent=byStatus.pending.length;
+  document.getElementById('rev-cnt-approved').textContent=byStatus.approved.length;
+  document.getElementById('rev-cnt-rejected').textContent=byStatus.rejected.length;
+  renderRevList(byStatus[_revTab]||[],_revTab);
+}
+
+function renderRevList(revs,status){
+  const el=document.getElementById('rev-list');
+  if(!revs.length){el.innerHTML='<p style="color:var(--text-muted);font-size:.83rem;padding:.5rem 0;">No hay reseñas en esta categoría.</p>';return;}
+  el.innerHTML=revs.map(r=>{
+    const stars='★'.repeat(r.rating||5)+'☆'.repeat(5-(r.rating||5));
+    const dt=r.fecha?new Date(r.fecha).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'}):'—';
+    const rid=(r.id||'').replace(/'/g,"\\'");
+    let actions='';
+    if(status==='pending') actions=`<button class="btn-xs btn-ok" onclick="approveRev('${rid}')">Aprobar</button> <button class="btn-xs btn-del" onclick="rejectRev('${rid}')">Rechazar</button>`;
+    else if(status==='approved') actions=`<button class="btn-xs btn-del" onclick="rejectRev('${rid}')">Quitar</button>`;
+    else if(status==='rejected') actions=`<button class="btn-xs btn-ok" onclick="approveRev('${rid}')">Publicar</button>`;
+    return `<div class="rev-card">
+      <div class="rev-header">
+        <div class="rev-name">${r.nombre||'Anónimo'}</div>
+        <div class="rev-stars">${stars}</div>
+        <div class="rev-meta">${dt}</div>
+      </div>
+      <div class="rev-text">${r.texto||''}</div>
+      <div class="rev-actions">${actions}</div>
+    </div>`;
+  }).join('');
+}
+
+function switchRevTab(status,btn){
+  _revTab=status;
+  document.querySelectorAll('.rev-tab').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  loadResenas();
+}
+
+async function approveRev(id){await _setRevStatus(id,'approved');toast('Reseña publicada');}
+async function rejectRev(id){await _setRevStatus(id,'rejected');toast('Reseña rechazada');}
+
+async function _setRevStatus(id,newStatus){
+  const raw=await window.storage.lrange('ag:reviews',0,-1);
+  const reviews=raw.map(r=>typeof r==='string'?JSON.parse(r):r);
+  const idx=reviews.findIndex(r=>r.id===id);
+  if(idx<0)return;
+  reviews[idx].status=newStatus;
+  // Rewrite entire list
+  await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'del',key:'ag:reviews'})});
+  for(const rev of reviews.slice().reverse()){
+    await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'lpush',key:'ag:reviews',value:JSON.stringify(rev)})});
+  }
+  loadResenas();
+}
+
+// ── MIGRACIÓN ──
+async function runMigration(){
+  try{
+    const r=await fetch('/api/migrate',{cache:'no-store'});
+    const d=await r.json();
+    alert('Migración completada:\n'+JSON.stringify(d.results,null,2));
+  }catch(e){alert('Error en migración: '+e.message);}
 }
 
 // Auto-boot
