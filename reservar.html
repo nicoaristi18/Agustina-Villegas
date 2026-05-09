@@ -266,7 +266,7 @@
     <div id="modality-section" style="display:none;margin-bottom:1.5rem;">
       <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.8rem;font-weight:500;">¿Cómo querés la consulta?</p>
       <div class="modality-row">
-        <button class="mod-btn active" id="mod-online" onclick="setModality('online')">💻 Online (videollamada)</button>
+        <button class="mod-btn active" id="mod-online" onclick="setModality('online')">Online (videollamada)</button>
         <button class="mod-btn" id="mod-presencial" onclick="setModality('presencial')">Presencial — Tarariras, Colonia</button>
       </div>
     </div>
@@ -312,6 +312,17 @@
       <div class="fg"><label>Email</label><input type="email" id="f-email" placeholder="tu@email.com"></div>
       <div class="fg"><label>WhatsApp</label><input type="tel" id="f-phone" placeholder="+598 09X XXX XXX"></div>
       <div class="fg"><label>Consulta o mensaje adicional (opcional)</label><input type="text" id="f-notes" placeholder="Alguna consulta o indicación especial..."></div>
+      <!-- CUPÓN -->
+      <div style="margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid var(--border);">
+        <div style="display:flex;gap:.6rem;align-items:flex-end;">
+          <div class="fg" style="flex:1;margin:0;">
+            <label style="font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:.3rem;">Cupón de descuento (opcional)</label>
+            <input type="text" id="f-coupon" placeholder="CÓDIGO" style="text-transform:uppercase;width:100%;padding:.58rem .85rem;background:var(--cream);border:1px solid var(--border);border-radius:7px;font-size:.85rem;outline:none;font-family:'DM Sans',sans-serif;">
+          </div>
+          <button onclick="applyCoupon()" style="padding:.58rem 1.1rem;background:transparent;border:1px solid var(--rose-dark);color:var(--rose-dark);border-radius:3px;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Aplicar</button>
+        </div>
+        <div id="coupon-msg" style="font-size:.78rem;margin-top:.4rem;display:none;"></div>
+      </div>
     </div>
     <div class="nav-btns">
       <button class="btn-back" onclick="goStep(2)">← Volver</button>
@@ -349,6 +360,53 @@
 window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',scrollY>50));
 
 let sel={svc:'',dur:0,price:'',type:'',date:null,time:'',dateStr:'',modality:'online'};
+let appliedCoupon=null; // cupón validado y aplicado
+
+async function applyCoupon(){
+  const code=(document.getElementById('f-coupon').value||'').trim().toUpperCase();
+  const msg=document.getElementById('coupon-msg');
+  msg.style.display='none'; appliedCoupon=null;
+  if(!code)return;
+
+  // Cargar cupones desde Edge Config
+  let cups={};
+  try{
+    const r=await fetch('/api/data?key=agustina_coupons',{cache:'no-store'});
+    if(r.ok){const d=await r.json();if(d.value)cups=typeof d.value==='string'?JSON.parse(d.value):d.value;}
+  }catch(e){}
+  // Fallback KV
+  if(!Object.keys(cups).length){
+    try{
+      const r=await fetch('/api/kv?op=hget&key=ag:coupons&field='+encodeURIComponent(code),{cache:'no-store'});
+      if(r.ok){const d=await r.json();if(d.value){cups[code]=typeof d.value==='string'?JSON.parse(d.value):d.value;}}
+    }catch(e){}
+  }
+
+  const cup=cups[code];
+  if(!cup||!cup.active){
+    msg.style.display='block';msg.style.color='var(--red)';msg.textContent='Cupón inválido o inactivo.';return;
+  }
+  if(cup.expires&&new Date(cup.expires)<new Date()){
+    msg.style.display='block';msg.style.color='var(--red)';msg.textContent='Este cupón ya venció.';return;
+  }
+  if(cup.uses_max>0&&(cup.uses_current||0)>=cup.uses_max){
+    msg.style.display='block';msg.style.color='var(--red)';msg.textContent='Este cupón ya alcanzó su límite de usos.';return;
+  }
+
+  appliedCoupon=cup;
+  const baseNum=parseInt((sel.price||'0').replace(/[^0-9]/g,''))||0;
+  let finalNum=baseNum;
+  let descLabel='';
+  if(cup.type==='percent'){finalNum=Math.round(baseNum*(1-cup.value/100));descLabel=`-${cup.value}%`;}
+  else if(cup.type==='fixed'){finalNum=Math.max(0,baseNum-cup.value);descLabel=`-$${cup.value}`;}
+  else if(cup.type==='free'){finalNum=0;descLabel='Consulta gratis';}
+
+  appliedCoupon._finalPrice=finalNum;
+  const priceEl=document.getElementById('cs-price');
+  if(priceEl) priceEl.innerHTML=`<span style="text-decoration:line-through;color:var(--text-muted);font-size:.85em;">${sel.price}</span> <strong style="color:var(--sage);">$${finalNum.toLocaleString('es')}</strong>`;
+  msg.style.display='block';msg.style.color='var(--sage)';
+  msg.textContent=finalNum===0?'¡Consulta gratis aplicada!':'Cupón aplicado: '+descLabel+' → $'+finalNum.toLocaleString('es');
+}
 const OPEN_H=8,CLOSE_H=20;
 let curYear=new Date().getFullYear(),curMonth=new Date().getMonth();
 
@@ -678,8 +736,10 @@ async function confirmBooking(){
   };
   sessionStorage.setItem('pending_booking', JSON.stringify(bookingData));
 
-  // Precio numérico (ej: '$2.500' → 2500)
-  const priceNum = parseInt((sel.price||'0').replace(/[^0-9]/g,''), 10) || 1;
+  // Precio numérico — si hay cupón aplicado, usar ese precio
+  const priceNum = (appliedCoupon && appliedCoupon._finalPrice !== undefined)
+    ? appliedCoupon._finalPrice
+    : (parseInt((sel.price||'0').replace(/[^0-9]/g,''), 10) || 1);
   const modLabel = sel.type==='masaje'?'Presencial':(sel.modality==='online'?'Online':'Presencial');
 
   try {

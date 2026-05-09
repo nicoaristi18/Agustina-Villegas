@@ -333,7 +333,6 @@ tbody tr:hover td{background:var(--cream);}
     <button class="sb-btn" onclick="go('creditos',this)"><span class="ic">🎟</span>Créditos</button>
     <button class="sb-btn" onclick="go('precios',this)"><span class="ic">💲</span>Precios</button>
     <button class="sb-btn" onclick="go('cupones',this)"><span class="ic">🏷</span>Cupones</button>
-    <button class="sb-btn" onclick="go('contenido',this)"><span class="ic">✏️</span>Contenido web</button>
     <button class="sb-btn" onclick="go('pedidos',this)"><span class="ic">📦</span>Pedidos Hábito</button>
     <button class="sb-btn" onclick="go('agenda',this)"><span class="ic">🗓</span>Mi agenda</button>
     <button class="sb-btn" onclick="go('portafolio',this)"><span class="ic">📚</span>Portfolio recetas</button>
@@ -955,7 +954,7 @@ function renderRes(data){
       <td><span class="badge ${b.modality&&b.modality.toLowerCase().includes('online')?'b-green':'b-gray'}">${b.modality||'Presencial'}</span></td>
       <td class="td-sm">${b.notes||'—'}</td>
       <td class="td-sm">${b.email||'—'}</td>
-      <td>${phone?`<a href="https://wa.me/${phone}" target="_blank" class="btn-xs btn-wa">WA</a>`:'—'}</td>
+      <td class="td-sm">${b.phone||'—'}</td>
       <td><button class="btn-xs btn-del" onclick="delRes('${b.date}','${b.time}')">Cancelar</button></td>
     </tr>`;
   }).join('')||`<tr class="empty"><td colspan="10">No hay reservas</td></tr>`;
@@ -1427,16 +1426,17 @@ function openCuponForm(code){
 function closeCuponForm(){document.getElementById('cup-form').classList.remove('on');}
 
 async function loadCupons_hash(){
-  const r=await fetch('/api/kv?op=hgetall&key=ag:coupons',{cache:'no-store'});
-  if(!r.ok)return{};
-  const d=await r.json();
-  const obj={};
-  if(d.value&&typeof d.value==='object'){
-    for(const[k,v] of Object.entries(d.value)){
-      try{obj[k]=typeof v==='string'?JSON.parse(v):v;}catch{obj[k]=v;}
-    }
-  }
-  return obj;
+  // 1. Edge Config (principal — siempre disponible)
+  try{
+    const r=await fetch('/api/data?key=agustina_coupons',{cache:'no-store'});
+    if(r.ok){const d=await r.json();if(d.value){const v=typeof d.value==='string'?JSON.parse(d.value):d.value;if(Object.keys(v).length)return v;}}
+  }catch(e){}
+  // 2. Fallback KV
+  try{
+    const r=await fetch('/api/kv?op=hgetall&key=ag:coupons',{cache:'no-store'});
+    if(r.ok){const d=await r.json();const obj={};if(d.value&&typeof d.value==='object'){for(const[k,v] of Object.entries(d.value)){try{obj[k]=typeof v==='string'?JSON.parse(v):v;}catch{obj[k]=v;}}}if(Object.keys(obj).length)return obj;}
+  }catch(e){}
+  return{};
 }
 
 async function loadCupones(){
@@ -1475,7 +1475,14 @@ async function saveCupon(){
   const expires=document.getElementById('cup-exp').value||null;
   const active=document.getElementById('cup-active').value==='1';
   const cup={code,type,value,uses_max,uses_current:0,expires,active};
-  await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'hset',key:'ag:coupons',field:code,value:JSON.stringify(cup)})});
+  // Cargar todos los cupones, agregar/pisar este y guardar el objeto completo
+  const all=await loadCupons_hash();
+  all[code]=cup;
+  const allStr=JSON.stringify(all);
+  // Guardar en Edge Config (principal)
+  await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'agustina_coupons',value:allStr})});
+  // También en KV si está disponible
+  fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'hset',key:'ag:coupons',field:code,value:JSON.stringify(cup)})}).catch(()=>{});
   closeCuponForm();
   loadCupones();
   toast('Cupón '+code+' guardado');
@@ -1484,15 +1491,19 @@ async function saveCupon(){
 async function toggleCupon(code){
   const cups=await loadCupons_hash();
   const c=cups[code];if(!c)return;
-  c.active=!c.active;
-  await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'hset',key:'ag:coupons',field:code,value:JSON.stringify(c)})});
+  c.active=!c.active;cups[code]=c;
+  await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'agustina_coupons',value:JSON.stringify(cups)})});
+  fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'hset',key:'ag:coupons',field:code,value:JSON.stringify(c)})}).catch(()=>{});
   loadCupones();
   toast(code+' '+(c.active?'activado':'desactivado'));
 }
 
 async function deleteCupon(code){
   if(!confirm('¿Eliminar cupón '+code+'?'))return;
-  await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'hdel',key:'ag:coupons',field:code})});
+  const cups=await loadCupons_hash();
+  delete cups[code];
+  await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'agustina_coupons',value:JSON.stringify(cups)})});
+  fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'hdel',key:'ag:coupons',field:code})}).catch(()=>{});
   loadCupones();
   toast('Cupón eliminado');
 }

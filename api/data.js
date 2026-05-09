@@ -9,7 +9,8 @@ const ALLOWED = new Set([
   'agustina_users',
   'agustina_content',
   'habito_orders',
-  'agustina_prices'
+  'agustina_prices',
+  'agustina_coupons'
 ]);
 
 export default async function handler(req, res) {
