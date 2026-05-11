@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 90">
+  <!-- Fondo redondeado color terracota del sitio -->
+  <rect width="90" height="90" rx="16" fill="#8B5550"/>
+
+  <!-- MANZANA (tercio izquierdo, centrada en x=18) -->
+  <!-- tallo -->
+  <path d="M18 17 Q20 12 24 14" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <!-- cuerpo -->
+  <path d="M10 36 C9 28 13 21 18 21 C19.5 21 20.5 22.5 21 22.5 C21.5 22.5 22.5 21 24 21 C29 21 33 28 32 36 C31 44 27 49 21 49 C15 49 11 44 10 36Z" fill="white"/>
+  <!-- hendidura superior -->
+  <path d="M18 21 Q21 19 24 21" stroke="#8B5550" stroke-width="1.2" fill="none"/>
+
+  <!-- CEREBRO (tercio central, centrado en x=45) -->
+  <!-- lóbulo izquierdo -->
+  <path d="M36 48 C32 48 30 44 30 40 C30 34 33 28 37 28 L38 48Z"
+        fill="white"/>
+  <!-- lóbulo derecho -->
+  <path d="M54 48 C58 48 60 44 60 40 C60 34 57 28 53 28 L52 48Z"
+        fill="white"/>
+  <!-- unión superior -->
+  <path d="M37 28 Q45 23 53 28" stroke="white" stroke-width="2.5" fill="none"/>
+  <!-- relleno centro -->
+  <rect x="38" y="28" width="14" height="20" fill="white"/>
+  <!-- línea divisoria -->
+  <line x1="45" y1="27" x2="45" y2="48" stroke="#8B5550" stroke-width="1.5"/>
+  <!-- bultos laterales -->
+  <path d="M30 37 C27 37 27 43 30 43" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M60 37 C63 37 63 43 60 43" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+  <!-- PESA RUSA (tercio derecho, centrada en x=74) -->
+  <!-- asa -->
+  <path d="M64 38 C64 29 84 29 84 38" stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- conector -->
+  <rect x="64" y="36" width="20" height="7" rx="2" fill="white"/>
+  <!-- cuerpo redondo -->
+  <circle cx="74" cy="57" r="13" fill="white"/>
+</svg>
