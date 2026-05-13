@@ -42,7 +42,13 @@ export default async function handler(req, res) {
     external_reference: bookingRef || new Date().toISOString(),
     statement_descriptor: 'Agustina Villegas',
     expires: true,
-    expiration_date_to: new Date(Date.now() + 30 * 60 * 1000).toISOString()
+    expiration_date_to: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+    payment_methods: {
+      excluded_payment_types: [
+        { id: 'ticket' },
+        { id: 'atm' }
+      ]
+    }
   };
 
   try {
