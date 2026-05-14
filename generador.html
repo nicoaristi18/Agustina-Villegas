@@ -1749,7 +1749,7 @@ function buildPlanDoc() {
           '<div class="macro-subcol"><div class="macro-sub-title">'+esc(m.s1t)+'</div><div class="macro-sub-items">'+esc(m.s1s)+'</div>'+(m.s1i?'<div class="macro-sub-note">'+esc(m.s1i)+'</div>':'')+' </div>'+
           '</div>';
       }
-      return '<div class="macro-pg">'+
+      return '<div class="macro-pg" data-macro-key="'+esc(m.key)+'">'+
         '<div class="macro-pg-overlay"></div>'+
         '<div class="macro-pg-body">'+
         '<div class="macro-eyebrow">Macronutrientes &middot; '+esc(nombre)+'</div>'+
@@ -1998,10 +1998,56 @@ async function dlPDF(docId, filename, btnId) {
     var pageEls = docEl.querySelectorAll('.doc-page, .macro-pg, .ideas-photo-page');
     console.log('[dlPDF] páginas a renderizar:', pageEls.length);
 
+    // Helper: cargar imagen como data URL para embeber nativamente en el PDF
+    async function loadImageAsDataURL(url) {
+      try {
+        var resp = await fetch(url);
+        if (!resp.ok) return null;
+        var blob = await resp.blob();
+        return await new Promise(function(resolve){
+          var reader = new FileReader();
+          reader.onloadend = function(){ resolve(reader.result); };
+          reader.onerror = function(){ resolve(null); };
+          reader.readAsDataURL(blob);
+        });
+      } catch(e) { return null; }
+    }
+
+    // Posiciones EXACTAS de las 4 fotos en una página de macronutrientes
+    // (matchean el CSS .macro-img-grid: left:58 right:58 bottom:52, gap:12, height:140)
+    var MACRO_IMG_POSITIONS = (function(){
+      var pad = 58, bottom = 52, cellH = 140, gap = 12;
+      var availW = PAGE_W - pad*2;       // 479
+      var cellW = (availW - gap) / 2;    // 233.5
+      var gridBottom = PAGE_H - bottom;  // 790
+      var gridTop = gridBottom - (cellH*2 + gap); // 498
+      return [
+        {x:pad,           y:gridTop,             w:cellW, h:cellH}, // top-left
+        {x:pad+cellW+gap, y:gridTop,             w:cellW, h:cellH}, // top-right
+        {x:pad,           y:gridTop+cellH+gap,   w:cellW, h:cellH}, // bottom-left
+        {x:pad+cellW+gap, y:gridTop+cellH+gap,   w:cellW, h:cellH}  // bottom-right
+      ];
+    })();
+
     var pdfPageCount = 0;
     for (var i = 0; i < pageEls.length; i++) {
       var pageEl = pageEls[i];
-      // Capturar solo este elemento (no el doc entero) a alta resolución
+      var isMacroPg = pageEl.classList.contains('macro-pg');
+      var macroKey = isMacroPg ? pageEl.getAttribute('data-macro-key') : null;
+
+      // Si es página de macro, ocultar el grid de imágenes ANTES de renderizar
+      // → así el canvas no tiene las fotos pixeladas, y después las pegamos nativas
+      var imgGridEl = null;
+      var prevGridDisplay = '';
+      if (isMacroPg) {
+        imgGridEl = pageEl.querySelector('.macro-img-grid');
+        if (imgGridEl) {
+          prevGridDisplay = imgGridEl.style.display;
+          imgGridEl.style.display = 'none';
+        }
+      }
+
+      // Capturar solo este elemento (sin las fotos de macros si es macro page)
       var pageCanvas = await h2c(pageEl, {
         scale: SCALE,
         useCORS: true,
@@ -2013,6 +2059,9 @@ async function dlPDF(docId, filename, btnId) {
         width: PAGE_W,
         windowWidth: PAGE_W
       });
+
+      // Restaurar el grid en la preview (no afecta el PDF ya capturado)
+      if (imgGridEl) imgGridEl.style.display = prevGridDisplay;
 
       var canvasW = pageCanvas.width;
       var canvasH = pageCanvas.height;
@@ -2027,12 +2076,9 @@ async function dlPDF(docId, filename, btnId) {
         var sliceH = Math.min(pageHpx, canvasH - srcY);
 
         if (numSlices === 1 && sliceH === canvasH) {
-          // Caso típico: la página entera cabe en una hoja PDF.
-          // No necesitamos sub-canvas, mandamos directo el pageCanvas.
           var imgData = pageCanvas.toDataURL('image/jpeg', 0.95);
           pdf.addImage(imgData, 'JPEG', 0, 0, PAGE_W, PAGE_H, undefined, 'SLOW');
         } else {
-          // Página taller que A4 → recortamos slice por slice
           var sub = document.createElement('canvas');
           sub.width  = canvasW;
           sub.height = pageHpx;
@@ -2042,9 +2088,28 @@ async function dlPDF(docId, filename, btnId) {
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, sub.width, sub.height);
           ctx.drawImage(pageCanvas, 0, srcY, canvasW, sliceH, 0, 0, canvasW, sliceH);
-
           var imgDataS = sub.toDataURL('image/jpeg', 0.95);
           pdf.addImage(imgDataS, 'JPEG', 0, 0, PAGE_W, PAGE_H, undefined, 'SLOW');
+        }
+
+        // Si es página de macros y es el primer slice → encimar las 4 fotos nativas
+        // (calidad ORIGINAL del JPG, sin pasar por canvas + JPEG nuevamente)
+        if (isMacroPg && macroKey && s === 0) {
+          var defaults = MACRO_DEFAULT_IMGS[macroKey] || [];
+          var userImgs = (macros4.find(function(mm){return mm.key===macroKey;})||{}).imgs || [];
+          for (var j = 0; j < 4; j++) {
+            var src = userImgs[j] || defaults[j];
+            if (!src) continue;
+            try {
+              // Si es ruta relativa, fetch + data URL; si ya es data URL, usar directo
+              var imgB64 = src.startsWith('data:') ? src : await loadImageAsDataURL(src);
+              if (!imgB64) continue;
+              var p = MACRO_IMG_POSITIONS[j];
+              // 'SLOW' compression + format auto-detect
+              var fmt = imgB64.indexOf('data:image/png') === 0 ? 'PNG' : 'JPEG';
+              pdf.addImage(imgB64, fmt, p.x, p.y, p.w, p.h, undefined, 'SLOW');
+            } catch(e) { console.warn('error embebiendo imagen macro', j, e); }
+          }
         }
       }
     }
