@@ -1976,9 +1976,14 @@ async function dlPDF(docId, filename, btnId) {
     }
     console.log('[dlPDF] libs ok, JSPDF version:', JSPDF.version || JSPDF.API && JSPDF.API.version || '?');
 
-    var SCALE = 2;
+    // SCALE=3 → ≈216 DPI (vs 144 DPI antes). Mejora notable de calidad de
+    // imágenes y texto sin hacer el PDF excesivamente grande ni saturar
+    // memoria en iPad (iOS Safari limita el canvas a ~16M pixels totales).
+    var SCALE = 3;
     var PAGE_W = 595;   // ancho lógico de página en CSS px = pt (mapeo 1:1)
     var PAGE_H = 842;   // alto lógico de página en CSS px
+
+    console.log('[dlPDF] usando SCALE=' + SCALE);
 
     // Capturar TODO el documento como un canvas
     var fullCanvas = await h2c(docEl, {
@@ -1988,8 +1993,11 @@ async function dlPDF(docId, filename, btnId) {
       width: PAGE_W,
       windowWidth: PAGE_W,
       logging: false,
-      imageTimeout: 15000,
-      backgroundColor: '#ffffff'
+      imageTimeout: 30000,
+      backgroundColor: '#ffffff',
+      letterRendering: true,
+      imageSmoothingEnabled: true,
+      imageSmoothingQuality: 'high'
     });
 
     console.log('[dlPDF] captured canvas:', fullCanvas.width, 'x', fullCanvas.height);
@@ -2034,14 +2042,19 @@ async function dlPDF(docId, filename, btnId) {
         sub.width  = PAGE_W * SCALE;
         sub.height = PAGE_H * SCALE;
         var ctx = sub.getContext('2d');
+        // Smoothing alto = imágenes scale-down se ven mejor (menos jagged edges)
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, sub.width, sub.height);
         ctx.drawImage(fullCanvas,
           0, srcY,             PAGE_W * SCALE, sliceH * SCALE,
           0, 0,                PAGE_W * SCALE, sliceH * SCALE);
 
+        // JPEG quality 0.95 — balance entre calidad visual y tamaño de archivo
         var imgData = sub.toDataURL('image/jpeg', 0.95);
-        pdf.addImage(imgData, 'JPEG', 0, 0, PAGE_W, PAGE_H);
+        // 'SLOW' compression mode = mejor compresión sin perder calidad → PDF más chico
+        pdf.addImage(imgData, 'JPEG', 0, 0, PAGE_W, PAGE_H, undefined, 'SLOW');
       }
     }
 
