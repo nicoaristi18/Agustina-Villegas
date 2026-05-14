@@ -1173,6 +1173,16 @@ function renderDaysForm() {
   }).join('');
 }
 
+/* MACRONUTRIENTES — Imágenes por defecto (16 fotos curadas, fijas en el server).
+   Si el usuario sube una imagen personalizada esa override la default.
+   Las rutas son relativas al sitio: /images/macros/<key>-N.jpg */
+var MACRO_DEFAULT_IMGS = {
+  prot: ['images/macros/proteinas-1.jpg','images/macros/proteinas-2.jpg','images/macros/proteinas-3.jpg','images/macros/proteinas-4.jpg'],
+  gras: ['images/macros/grasas-1.jpg','images/macros/grasas-2.jpg','images/macros/grasas-3.jpg','images/macros/grasas-4.jpg'],
+  carb: ['images/macros/carbohidratos-1.jpg','images/macros/carbohidratos-2.jpg','images/macros/carbohidratos-3.jpg','images/macros/carbohidratos-4.jpg'],
+  fibr: ['images/macros/fibra-1.jpg','images/macros/fibra-2.jpg','images/macros/fibra-3.jpg','images/macros/fibra-4.jpg']
+};
+
 /* MACRONUTRIENTES 4 PAGES */
 var DEF_MACROS4 = [
   { key:'prot', label:'PROTEÍNAS', s2on:true, imgs:['','','',''],
@@ -1716,12 +1726,13 @@ function buildPlanDoc() {
   var macroLogo = getLogo();
   if (macrosOn) {
     macrosPgs = macros4.map(function(m) {
-      var imgs = m.imgs || ['','','',''];
+      var userImgs = m.imgs || ['','','',''];
+      var defaults = MACRO_DEFAULT_IMGS[m.key] || ['','','',''];
+      // Resolución: imagen del usuario si la subió, sino la default fija
+      var imgs = userImgs.map(function(src, i){ return src || defaults[i] || ''; });
       var hasImgs = imgs.some(function(x){ return !!x; });
-      // Siempre renderizamos el grid: con imágenes si las hay, con placeholders si no.
       var imgGrid = '<div class="macro-img-grid">' +
         imgs.map(function(src) {
-          // background-image en el div (no <img>) → evita distorsión en html2canvas/iPad Safari
           if (src) {
             return '<div class="macro-img-cell" style="background-image:url(\''+src+'\');background-size:cover;background-position:center center;background-repeat:no-repeat"></div>';
           }
