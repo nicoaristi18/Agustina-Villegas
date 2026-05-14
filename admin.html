@@ -1305,21 +1305,41 @@ async function sendSurvey(){
   document.getElementById('surv-email').value='';
 }
 
-// ── CLIENTES ──
-function renderClientes(filter) {
-  filter = (filter || '').toLowerCase().trim();
-  const saves = JSON.parse(localStorage.getItem('ag_plan_saves') || '[]');
+// ── CLIENTES — helpers cloud (misma lógica que generador.html) ──
+async function adminCloudGetSaves() {
+  try {
+    const r = await fetch('/api/kv?op=get&key=ag:gen_saves', {cache:'no-store'});
+    if (r.ok) { const d = await r.json(); if (d.value) return typeof d.value==='string'?JSON.parse(d.value):d.value; }
+  } catch(e) {}
+  try {
+    const r = await fetch('/api/data?key=agustina_generator_saves', {cache:'no-store'});
+    if (r.ok) { const d = await r.json(); if (d.value) return typeof d.value==='string'?JSON.parse(d.value):d.value; }
+  } catch(e) {}
+  try { const ls = localStorage.getItem('ag_plan_saves'); if (ls) return JSON.parse(ls); } catch(e) {}
+  return [];
+}
+async function adminCloudPutSaves(arr) {
+  localStorage.setItem('ag_plan_saves', JSON.stringify(arr));
+  try { await fetch('/api/kv', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'set',key:'ag:gen_saves',value:JSON.stringify(arr)})}); } catch(e) {}
+  try { await fetch('/api/data', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'agustina_generator_saves',value:JSON.stringify(arr)})}); } catch(e) {}
+}
 
-  // Group by clientName
+// ── CLIENTES ──
+async function renderClientes(filter) {
+  filter = (filter || '').toLowerCase().trim();
+  const container = document.getElementById('cl-list');
+  if (!container) return;
+  container.innerHTML = '<div class="cl-empty">Cargando planes…</div>';
+
+  const saves = await adminCloudGetSaves();
+
+  // Group by nombre (patient name field from collectPlanData)
   const clients = {};
   saves.forEach(s => {
-    const key = (s.clientName || 'Sin nombre').trim();
+    const key = (s.nombre || 'Sin nombre').trim();
     if (!clients[key]) clients[key] = [];
     clients[key].push(s);
   });
-
-  const container = document.getElementById('cl-list');
-  if (!container) return;
 
   const names = Object.keys(clients).sort();
   const filtered = filter ? names.filter(n => n.toLowerCase().includes(filter)) : names;
@@ -1330,25 +1350,30 @@ function renderClientes(filter) {
   }
 
   container.innerHTML = filtered.map(name => {
-    const plans = clients[name].sort((a, b) => b.savedTs - a.savedTs);
-    const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-    const lastDate = plans[0]?.savedAt || '—';
-    const plansHtml = plans.map(p => `
+    const plans = clients[name].sort((a, b) => new Date(b._ts||0) - new Date(a._ts||0));
+    const initials = name.split(' ').map(w => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?';
+    const lastSave = plans[0]?._name || '—';
+    const lastDate = plans[0]?._ts ? new Date(plans[0]._ts).toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+    const plansHtml = plans.map(p => {
+      const pDate = p._ts ? new Date(p._ts).toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+      const pTime = p._ts ? new Date(p._ts).toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'}) : '';
+      const safeName = (p._name || 'Plan sin nombre').replace(/'/g, '&#39;');
+      return `
       <div class="cl-plan-row">
-        <span class="cl-plan-date">${p.savedAt || '—'}</span>
-        <span class="cl-plan-name">Plan · ${p.savedAt || 'sin fecha'}</span>
+        <span class="cl-plan-date">${pDate} ${pTime}</span>
+        <span class="cl-plan-name">${safeName}</span>
         <div class="cl-plan-actions">
-          <button class="btn-open-plan" onclick="openPlanInGenerator('${p.id}')">Abrir en generador</button>
-          <button class="btn-del-plan" onclick="deleteSave('${p.id}')">Eliminar</button>
+          <button class="btn-open-plan" onclick="openPlanInGenerator('${p._id}')">Abrir</button>
+          <button class="btn-del-plan" onclick="deleteSave('${p._id}')">Eliminar</button>
         </div>
-      </div>`).join('');
+      </div>`}).join('');
 
-    return `<div class="cl-card" id="cl-${name.replace(/\s/g,'_')}">
+    return `<div class="cl-card" id="cl-${name.replace(/[^a-zA-Z0-9]/g,'_')}">
       <div class="cl-card-hd" onclick="toggleClient(this)">
         <div class="cl-avatar">${initials}</div>
         <div>
           <div class="cl-name">${name}</div>
-          <div class="cl-meta">Último plan: ${lastDate}</div>
+          <div class="cl-meta">Último guardado: ${lastDate}</div>
         </div>
         <span class="cl-badge-count">${plans.length} plan${plans.length > 1 ? 'es' : ''}</span>
         <span class="cl-chevron">▾</span>
@@ -1369,10 +1394,10 @@ function openPlanInGenerator(planId) {
   window.open('generador.html', '_blank');
 }
 
-function deleteSave(planId) {
+async function deleteSave(planId) {
   if (!confirm('¿Eliminar este plan? No se puede deshacer.')) return;
-  const saves = JSON.parse(localStorage.getItem('ag_plan_saves') || '[]');
-  localStorage.setItem('ag_plan_saves', JSON.stringify(saves.filter(s => s.id !== planId)));
+  const saves = await adminCloudGetSaves();
+  await adminCloudPutSaves(saves.filter(s => s._id !== planId));
   renderClientes(document.getElementById('cl-search')?.value || '');
 }
 

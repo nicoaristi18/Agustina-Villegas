@@ -330,7 +330,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
       <div class="fg"><label>Nombre del cliente</label><input id="rec-nombre" type="text" placeholder="Mar&iacute;a Garc&iacute;a" oninput="upRec()"></div>
       <div class="fg-row">
         <div class="fg"><label>Fecha</label><input id="rec-fecha" type="date" oninput="upRec()"></div>
-        <div class="fg"><label>Imagen de portada</label><input id="rec-portada" type="file" accept="image/*" onchange="setCover(this,'gen_cv_rec','upRec')"></div>
+        <div class="fg"><label>Imagen de portada</label><div style="display:flex;gap:.4rem;align-items:center"><input id="rec-portada" type="file" accept="image/*" onchange="setCover(this,'gen_cv_rec','upRec')" style="flex:1;min-width:0"><button id="btn-clear-rec-cover" class="sb-btn danger" onclick="clearCover('gen_cv_rec','upRec','rec-portada','btn-clear-rec-cover')" style="display:none;white-space:nowrap;font-size:.65rem">✕ Quitar</button></div></div>
       </div>
       <div class="fg"><label>Frase introductoria (opcional)</label><textarea id="rec-intro" rows="2" placeholder="Estas recetas est&aacute;n dise&ntilde;adas para&hellip;" oninput="upRec()"></textarea></div>
     </div>
@@ -362,7 +362,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
       <div class="fg"><label>Nombre del cliente</label><input id="sup-nombre" type="text" placeholder="Mar&iacute;a Garc&iacute;a" oninput="upSup()"></div>
       <div class="fg-row">
         <div class="fg"><label>Fecha</label><input id="sup-fecha" type="date" oninput="upSup()"></div>
-        <div class="fg"><label>Imagen de portada</label><input id="sup-portada" type="file" accept="image/*" onchange="setCover(this,'gen_cv_sup','upSup')"></div>
+        <div class="fg"><label>Imagen de portada</label><div style="display:flex;gap:.4rem;align-items:center"><input id="sup-portada" type="file" accept="image/*" onchange="setCover(this,'gen_cv_sup','upSup')" style="flex:1;min-width:0"><button id="btn-clear-sup-cover" class="sb-btn danger" onclick="clearCover('gen_cv_sup','upSup','sup-portada','btn-clear-sup-cover')" style="display:none;white-space:nowrap;font-size:.65rem">✕ Quitar</button></div></div>
       </div>
       <div class="fg">
         <label>Per&iacute;odo</label>
@@ -399,18 +399,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 <div id="panel-plan" class="tab-panel">
   <div class="form-col">
     <!-- SAVE/LOAD -->
-    <div class="save-bar">
-      <select id="plan-saves-sel"><option value="">— Guardados —</option></select>
-      <button class="sb-btn" onclick="loadPlanSnapshot()">Cargar</button>
-      <button class="sb-btn danger" onclick="deletePlanSnapshot()">Borrar</button>
-      <button class="sb-btn primary" onclick="savePlanSnapshot()">Guardar</button>
+    <div class="save-bar" style="flex-direction:column;gap:.45rem">
+      <div style="display:flex;gap:.4rem;width:100%;align-items:center">
+        <input id="plan-save-name" type="text" placeholder="Nombre del guardado (auto desde paciente + fecha)" style="flex:1;min-width:0;padding:.35rem .55rem;background:#fff;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text);outline:none;">
+        <button class="sb-btn primary" onclick="savePlanSnapshot()">💾 Guardar</button>
+      </div>
+      <div style="display:flex;gap:.4rem;width:100%;align-items:center">
+        <select id="plan-saves-sel" style="flex:1;min-width:0;padding:.35rem .55rem;background:#fff;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text);outline:none;"><option value="">— Cargar guardado… —</option></select>
+        <button class="sb-btn" onclick="loadPlanSnapshot()">Cargar</button>
+        <button class="sb-btn danger" onclick="deletePlanSnapshot()">Borrar</button>
+      </div>
+      <div id="save-status" style="font-size:.67rem;color:var(--rose-dark);display:none"></div>
     </div>
     <div class="fsec">
       <div class="fsec-title">Datos del documento</div>
       <div class="fg"><label>Nombre del cliente</label><input id="plan-nombre" type="text" placeholder="Mar&iacute;a Garc&iacute;a" oninput="upPlan()"></div>
       <div class="fg-row">
         <div class="fg"><label>Fecha</label><input id="plan-fecha" type="date" oninput="upPlan()"></div>
-        <div class="fg"><label>Imagen de portada</label><input id="plan-portada" type="file" accept="image/*" onchange="setCover(this,'gen_cv_plan','upPlan')"></div>
+        <div class="fg"><label>Imagen de portada</label><div style="display:flex;gap:.4rem;align-items:center"><input id="plan-portada" type="file" accept="image/*" onchange="setCover(this,'gen_cv_plan','upPlan')" style="flex:1;min-width:0"><button id="btn-clear-plan-cover" class="sb-btn danger" onclick="clearCover('gen_cv_plan','upPlan','plan-portada','btn-clear-plan-cover')" style="display:none;white-space:nowrap;font-size:.65rem">✕ Quitar</button></div></div>
       </div>
       <div class="fg-row">
         <div class="fg"><label>Objetivo</label><input id="plan-objetivo" type="text" placeholder="Descenso de peso" oninput="upPlan()"></div>
@@ -439,6 +445,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
       <label class="sec-toggle"><span>Porciones e intercambios</span><input type="checkbox" id="plan-porc-on" onchange="planToggleSec(this,'fsec-porcs')"></label>
       <label class="sec-toggle"><span>Alimentos crudos y cocidos</span><input type="checkbox" id="plan-crudo-on" onchange="planToggleSec(this,'fsec-crudos')"></label>
       <label class="sec-toggle"><span>Ideas de comidas</span><input type="checkbox" id="plan-ideas-on" onchange="planToggleSec(this,'fsec-ideas')"></label>
+      <label class="sec-toggle"><span>Tabla semanal (7 días × 4 comidas)</span><input type="checkbox" id="plan-tabla-on" onchange="planToggleSec(this,'fsec-tabla')"></label>
     </div>
     <div class="fsec" id="fsec-macros4" style="display:none">
       <div class="fsec-title">Macronutrientes &mdash; contenido</div>
@@ -479,6 +486,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
       <div class="fsec-title">Ideas de comidas</div>
       <div id="ideas-list"></div>
       <button class="add-btn" onclick="addIdeaSection()">+ Agregar categor&iacute;a</button>
+    </div>
+    <div class="fsec" id="fsec-tabla" style="display:none">
+      <div class="fsec-title">Tabla semanal</div>
+      <p style="font-size:.7rem;color:var(--text-muted);margin-bottom:.8rem">7 días × 4 comidas. Completá solo las celdas que necesites.</p>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.68rem">
+          <thead>
+            <tr>
+              <th style="padding:.3rem .4rem;background:var(--rose-deep);color:#fff;text-align:left;border-radius:6px 0 0 0;font-weight:500">Día</th>
+              <th style="padding:.3rem .4rem;background:var(--rose-deep);color:#fff;text-align:center;font-weight:500">Desayuno</th>
+              <th style="padding:.3rem .4rem;background:var(--rose-deep);color:#fff;text-align:center;font-weight:500">Almuerzo</th>
+              <th style="padding:.3rem .4rem;background:var(--rose-deep);color:#fff;text-align:center;font-weight:500">Merienda</th>
+              <th style="padding:.3rem .4rem;background:var(--rose-deep);color:#fff;text-align:center;border-radius:0 6px 0 0;font-weight:500">Cena</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-semanal-body"></tbody>
+        </table>
+      </div>
     </div>
     <div class="fsec">
       <div class="fsec-title">Notas finales</div>
@@ -526,6 +551,35 @@ if (!window.storage) {
       try { await fetch('/api/kv', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'lpush',key:k,value:v})}); } catch(e) {}
     }
   };
+}
+
+/* CLOUD SAVES — sincroniza entre dispositivos */
+async function cloudGetSaves() {
+  try {
+    const r = await fetch('/api/kv?op=get&key=ag:gen_saves', {cache:'no-store'});
+    if (r.ok) { const d = await r.json(); if (d.value) return typeof d.value==='string'?JSON.parse(d.value):d.value; }
+  } catch(e) {}
+  try {
+    const r = await fetch('/api/data?key=agustina_generator_saves', {cache:'no-store'});
+    if (r.ok) { const d = await r.json(); if (d.value) return typeof d.value==='string'?JSON.parse(d.value):d.value; }
+  } catch(e) {}
+  try { const ls = localStorage.getItem('ag_plan_saves'); if (ls) return JSON.parse(ls); } catch(e) {}
+  return [];
+}
+
+async function cloudPutSaves(arr) {
+  localStorage.setItem('ag_plan_saves', JSON.stringify(arr));
+  try { await fetch('/api/kv', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'set',key:'ag:gen_saves',value:JSON.stringify(arr)})}); } catch(e) {}
+  try { await fetch('/api/data', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'agustina_generator_saves',value:JSON.stringify(arr)})}); } catch(e) {}
+}
+
+function showSaveStatus(msg, isErr) {
+  var el = $('save-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = isErr ? '#a32d2d' : 'var(--rose-dark)';
+  el.style.display = '';
+  setTimeout(function(){ el.style.display='none'; }, 3000);
 }
 
 /* LOGO */
@@ -595,8 +649,26 @@ function setCover(inp, key, upFn) {
   const f = inp.files[0];
   if (!f) return;
   const r = new FileReader();
-  r.onload = e => { localStorage.setItem(key, e.target.result); window[upFn](); };
+  r.onload = e => {
+    localStorage.setItem(key, e.target.result);
+    const btnMap = {'gen_cv_rec':'btn-clear-rec-cover','gen_cv_sup':'btn-clear-sup-cover','gen_cv_plan':'btn-clear-plan-cover'};
+    const btn = $(btnMap[key]); if (btn) btn.style.display = '';
+    window[upFn]();
+  };
   r.readAsDataURL(f);
+}
+
+function clearCover(key, upFn, inpId, btnId) {
+  localStorage.removeItem(key);
+  const inp = $(inpId); if (inp) inp.value = '';
+  const btn = $(btnId); if (btn) btn.style.display = 'none';
+  window[upFn]();
+}
+
+function initCoverButtons() {
+  [['gen_cv_rec','btn-clear-rec-cover'],['gen_cv_sup','btn-clear-sup-cover'],['gen_cv_plan','btn-clear-plan-cover']].forEach(function(p){
+    if (localStorage.getItem(p[0])) { const b=$(p[1]); if(b) b.style.display=''; }
+  });
 }
 
 /* BUILD COVER */
@@ -1205,47 +1277,103 @@ function renderIdeasForm() {
 }
 
 /* SAVE / LOAD */
-function savePlanSnapshot() {
-  var nombre = val('plan-nombre');
-  var name = prompt('Nombre del guardado:', nombre || 'Plan sin nombre');
-  if (!name) return;
-  var snap = collectPlanData();
-  snap._name = name; snap._ts = new Date().toISOString();
-  var arr = JSON.parse(localStorage.getItem('ag_plan_saves') || '[]');
-  arr.unshift(snap);
-  if (arr.length > 30) arr = arr.slice(0, 30);
-  localStorage.setItem('ag_plan_saves', JSON.stringify(arr));
-  updatePlanSavesUI();
-  alert('Guardado: ' + name);
+function autoFillSaveName() {
+  var nameInp = $('plan-save-name');
+  if (!nameInp) return;
+  var pNombre = val('plan-nombre');
+  if (!pNombre) return;
+  var pFecha = val('plan-fecha');
+  var fechaStr = pFecha ? new Date(pFecha+'T12:00:00').toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+  nameInp.placeholder = pNombre + (fechaStr ? ' — ' + fechaStr : '') + ' (auto)';
 }
 
-function updatePlanSavesUI() {
+async function savePlanSnapshot() {
+  var nameInp = $('plan-save-name');
+  var name = nameInp ? nameInp.value.trim() : '';
+  if (!name) {
+    var pNombre = val('plan-nombre') || 'Sin nombre';
+    var now = new Date();
+    name = pNombre + ' — ' + now.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + now.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'});
+    if (nameInp) nameInp.value = name;
+  }
+  var snap = collectPlanData();
+  snap._name = name; snap._ts = new Date().toISOString(); snap._id = Date.now().toString();
+  showSaveStatus('Guardando…');
+  var arr = await cloudGetSaves();
+  arr.unshift(snap);
+  if (arr.length > 50) arr = arr.slice(0, 50);
+  await cloudPutSaves(arr);
+  updatePlanSavesUI(arr);
+  showSaveStatus('✓ Guardado: ' + name);
+}
+
+function updatePlanSavesUI(arr) {
   var sel = $('plan-saves-sel');
   if (!sel) return;
-  var arr = JSON.parse(localStorage.getItem('ag_plan_saves') || '[]');
-  sel.innerHTML = '<option value="">— Guardados (' + arr.length + ') —</option>' +
-    arr.map(function(s, i){ return '<option value="' + i + '">' + esc(s._name||'Sin nombre') + '</option>'; }).join('');
+  if (!arr) { try { arr = JSON.parse(localStorage.getItem('ag_plan_saves')||'[]'); } catch(e){ arr=[]; } }
+  sel.innerHTML = '<option value="">— Cargar guardado… (' + arr.length + ') —</option>' +
+    arr.map(function(s,i){
+      var ts = s._ts ? ' · ' + new Date(s._ts).toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '';
+      return '<option value="'+i+'">'+esc(s._name||'Sin nombre')+ts+'</option>';
+    }).join('');
 }
 
-function loadPlanSnapshot() {
+async function loadPlanSnapshot() {
   var sel = $('plan-saves-sel');
-  if (!sel || sel.value === '') { alert('Seleccioná un guardado primero.'); return; }
-  var arr = JSON.parse(localStorage.getItem('ag_plan_saves') || '[]');
+  if (!sel || sel.value === '') { showSaveStatus('Seleccioná un guardado primero.', true); return; }
+  var arr = await cloudGetSaves();
   var snap = arr[parseInt(sel.value)];
   if (!snap) return;
   applyPlanData(snap);
+  if ($('plan-save-name')) $('plan-save-name').value = snap._name || '';
   upPlan();
+  showSaveStatus('✓ Cargado: ' + (snap._name||'guardado'));
 }
 
-function deletePlanSnapshot() {
+async function deletePlanSnapshot() {
   var sel = $('plan-saves-sel');
-  if (!sel || sel.value === '') { alert('Seleccioná un guardado primero.'); return; }
+  if (!sel || sel.value === '') { showSaveStatus('Seleccioná un guardado primero.', true); return; }
   if (!confirm('¿Borrar este guardado?')) return;
-  var arr = JSON.parse(localStorage.getItem('ag_plan_saves') || '[]');
+  var arr = await cloudGetSaves();
   arr.splice(parseInt(sel.value), 1);
-  localStorage.setItem('ag_plan_saves', JSON.stringify(arr));
-  updatePlanSavesUI();
+  await cloudPutSaves(arr);
+  updatePlanSavesUI(arr);
+  showSaveStatus('Guardado eliminado.');
 }
+
+async function initSavesUI() {
+  var arr = await cloudGetSaves();
+  updatePlanSavesUI(arr);
+  initCoverButtons();
+  // Si admin abrió una plan específico, cargarlo automáticamente
+  var loadId = localStorage.getItem('ag_load_plan_id');
+  if (loadId) {
+    localStorage.removeItem('ag_load_plan_id');
+    var snap = arr.find(function(s){ return s._id === loadId; });
+    if (snap) {
+      applyPlanData(snap);
+      switchTab('plan');
+      showSaveStatus('Plan cargado: ' + (snap._name || snap.nombre || ''));
+    }
+  }
+}
+
+/* Auto-save al cerrar pestaña (solo localStorage, sync no disponible en unload) */
+window.addEventListener('beforeunload', function() {
+  try {
+    if (!val('plan-nombre')) return;
+    var snap = collectPlanData();
+    var now = new Date();
+    snap._name = (val('plan-nombre')||'Sin nombre') + ' — autocierre ' + now.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'2-digit'});
+    snap._ts = now.toISOString(); snap._auto = true;
+    var arr = JSON.parse(localStorage.getItem('ag_plan_saves')||'[]');
+    var existing = arr.findIndex(function(s){ return s._auto && (s._name||'').includes('autocierre'); });
+    if (existing >= 0) arr.splice(existing, 1);
+    arr.unshift(snap);
+    if (arr.length > 60) arr = arr.slice(0, 60);
+    localStorage.setItem('ag_plan_saves', JSON.stringify(arr));
+  } catch(e) {}
+});
 
 function collectPlanData() {
   return {
@@ -1259,6 +1387,8 @@ function collectPlanData() {
     porcOn:!!($('plan-porc-on')&&$('plan-porc-on').checked),
     crudoOn:!!($('plan-crudo-on')&&$('plan-crudo-on').checked),
     ideasOn:!!($('plan-ideas-on')&&$('plan-ideas-on').checked),
+    tablaOn:!!($('plan-tabla-on')&&$('plan-tabla-on').checked),
+    tablaData:JSON.parse(JSON.stringify(tablaData)),
     porcSub:val('plan-porc-sub'), crudoNota:val('plan-crudo-nota'),
     evitar:val('plan-evitar'), recs:val('plan-recs'), prox:val('plan-prox'),
     days:JSON.parse(JSON.stringify(days)),
@@ -1282,6 +1412,8 @@ function applyPlanData(d) {
   setV('plan-carbs-pct',d.carbPct);setV('plan-carbs-g',d.carbG);
   setCb('plan-macros-on',d.macrosOn);setCb('plan-porc-on',d.porcOn);
   setCb('plan-crudo-on',d.crudoOn);setCb('plan-ideas-on',d.ideasOn);
+  setCb('plan-tabla-on',d.tablaOn);
+  if(d.tablaData){tablaData=d.tablaData;initTabla();}
   setV('plan-porc-sub',d.porcSub);setV('plan-crudo-nota',d.crudoNota);
   setV('plan-evitar',d.evitar);setV('plan-recs',d.recs);setV('plan-prox',d.prox);
   /* Backward-compat: prefer d.days, fall back to wrapping d.meals in single day */
@@ -1301,7 +1433,7 @@ function applyPlanData(d) {
   if(d.crudos)crudos=d.crudos;if(d.medidas)medidas=d.medidas;
   if(d.crudos||d.medidas)renderCrudosForm();
   if(d.ideas){ideas=d.ideas;renderIdeasForm();}
-  var fsecMap={'plan-macros-on':'fsec-macros4','plan-porc-on':'fsec-porcs','plan-crudo-on':'fsec-crudos','plan-ideas-on':'fsec-ideas'};
+  var fsecMap={'plan-macros-on':'fsec-macros4','plan-porc-on':'fsec-porcs','plan-crudo-on':'fsec-crudos','plan-ideas-on':'fsec-ideas','plan-tabla-on':'fsec-tabla'};
   Object.keys(fsecMap).forEach(function(k){var cb=$(k),sec=$(fsecMap[k]);if(sec)sec.style.display=(cb&&cb.checked)?'':'none';});
 }
 
@@ -1317,6 +1449,7 @@ function buildPlanDoc() {
   var macrosOn = $('plan-macros-on') && $('plan-macros-on').checked;
   var porcOn = $('plan-porc-on') && $('plan-porc-on').checked;
   var crudoOn = $('plan-crudo-on') && $('plan-crudo-on').checked;
+  var tablaOn = $('plan-tabla-on') && $('plan-tabla-on').checked;
   var ideasOn = $('plan-ideas-on') && $('plan-ideas-on').checked;
 
   var tot = (parseFloat(pP)||0)+(parseFloat(gP)||0)+(parseFloat(cP)||0);
@@ -1404,22 +1537,34 @@ function buildPlanDoc() {
       '</div></div>';
   }
 
-  /* Meals HTML — single day or multi-day (each day = one doc-page) */
+  /* Meals HTML — split in pages of MAX 3 meals to avoid page cuts */
+  var MAX_MPP = 3;
+  function splitMealsIntoPages(dayLabel, meals, secTitle) {
+    if (!meals || meals.length === 0) {
+      return '<div class="doc-page">'+pgHdr('Plan de alimentación', nombre)+
+        '<div class="sec-label first">'+esc(secTitle)+'</div>'+
+        '<p style="font-size:11px;color:#8C7E78">Agrega comidas desde el formulario.</p></div>';
+    }
+    var pages = '';
+    for (var i = 0; i < meals.length; i += MAX_MPP) {
+      var chunk = meals.slice(i, i + MAX_MPP);
+      var totalPgs = Math.ceil(meals.length / MAX_MPP);
+      var pgNum = Math.floor(i / MAX_MPP) + 1;
+      var label = esc(secTitle) + (totalPgs > 1 ? ' (' + pgNum + '/' + totalPgs + ')' : '');
+      pages += '<div class="doc-page">'+pgHdr('Plan de alimentación', nombre)+
+        '<div class="sec-label first">'+label+'</div>'+
+        chunk.map(buildOneMeal).join('')+'</div>';
+    }
+    return pages;
+  }
+
   var mealsPages;
   if (days.length <= 1) {
     var onlyDay = days[0] || {label:'Día 1', meals:[]};
-    mealsPages = '<div class="doc-page">'+
-      pgHdr('Plan de alimentación', nombre)+
-      '<div class="sec-label first">Distribución diaria</div>'+
-      (onlyDay.meals.map(buildOneMeal).join('')||'<p style="font-size:11px;color:#8C7E78">Agrega comidas desde el formulario.</p>')+
-      '</div>';
+    mealsPages = splitMealsIntoPages('Día 1', onlyDay.meals, 'Distribución diaria');
   } else {
     mealsPages = days.map(function(d) {
-      return '<div class="doc-page">'+
-        pgHdr('Plan de alimentación', nombre)+
-        '<div class="sec-label first">'+esc(d.label||'Día')+'</div>'+
-        ((d.meals||[]).map(buildOneMeal).join('')||'<p style="font-size:11px;color:#8C7E78">Sin comidas.</p>')+
-        '</div>';
+      return splitMealsIntoPages(d.label||'Día', d.meals||[], d.label||'Día');
     }).join('');
   }
 
@@ -1512,6 +1657,8 @@ function buildPlanDoc() {
     '</div>':'';
 
   /* Page order: Cover → Macros summary → Macronutrientes pages → Distribución (one page per day) → Porciones → Crudos → Ideas → Notas */
+  var tablaPg = tablaOn ? buildTablaPage(nombre) : '';
+
   return '<div class="ag-doc" id="doc-plan">'+
     buildCover('Plan de\nalimentación', nombre, fecha, 'gen_cv_plan', objetivo||'')+
     '<div class="doc-page" style="background:#FAF8F4">'+
@@ -1522,6 +1669,7 @@ function buildPlanDoc() {
     '</div>'+
     macrosPgs+
     mealsPages+
+    tablaPg+
     porcPg+crudoPg+ideasPg+notasPage+
     '</div>';
 }
@@ -1534,6 +1682,7 @@ var upPlan = deb(function() {
   var nMeals = days.reduce(function(s,d){ return s+(d.meals?d.meals.length:0); }, 0);
   $('plan-info').textContent = nDays + (nDays!==1?' días':' día') + ' · ' + nMeals + (nMeals!==1?' comidas':' comida');
   scaleDoc('pw-plan', 'preview-plan');
+  autoFillSaveName();
 }, 200);
 
 /* ============================================================
@@ -1645,23 +1794,15 @@ async function dlPDF(docId, filename, btnId) {
       try {
         var snap = collectPlanData();
         var now = new Date();
-        var dateStr = now.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'2-digit'});
-        var timeStr = now.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'});
         var pNombre = val('plan-nombre') || 'Sin nombre';
-        snap._name = pNombre + ' — auto ' + dateStr + ' ' + timeStr;
-        snap._ts = now.toISOString();
-        snap._auto = true;
-        var arr = JSON.parse(localStorage.getItem('ag_plan_saves') || '[]');
-        /* Keep at most 3 auto-saves per patient (remove oldest) */
-        var samePatientAutos = arr.filter(function(s){ return s._auto && (s._name||'').startsWith(pNombre + ' — auto'); });
-        if (samePatientAutos.length >= 3) {
-          var toRemove = samePatientAutos.slice(2);
-          arr = arr.filter(function(s){ return toRemove.indexOf(s) === -1; });
-        }
-        arr.unshift(snap);
-        if (arr.length > 60) arr = arr.slice(0, 60);
-        localStorage.setItem('ag_plan_saves', JSON.stringify(arr));
-        updatePlanSavesUI();
+        snap._name = pNombre + ' — PDF ' + now.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + now.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'});
+        snap._ts = now.toISOString(); snap._auto = true; snap._id = 'pdf_' + Date.now();
+        cloudGetSaves().then(function(arr){
+          arr = arr.filter(function(s){ return !(s._auto && (s._name||'').startsWith(pNombre + ' — PDF')); });
+          arr.unshift(snap);
+          if (arr.length > 60) arr = arr.slice(0, 60);
+          cloudPutSaves(arr).then(function(){ updatePlanSavesUI(arr); });
+        });
         console.log('[dlPDF] auto-saved plan:', snap._name);
       } catch(ae) { console.warn('[dlPDF] auto-save error:', ae); }
     }
@@ -1765,6 +1906,43 @@ document.addEventListener('click', function(e) {
 /* ============================================================
    INIT
    ============================================================ */
+/* TABLA SEMANAL */
+var DIAS_SEMANA = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+var COMIDAS_TABLA = ['Desayuno','Almuerzo','Merienda','Cena'];
+var tablaData = DIAS_SEMANA.map(function(d){ return {dia:d, desayuno:'', almuerzo:'', merienda:'', cena:''}; });
+
+function initTabla() {
+  var tbody = $('tabla-semanal-body');
+  if (!tbody) return;
+  tbody.innerHTML = tablaData.map(function(row, ri) {
+    var keys = ['desayuno','almuerzo','merienda','cena'];
+    var cols = keys.map(function(k) {
+      return '<td style="padding:.2rem;border:1px solid var(--border)"><textarea rows="2" style="width:100%;resize:vertical;font-size:.63rem;border:none;outline:none;font-family:\'DM Sans\',sans-serif;background:transparent;padding:.2rem" oninput="tablaData['+ri+'].'+k+'=this.value;upPlan()" placeholder="…">'+esc(row[k])+'</textarea></td>';
+    }).join('');
+    var bg = ri%2===0?'#fff':'var(--cream)';
+    return '<tr style="background:'+bg+'"><td style="padding:.3rem .4rem;font-weight:500;font-size:.68rem;white-space:nowrap;border:1px solid var(--border)">'+esc(row.dia)+'</td>'+cols+'</tr>';
+  }).join('');
+}
+
+function buildTablaPage(nombre) {
+  var keys = ['desayuno','almuerzo','merienda','cena'];
+  var headerCells = ['Día'].concat(COMIDAS_TABLA).map(function(h,i){
+    return '<th style="padding:6px 8px;background:#8B5550;color:#fff;font-size:8px;font-weight:500;text-align:'+(i===0?'left':'center')+';letter-spacing:.04em;text-transform:uppercase">'+h+'</th>';
+  }).join('');
+  var rows = tablaData.map(function(row, ri) {
+    var cells = keys.map(function(k){
+      return '<td style="padding:5px 7px;font-size:8px;color:#2A2118;text-align:center;border:1px solid rgba(169,138,130,.18);vertical-align:top;line-height:1.4">'+esc(row[k]||'')+'</td>';
+    }).join('');
+    var bg = ri%2===0?'#fff':'#FAF8F4';
+    return '<tr style="background:'+bg+'"><td style="padding:5px 8px;font-size:8px;font-weight:500;color:#2A2118;border:1px solid rgba(169,138,130,.18);white-space:nowrap">'+esc(row.dia)+'</td>'+cells+'</tr>';
+  }).join('');
+  return '<div class="doc-page" style="background:#FAF8F4">'+
+    pgHdr('Tabla semanal', nombre)+
+    '<div class="sec-label first">Distribución semanal</div>'+
+    '<table style="width:100%;border-collapse:collapse;margin-top:8px"><thead><tr>'+headerCells+'</tr></thead><tbody>'+rows+'</tbody></table>'+
+    '</div>';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   var today = new Date().toISOString().slice(0, 10);
   ['rec-fecha','sup-fecha','plan-fecha'].forEach(function(id) {
@@ -1779,7 +1957,8 @@ document.addEventListener('DOMContentLoaded', function() {
   initPorcs();
   initCrudos();
   renderIdeasForm();
-  updatePlanSavesUI();
+  initTabla();
+  initSavesUI();
   upRec();
   upSup();
   upPlan();
