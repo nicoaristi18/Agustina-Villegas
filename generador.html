@@ -1976,85 +1976,76 @@ async function dlPDF(docId, filename, btnId) {
     }
     console.log('[dlPDF] libs ok, JSPDF version:', JSPDF.version || JSPDF.API && JSPDF.API.version || '?');
 
-    // SCALE=3 → ≈216 DPI (vs 144 DPI antes). Mejora notable de calidad de
-    // imágenes y texto sin hacer el PDF excesivamente grande ni saturar
-    // memoria en iPad (iOS Safari limita el canvas a ~16M pixels totales).
-    var SCALE = 3;
+    // SCALE=4 → ≈288 DPI. Calidad alta para visualización digital con zoom.
+    // Renderizamos PÁGINA POR PÁGINA (no el doc entero) → cada canvas queda en
+    // 2380×3368 ≈ 8M pixels, muy debajo del límite de iOS Safari (~16M).
+    // Esto permite SCALE alto sin saturar memoria en iPad/iPhone.
+    var SCALE = 4;
     var PAGE_W = 595;   // ancho lógico de página en CSS px = pt (mapeo 1:1)
     var PAGE_H = 842;   // alto lógico de página en CSS px
 
-    console.log('[dlPDF] usando SCALE=' + SCALE);
-
-    // Capturar TODO el documento como un canvas
-    var fullCanvas = await h2c(docEl, {
-      scale: SCALE,
-      useCORS: true,
-      allowTaint: true,
-      width: PAGE_W,
-      windowWidth: PAGE_W,
-      logging: false,
-      imageTimeout: 30000,
-      backgroundColor: '#ffffff',
-      letterRendering: true,
-      imageSmoothingEnabled: true,
-      imageSmoothingQuality: 'high'
-    });
-
-    console.log('[dlPDF] captured canvas:', fullCanvas.width, 'x', fullCanvas.height);
+    console.log('[dlPDF] usando SCALE=' + SCALE + ' (render por página)');
 
     // PDF con dimensiones en pt que matchean el canvas 1:1 (1 css px = 1 pt)
     var pdf = new JSPDF({
       orientation: 'portrait',
       unit: 'pt',
-      format: [PAGE_W, PAGE_H]
+      format: [PAGE_W, PAGE_H],
+      compress: true
     });
 
-    // Identificar boundaries de páginas en el documento original
+    // Lista de páginas a renderizar (cada una se captura por separado)
     var pageEls = docEl.querySelectorAll('.doc-page, .macro-pg, .ideas-photo-page');
-    var docTop = docEl.getBoundingClientRect().top;
-    var breaks = [];
-    pageEls.forEach(function(el) {
-      breaks.push(Math.round(el.getBoundingClientRect().top - docTop));
-    });
-    breaks.push(docEl.offsetHeight);
+    console.log('[dlPDF] páginas a renderizar:', pageEls.length);
 
-    console.log('[dlPDF] page breaks:', breaks);
-
-    // Renderizar página por página
-    // Si un elemento doc-page es más alto que PAGE_H, se divide en múltiples páginas PDF
     var pdfPageCount = 0;
-    for (var i = 0; i < breaks.length - 1; i++) {
-      var elStartY = breaks[i];
-      var elEndY   = breaks[i + 1];
-      var elH      = elEndY - elStartY;
-      if (elH <= 0) continue;
+    for (var i = 0; i < pageEls.length; i++) {
+      var pageEl = pageEls[i];
+      // Capturar solo este elemento (no el doc entero) a alta resolución
+      var pageCanvas = await h2c(pageEl, {
+        scale: SCALE,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        imageTimeout: 30000,
+        logging: false,
+        letterRendering: true,
+        width: PAGE_W,
+        windowWidth: PAGE_W
+      });
 
-      var numSlices = Math.ceil(elH / PAGE_H);
+      var canvasW = pageCanvas.width;
+      var canvasH = pageCanvas.height;
+      var pageHpx = PAGE_H * SCALE;
+      var numSlices = Math.ceil(canvasH / pageHpx);
+
       for (var s = 0; s < numSlices; s++) {
         if (pdfPageCount > 0) pdf.addPage([PAGE_W, PAGE_H], 'portrait');
         pdfPageCount++;
 
-        var srcY  = (elStartY + s * PAGE_H) * SCALE;
-        var remaining = elH - s * PAGE_H;
-        var sliceH = Math.min(PAGE_H, remaining);
+        var srcY = s * pageHpx;
+        var sliceH = Math.min(pageHpx, canvasH - srcY);
 
-        var sub = document.createElement('canvas');
-        sub.width  = PAGE_W * SCALE;
-        sub.height = PAGE_H * SCALE;
-        var ctx = sub.getContext('2d');
-        // Smoothing alto = imágenes scale-down se ven mejor (menos jagged edges)
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, sub.width, sub.height);
-        ctx.drawImage(fullCanvas,
-          0, srcY,             PAGE_W * SCALE, sliceH * SCALE,
-          0, 0,                PAGE_W * SCALE, sliceH * SCALE);
+        if (numSlices === 1 && sliceH === canvasH) {
+          // Caso típico: la página entera cabe en una hoja PDF.
+          // No necesitamos sub-canvas, mandamos directo el pageCanvas.
+          var imgData = pageCanvas.toDataURL('image/jpeg', 0.95);
+          pdf.addImage(imgData, 'JPEG', 0, 0, PAGE_W, PAGE_H, undefined, 'SLOW');
+        } else {
+          // Página taller que A4 → recortamos slice por slice
+          var sub = document.createElement('canvas');
+          sub.width  = canvasW;
+          sub.height = pageHpx;
+          var ctx = sub.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, sub.width, sub.height);
+          ctx.drawImage(pageCanvas, 0, srcY, canvasW, sliceH, 0, 0, canvasW, sliceH);
 
-        // JPEG quality 0.95 — balance entre calidad visual y tamaño de archivo
-        var imgData = sub.toDataURL('image/jpeg', 0.95);
-        // 'SLOW' compression mode = mejor compresión sin perder calidad → PDF más chico
-        pdf.addImage(imgData, 'JPEG', 0, 0, PAGE_W, PAGE_H, undefined, 'SLOW');
+          var imgDataS = sub.toDataURL('image/jpeg', 0.95);
+          pdf.addImage(imgDataS, 'JPEG', 0, 0, PAGE_W, PAGE_H, undefined, 'SLOW');
+        }
       }
     }
 
