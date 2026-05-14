@@ -87,7 +87,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 
 /* COVER */
 .page-cover{padding:0;background:#8B5550;height:842px;min-height:842px;overflow:hidden;}
-.cover-bg-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;}
+/* .cover-bg-img eliminado — imagen de portada ahora se aplica como background-image CSS en el div */
 .cover-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(150deg,rgba(43,33,24,.52) 0%,rgba(139,85,80,.38) 100%);}
 .cover-body{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;padding:50px 58px;}
 .cover-sig{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:300;}
@@ -409,7 +409,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
         <button class="sb-btn" onclick="loadPlanSnapshot()">Cargar</button>
         <button class="sb-btn danger" onclick="deletePlanSnapshot()">Borrar</button>
       </div>
-      <div id="save-status" style="font-size:.67rem;color:var(--rose-dark);display:none"></div>
+      <div id="save-status" style="font-size:.75rem;font-weight:500;color:var(--rose-dark);display:none;padding:.3rem .5rem;background:rgba(168,112,106,.1);border-radius:6px;text-align:center"></div>
     </div>
     <div class="fsec">
       <div class="fsec-title">Datos del documento</div>
@@ -578,8 +578,10 @@ function showSaveStatus(msg, isErr) {
   if (!el) return;
   el.textContent = msg;
   el.style.color = isErr ? '#a32d2d' : 'var(--rose-dark)';
+  el.style.background = isErr ? 'rgba(163,45,45,.1)' : 'rgba(168,112,106,.1)';
   el.style.display = '';
-  setTimeout(function(){ el.style.display='none'; }, 3000);
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.style.display='none'; }, 5000);
 }
 
 /* LOGO */
@@ -678,8 +680,10 @@ function buildCover(titulo, nombre, fecha, imgKey, extra) {
   var coverTop = logo
     ? '<img class="cover-logo-img" src="' + logo + '" alt="Agustina Villegas">'
     : '<div class="cover-sig">Lic. Agustina Villegas &middot; Nutricionista</div>';
-  return '<div class="doc-page page-cover">' +
-    (img ? '<img class="cover-bg-img" src="' + img + '" alt="">' : '') +
+  // Usar background-image CSS en lugar de <img object-fit:cover>
+  // html2canvas maneja bg CSS correctamente en Safari/iPad (object-fit falla)
+  var bgStyle = img ? 'background-image:url(\'' + img + '\');background-size:cover;background-position:center top;' : '';
+  return '<div class="doc-page page-cover" style="' + bgStyle + '">' +
     '<div class="cover-overlay"></div>' +
     '<div class="cover-body">' +
     coverTop +
@@ -1359,21 +1363,29 @@ async function initSavesUI() {
 }
 
 /* Auto-save al cerrar pestaña (solo localStorage, sync no disponible en unload) */
-window.addEventListener('beforeunload', function() {
+function _autoSaveLocal() {
   try {
     if (!val('plan-nombre')) return;
     var snap = collectPlanData();
     var now = new Date();
-    snap._name = (val('plan-nombre')||'Sin nombre') + ' — autocierre ' + now.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'2-digit'});
+    snap._name = (val('plan-nombre')||'Sin nombre') + ' — autoguardado ' + now.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' + now.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'});
     snap._ts = now.toISOString(); snap._auto = true;
+    snap._id = 'auto_' + (val('plan-nombre')||'noname').replace(/\s+/g,'_');
     var arr = JSON.parse(localStorage.getItem('ag_plan_saves')||'[]');
-    var existing = arr.findIndex(function(s){ return s._auto && (s._name||'').includes('autocierre'); });
-    if (existing >= 0) arr.splice(existing, 1);
+    // Reemplazar el autoguardado anterior del mismo paciente (no acumular)
+    arr = arr.filter(function(s){ return !(s._auto && s._id === snap._id); });
     arr.unshift(snap);
     if (arr.length > 60) arr = arr.slice(0, 60);
     localStorage.setItem('ag_plan_saves', JSON.stringify(arr));
   } catch(e) {}
-});
+}
+window.addEventListener('beforeunload', _autoSaveLocal);
+window.addEventListener('pagehide', _autoSaveLocal); // iOS Safari: pagehide es más confiable que beforeunload
+
+/* Auto-save periódico cada 90s → protege contra cierres bruscos en iPad */
+setInterval(function() {
+  if (val('plan-nombre')) _autoSaveLocal();
+}, 90000);
 
 function collectPlanData() {
   return {
@@ -1759,27 +1771,36 @@ async function dlPDF(docId, filename, btnId) {
     console.log('[dlPDF] page breaks:', breaks);
 
     // Renderizar página por página
+    // Si un elemento doc-page es más alto que PAGE_H, se divide en múltiples páginas PDF
+    var pdfPageCount = 0;
     for (var i = 0; i < breaks.length - 1; i++) {
-      var startY = breaks[i];
-      var endY = breaks[i + 1];
-      var sliceH = Math.min(endY - startY, PAGE_H);
-      if (sliceH <= 0) continue;
-      if (i > 0) pdf.addPage([PAGE_W, PAGE_H], 'portrait');
+      var elStartY = breaks[i];
+      var elEndY   = breaks[i + 1];
+      var elH      = elEndY - elStartY;
+      if (elH <= 0) continue;
 
-      // Sub-canvas con la región de esta página
-      var sub = document.createElement('canvas');
-      sub.width = PAGE_W * SCALE;
-      sub.height = PAGE_H * SCALE;
-      var ctx = sub.getContext('2d');
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, sub.width, sub.height);
-      ctx.drawImage(fullCanvas,
-        0, startY * SCALE, PAGE_W * SCALE, sliceH * SCALE,
-        0, 0,              PAGE_W * SCALE, sliceH * SCALE);
+      var numSlices = Math.ceil(elH / PAGE_H);
+      for (var s = 0; s < numSlices; s++) {
+        if (pdfPageCount > 0) pdf.addPage([PAGE_W, PAGE_H], 'portrait');
+        pdfPageCount++;
 
-      var imgData = sub.toDataURL('image/jpeg', 0.95);
-      // addImage con dimensiones en pt = matchean exactamente la página
-      pdf.addImage(imgData, 'JPEG', 0, 0, PAGE_W, PAGE_H);
+        var srcY  = (elStartY + s * PAGE_H) * SCALE;
+        var remaining = elH - s * PAGE_H;
+        var sliceH = Math.min(PAGE_H, remaining);
+
+        var sub = document.createElement('canvas');
+        sub.width  = PAGE_W * SCALE;
+        sub.height = PAGE_H * SCALE;
+        var ctx = sub.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, sub.width, sub.height);
+        ctx.drawImage(fullCanvas,
+          0, srcY,             PAGE_W * SCALE, sliceH * SCALE,
+          0, 0,                PAGE_W * SCALE, sliceH * SCALE);
+
+        var imgData = sub.toDataURL('image/jpeg', 0.95);
+        pdf.addImage(imgData, 'JPEG', 0, 0, PAGE_W, PAGE_H);
+      }
     }
 
     pdf.save(filename);
