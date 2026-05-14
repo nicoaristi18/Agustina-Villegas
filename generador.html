@@ -632,23 +632,51 @@ function _stripImagesFromSnap(snap) {
   return copy;
 }
 
+/* Intenta subir N guardados al cloud; si falla por tamaño, recorta y reintenta.
+   Edge Config tiene límite ~8KB por valor en plan free. */
+async function _tryCloudWrite(url, bodyBuilder, fullArr) {
+  // Empieza con todos los guardados, va recortando hasta que entre
+  var sizes = [fullArr.length, Math.ceil(fullArr.length/2), 3, 2, 1];
+  // Dedup
+  sizes = sizes.filter(function(v,i,a){ return v>0 && a.indexOf(v)===i; });
+  for (var k = 0; k < sizes.length; k++) {
+    var sliced = fullArr.slice(0, sizes[k]);
+    var body = bodyBuilder(sliced);
+    try {
+      var r = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:body});
+      if (r.ok) return { ok: true, count: sliced.length, response: r };
+      // 400 = body muy grande, intentar con menos
+      if (r.status !== 400 && r.status !== 413) {
+        return { ok: false, response: r }; // otro error, no recortar
+      }
+    } catch(e) {}
+  }
+  return { ok: false, response: null };
+}
+
 async function cloudPutSaves(arr) {
   // localStorage SIEMPRE primero (síncrono) — con imágenes intactas
   try { localStorage.setItem('ag_plan_saves', JSON.stringify(arr)); } catch(e) {}
   // Para la nube usamos versión liviana (sin imágenes base64)
   var lite = arr.map(_stripImagesFromSnap);
-  var liteStr = JSON.stringify(lite);
-  console.log('[cloudPutSaves] tamaños — full:', JSON.stringify(arr).length, 'lite:', liteStr.length, 'bytes');
-  var kvP = fetch('/api/kv', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'set',key:'ag:gen_saves',value:liteStr})}).catch(function(e){ console.warn('KV err', e); return null; });
-  var ecP = fetch('/api/data', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'agustina_generator_saves',value:liteStr})}).catch(function(e){ console.warn('EC err', e); return null; });
-  var results = await Promise.all([kvP, ecP]);
-  var kvOk = results[0] && results[0].ok;
-  var ecOk = results[1] && results[1].ok;
-  // Diagnóstico detallado
-  if (!kvOk && results[0]) try { results[0].clone().json().then(function(d){ console.warn('[KV detail]', d); }); } catch(e){}
-  if (!ecOk && results[1]) try { results[1].clone().json().then(function(d){ console.warn('[EC detail]', d); }); } catch(e){}
-  console.log('[cloudPutSaves] localStorage:✓ KV:'+(kvOk?'✓':'✗')+' EC:'+(ecOk?'✓':'✗'));
-  return { kvOk: kvOk, ecOk: ecOk, lsOk: true };
+  console.log('[cloudPutSaves] tamaño full:', JSON.stringify(arr).length, 'lite total:', JSON.stringify(lite).length, 'bytes');
+
+  // Auto-retry con tamaños decrecientes hasta que entre
+  var kvRes = _tryCloudWrite('/api/kv', function(sliced){
+    return JSON.stringify({op:'set', key:'ag:gen_saves', value: JSON.stringify(sliced)});
+  }, lite);
+  var ecRes = _tryCloudWrite('/api/data', function(sliced){
+    return JSON.stringify({key:'agustina_generator_saves', value: JSON.stringify(sliced)});
+  }, lite);
+  var results = await Promise.all([kvRes, ecRes]);
+  var kvOk = results[0].ok, ecOk = results[1].ok;
+  var syncCount = Math.max(kvOk ? results[0].count : 0, ecOk ? results[1].count : 0);
+
+  // Diagnóstico
+  if (!kvOk && results[0].response) try { results[0].response.clone().json().then(function(d){ console.warn('[KV detail]', d); }); } catch(e){}
+  if (!ecOk && results[1].response) try { results[1].response.clone().json().then(function(d){ console.warn('[EC detail]', d); }); } catch(e){}
+  console.log('[cloudPutSaves] localStorage:✓ KV:'+(kvOk?('✓('+results[0].count+')'):'✗')+' EC:'+(ecOk?('✓('+results[1].count+')'):'✗'));
+  return { kvOk: kvOk, ecOk: ecOk, lsOk: true, syncCount: syncCount, totalCount: arr.length };
 }
 
 function showSaveStatus(msg, isErr) {
@@ -1389,11 +1417,17 @@ async function savePlanSnapshot() {
   if (arr.length > 50) arr = arr.slice(0, 50);
   var res = await cloudPutSaves(arr);
   updatePlanSavesUI(arr);
-  // Mensaje claro sobre qué fuentes recibieron el guardado
+  // Mensaje claro sobre cuántos se sincronizaron
   var msg = '✓ Guardado';
-  if (res.kvOk) msg += ' (sincroniza entre dispositivos)';
-  else if (res.ecOk) msg += ' (sincroniza entre dispositivos)';
-  else msg += ' SOLO en este dispositivo — sin conexión a la nube';
+  if (res.kvOk || res.ecOk) {
+    if (res.syncCount >= res.totalCount) {
+      msg += ' (' + res.totalCount + ' planes sincronizados entre dispositivos)';
+    } else {
+      msg += ' — solo los ' + res.syncCount + ' más recientes sincronizan (los otros ' + (res.totalCount - res.syncCount) + ' quedan solo en este dispositivo)';
+    }
+  } else {
+    msg += ' SOLO en este dispositivo — sin conexión a la nube';
+  }
   showSaveStatus(msg, !res.kvOk && !res.ecOk);
 }
 
