@@ -439,6 +439,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
     </div>
     <div class="fsec">
       <div class="fsec-title">Secciones adicionales</div>
+      <label class="sec-toggle"><span>Página de macros totales (resumen de distribución nutricional)</span><input type="checkbox" id="plan-totales-on" checked onchange="upPlan()"></label>
       <label class="sec-toggle"><span>Macronutrientes (4 p&aacute;ginas)</span><input type="checkbox" id="plan-macros-on" onchange="planToggleSec(this,'fsec-macros4')"></label>
       <label class="sec-toggle"><span>Porciones e intercambios</span><input type="checkbox" id="plan-porc-on" onchange="planToggleSec(this,'fsec-porcs')"></label>
       <label class="sec-toggle"><span>Alimentos crudos y cocidos</span><input type="checkbox" id="plan-crudo-on" onchange="planToggleSec(this,'fsec-crudos')"></label>
@@ -523,14 +524,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 
 <!-- PORTFOLIO MODAL -->
 <div id="portfolio-modal" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(43,33,24,.72);align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:14px;width:520px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.25);">
+  <div style="background:#fff;border-radius:14px;width:560px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.25);">
     <div style="padding:1rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;flex-shrink:0;">
       <div style="flex:1;font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:400;color:var(--rose-deep)">Portfolio de recetas</div>
       <input id="pm-search" type="text" placeholder="Buscar..." oninput="filterPortfolioModal(this.value)" style="padding:.35rem .65rem;border:1px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.77rem;outline:none;width:160px">
       <button onclick="closePortfolioModal()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--text-muted);padding:.1rem .3rem">&times;</button>
     </div>
+    <div style="padding:.45rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.7rem;flex-shrink:0;font-size:.73rem">
+      <button onclick="pmSelectAll(true)" style="background:none;border:1px solid var(--border);border-radius:6px;padding:.25rem .55rem;cursor:pointer;color:var(--rose-dark);font-size:.7rem;font-family:inherit">Seleccionar todas</button>
+      <button onclick="pmSelectAll(false)" style="background:none;border:1px solid var(--border);border-radius:6px;padding:.25rem .55rem;cursor:pointer;color:var(--text-muted);font-size:.7rem;font-family:inherit">Limpiar selección</button>
+      <span id="pm-count" style="margin-left:auto;color:var(--text-muted);font-size:.7rem">0 seleccionadas</span>
+    </div>
     <div id="pm-list" style="overflow-y:auto;flex:1;padding:.6rem .8rem;"></div>
-    <div style="padding:.7rem 1.2rem;border-top:1px solid var(--border);font-size:.68rem;color:var(--text-muted);flex-shrink:0">Clic en una receta para agregarla al recetario</div>
+    <div style="padding:.7rem 1.2rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:.7rem;flex-shrink:0">
+      <div style="flex:1;font-size:.68rem;color:var(--text-muted)">Tildá las recetas que quieras agregar y dale al botón</div>
+      <button id="pm-add-btn" onclick="addSelectedPortfolio()" disabled style="background:var(--rose-dark);color:#fff;border:none;border-radius:7px;padding:.5rem 1.1rem;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;opacity:.4">Agregar 0 al recetario</button>
+    </div>
   </div>
 </div>
 
@@ -1605,6 +1614,7 @@ function collectPlanData() {
     protPct:val('plan-prot-pct'), protG:val('plan-prot-g'),
     grasPct:val('plan-grasas-pct'), grasG:val('plan-grasas-g'),
     carbPct:val('plan-carbs-pct'), carbG:val('plan-carbs-g'),
+    totalesOn:$('plan-totales-on')?!!$('plan-totales-on').checked:true,
     macrosOn:!!($('plan-macros-on')&&$('plan-macros-on').checked),
     porcOn:!!($('plan-porc-on')&&$('plan-porc-on').checked),
     crudoOn:!!($('plan-crudo-on')&&$('plan-crudo-on').checked),
@@ -1632,6 +1642,8 @@ function applyPlanData(d) {
   setV('plan-prot-pct',d.protPct);setV('plan-prot-g',d.protG);
   setV('plan-grasas-pct',d.grasPct);setV('plan-grasas-g',d.grasG);
   setV('plan-carbs-pct',d.carbPct);setV('plan-carbs-g',d.carbG);
+  // totalesOn default true para compat con saves viejos que no lo tenian
+  setCb('plan-totales-on', d.totalesOn !== false);
   setCb('plan-macros-on',d.macrosOn);setCb('plan-porc-on',d.porcOn);
   setCb('plan-crudo-on',d.crudoOn);setCb('plan-ideas-on',d.ideasOn);
   setCb('plan-tabla-on',d.tablaOn);
@@ -1885,14 +1897,19 @@ function buildPlanDoc() {
   /* Page order: Cover → Macros summary → Macronutrientes pages → Distribución (one page per day) → Porciones → Crudos → Ideas → Notas */
   var tablaPg = tablaOn ? buildTablaPage(nombre) : '';
 
+  /* Página de macros totales (resumen) — opcional */
+  var totalesOn = $('plan-totales-on') ? $('plan-totales-on').checked : true;
+  var totalesPage = totalesOn ?
+    ('<div class="doc-page" style="background:#FAF8F4">'+
+      pgHdr('Plan de alimentación', nombre)+
+      objBox+
+      '<div class="sec-label'+(objBox?'':' first')+'">Distribución nutricional</div>'+
+      macrosTbl+bars+
+    '</div>') : '';
+
   return '<div class="ag-doc" id="doc-plan">'+
     buildCover('Plan de\nalimentación', nombre, fecha, 'gen_cv_plan', objetivo||'')+
-    '<div class="doc-page" style="background:#FAF8F4">'+
-    pgHdr('Plan de alimentación', nombre)+
-    objBox+
-    '<div class="sec-label'+(objBox?'':' first')+'">Distribución nutricional</div>'+
-    macrosTbl+bars+
-    '</div>'+
+    totalesPage+
     macrosPgs+
     mealsPages+
     tablaPg+
@@ -2099,6 +2116,8 @@ async function openPortfolioModal() {
   modal.style.display = 'flex';
   var searchEl = $('pm-search');
   if (searchEl) searchEl.value = '';
+  // Limpiar selección anterior al abrir
+  _pmSelected.clear();
   // Cargar desde la nube (mostrar loading mientras tanto)
   var list = $('pm-list');
   if (list) list.innerHTML = '<div style="text-align:center;padding:2rem;color:#8C7E78;font-size:.85rem">Cargando recetas…</div>';
@@ -2115,6 +2134,9 @@ function filterPortfolioModal(q) {
   renderPortfolioModal(q);
 }
 
+/* Set de _ids seleccionados (persistido entre filtros) */
+var _pmSelected = new Set();
+
 function renderPortfolioModal(filter) {
   var list = $('pm-list');
   if (!list) return;
@@ -2125,48 +2147,94 @@ function renderPortfolioModal(filter) {
     list.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--text-muted);font-size:.8rem">' +
       (full.length ? 'Sin resultados para "' + esc(filter) + '".' : 'El portfolio está vacío. Agregá recetas desde el Admin → Portfolio de recetas.') +
       '</div>';
+    pmUpdateCounter();
     return;
   }
   var secLabel = {des:'Desayuno / Merienda', alm:'Almuerzo / Cena', extra:'Extra'};
   list.innerHTML = _pmFiltered.map(function(r, i) {
     var sec = r.seccion || r.sec || 'extra';
-    return '<div data-pmidx="' + i + '" style="display:flex;align-items:center;gap:.7rem;padding:.6rem .7rem;border-radius:8px;cursor:pointer;border:1px solid rgba(169,138,130,.2);margin-bottom:.4rem;background:#fff;">' +
-      '<div style="flex:1">' +
-      '<div style="font-size:.82rem;font-weight:500;color:#2A2118">' + esc(r.nombre||'Sin nombre') + '</div>' +
-      '<div style="font-size:.68rem;color:#8C7E78;margin-top:1px">' + (secLabel[sec]||'Extra') + '</div>' +
+    var rid = r.id || ('idx_' + i);
+    var checked = _pmSelected.has(rid) ? 'checked' : '';
+    return '<label data-pmid="' + esc(rid) + '" style="display:flex;align-items:center;gap:.7rem;padding:.55rem .7rem;border-radius:8px;cursor:pointer;border:1px solid rgba(169,138,130,.2);margin-bottom:.35rem;background:#fff;transition:background .12s;">' +
+      '<input type="checkbox" ' + checked + ' onchange="pmToggle(\'' + esc(rid) + '\',this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:#A8706A;flex-shrink:0">' +
+      '<div style="flex:1;min-width:0">' +
+      '<div style="font-size:.82rem;font-weight:500;color:#2A2118;overflow:hidden;text-overflow:ellipsis">' + esc(r.nombre||'Sin nombre') + '</div>' +
+      '<div style="font-size:.68rem;color:#8C7E78;margin-top:1px">' + (secLabel[sec]||'Extra') + (r.sinTACC?' · Sin TACC':'') + (r.kcal?' · '+esc(r.kcal)+' kcal':'') + '</div>' +
       '</div>' +
-      '<div style="font-size:.72rem;color:#A8706A;font-weight:500;white-space:nowrap;background:#F0E6DF;padding:3px 10px;border-radius:20px;">+ Agregar</div>' +
-      '</div>';
+      '</label>';
   }).join('');
-  /* Adjuntar listeners después de renderizar — más robusto que onclick inline */
-  list.querySelectorAll('[data-pmidx]').forEach(function(row) {
+  // Hover suave + click en la fila (no solo en el check) marca el checkbox
+  list.querySelectorAll('[data-pmid]').forEach(function(row) {
     row.addEventListener('mouseenter', function(){ this.style.background = '#FAF8F4'; });
     row.addEventListener('mouseleave', function(){ this.style.background = '#fff'; });
-    row.addEventListener('click', function(e) {
-      e.stopPropagation();
-      addRecetaFromPortfolio(parseInt(this.dataset.pmidx));
-    });
   });
+  pmUpdateCounter();
 }
 
-function addRecetaFromPortfolio(idx) {
-  var r = _pmFiltered[idx];
-  if (!r) return;
-  recCtr++;
-  var secMap = {des:'desayuno', alm:'almuerzo', extra:'extra'};
-  recetas.push({
-    id: recCtr,
-    nombre: r.nombre || '',
-    sec: secMap[r.seccion||r.sec] || 'extra',
-    porciones: r.porciones || '1',
-    ing: r.ingredientes || '',
-    prep: r.prep || r.preparacion || '',
-    tacc: !!r.tacc,
-    kcal: r.kcal || ''
+function pmToggle(id, on) {
+  if (on) _pmSelected.add(id); else _pmSelected.delete(id);
+  pmUpdateCounter();
+}
+
+function pmSelectAll(on) {
+  _pmFiltered.forEach(function(r, i){
+    var rid = r.id || ('idx_' + i);
+    if (on) _pmSelected.add(rid); else _pmSelected.delete(rid);
   });
+  // Si "limpiar" se aplicó, también limpia los que no están en la lista filtrada
+  if (!on) _pmSelected.clear();
+  renderPortfolioModal($('pm-search') ? $('pm-search').value : '');
+}
+
+function pmUpdateCounter() {
+  var n = _pmSelected.size;
+  var cnt = $('pm-count');
+  var btn = $('pm-add-btn');
+  if (cnt) cnt.textContent = n + ' seleccionada' + (n !== 1 ? 's' : '');
+  if (btn) {
+    btn.textContent = 'Agregar ' + n + ' al recetario';
+    btn.disabled = n === 0;
+    btn.style.opacity = n === 0 ? '0.4' : '1';
+    btn.style.cursor = n === 0 ? 'not-allowed' : 'pointer';
+  }
+}
+
+function addSelectedPortfolio() {
+  if (_pmSelected.size === 0) return;
+  var full = getAdminPortfolio();
+  var secMap = {des:'desayuno', alm:'almuerzo', extra:'extra'};
+  var added = 0;
+  full.forEach(function(r, i) {
+    var rid = r.id || ('idx_' + i);
+    if (!_pmSelected.has(rid)) return;
+    recCtr++;
+    recetas.push({
+      id: recCtr,
+      nombre: r.nombre || '',
+      sec: secMap[r.seccion||r.sec] || 'extra',
+      porciones: r.porciones || '1',
+      ing: r.ingredientes || '',
+      prep: r.prep || r.preparacion || '',
+      tacc: !!r.sinTACC,
+      kcal: r.kcal || ''
+    });
+    added++;
+  });
+  _pmSelected.clear();
   renderRecForm();
   upRec();
   closePortfolioModal();
+  // toast simple en el botón si existe
+  console.log('[portfolio] agregadas '+added+' recetas');
+}
+
+/* Compatibilidad: la función vieja redirige a la nueva si alguien la llama */
+function addRecetaFromPortfolio(idx) {
+  var r = _pmFiltered[idx];
+  if (!r) return;
+  var rid = r.id || ('idx_' + idx);
+  _pmSelected.add(rid);
+  addSelectedPortfolio();
 }
 
 /* Close modal on backdrop click */
