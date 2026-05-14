@@ -880,29 +880,64 @@ function buildRecDoc() {
   var nombre = val('rec-nombre'), fecha = val('rec-fecha'), intro = val('rec-intro');
   var bySec = {desayuno:[], almuerzo:[], extra:[]};
   recetas.forEach(function(r){ if (bySec[r.sec]) bySec[r.sec].push(r); });
+
+  /* Índice */
   var idxItems = recetas.filter(function(r){ return r.nombre; }).map(function(r) {
     return '<li class="idx-item"><span class="idx-name">' + esc(r.nombre) + '</span><span class="idx-dots"></span><span class="idx-sec">' + (r.sec === 'desayuno' ? 'D/M' : r.sec === 'almuerzo' ? 'A/C' : 'Ext') + '</span></li>';
   }).join('');
-  var recHtml = '';
+
+  /* HTML de una receta individual */
+  function buildOneReceta(r) {
+    var tags = (r.tacc ? '<span class="rec-tag tacc">Sin TACC</span>' : '') +
+      (r.porciones ? '<span class="rec-tag">' + esc(r.porciones) + ' porci&oacute;n' + (r.porciones != 1 ? 'es' : '') + '</span>' : '');
+    return '<div class="rec-block">' +
+      '<div class="rec-name">' + (esc(r.nombre) || 'Sin nombre') + '</div>' +
+      (tags ? '<div class="rec-tags">' + tags + '</div>' : '') +
+      '<div class="rec-cols">' +
+      '<div><div class="col-title">Ingredientes</div>' +
+      '<ul class="ing-list">' + (nl2li(r.ing, 'ing-item') || '<li class="ing-item">&mdash;</li>') + '</ul>' +
+      (r.kcal ? '<div class="rec-kcal"><span class="rec-kcal-n">' + esc(r.kcal) + '</span><span class="rec-kcal-l">kcal/porci&oacute;n</span></div>' : '') +
+      '</div>' +
+      '<div><div class="col-title">Preparaci&oacute;n</div>' +
+      '<ol class="prep-list">' + (nl2steps(r.prep) || '<li class="prep-item">&mdash;</li>') + '</ol>' +
+      '</div></div></div>';
+  }
+
+  /* Agrupar TODAS las recetas en lista ordenada por sección, anotando dónde
+     empieza cada sección para insertar el sec-label en la pag correspondiente */
+  var flat = [];
   ['desayuno','almuerzo','extra'].forEach(function(s) {
-    if (!bySec[s].length) return;
-    recHtml += '<div class="sec-label">' + SECS[s] + '</div>';
-    bySec[s].forEach(function(r) {
-      var tags = (r.tacc ? '<span class="rec-tag tacc">Sin TACC</span>' : '') +
-        (r.porciones ? '<span class="rec-tag">' + esc(r.porciones) + ' porci&oacute;n' + (r.porciones != 1 ? 'es' : '') + '</span>' : '');
-      recHtml += '<div class="rec-block">' +
-        '<div class="rec-name">' + (esc(r.nombre) || 'Sin nombre') + '</div>' +
-        (tags ? '<div class="rec-tags">' + tags + '</div>' : '') +
-        '<div class="rec-cols">' +
-        '<div><div class="col-title">Ingredientes</div>' +
-        '<ul class="ing-list">' + (nl2li(r.ing, 'ing-item') || '<li class="ing-item">&mdash;</li>') + '</ul>' +
-        (r.kcal ? '<div class="rec-kcal"><span class="rec-kcal-n">' + esc(r.kcal) + '</span><span class="rec-kcal-l">kcal/porci&oacute;n</span></div>' : '') +
-        '</div>' +
-        '<div><div class="col-title">Preparaci&oacute;n</div>' +
-        '<ol class="prep-list">' + (nl2steps(r.prep) || '<li class="prep-item">&mdash;</li>') + '</ol>' +
-        '</div></div></div>';
-    });
+    bySec[s].forEach(function(r){ flat.push({recipe: r, sec: s}); });
   });
+
+  /* Chunk en páginas de máximo 2 recetas. Si una receta entra sola, sola va.
+     Si entran 2, juntas. El sec-label aparece arriba de la primera receta
+     de su sección (puede coincidir con cambio de página o no). */
+  var MAX_PER_PAGE = 2;
+  var recPagesHtml = '';
+  var lastSec = null;
+  for (var i = 0; i < flat.length; i += MAX_PER_PAGE) {
+    var chunk = flat.slice(i, i + MAX_PER_PAGE);
+    var inner = '';
+    chunk.forEach(function(entry, idx) {
+      if (entry.sec !== lastSec) {
+        inner += '<div class="sec-label' + (idx === 0 ? ' first' : '') + '">' + SECS[entry.sec] + '</div>';
+        lastSec = entry.sec;
+      }
+      inner += buildOneReceta(entry.recipe);
+    });
+    recPagesHtml += '<div class="doc-page">' + pgHdr('Recetario', nombre) + inner + '</div>';
+  }
+  if (!recPagesHtml) {
+    recPagesHtml = '<div class="doc-page">' + pgHdr('Recetario', nombre) +
+      '<p style="font-size:11px;color:#8C7E78;margin-top:40px">Agrega recetas desde el formulario.</p></div>';
+  }
+
+  /* Si hay intro, se pone en su propia página dedicada (antes de las recetas) */
+  var introPage = intro ?
+    '<div class="doc-page">' + pgHdr('Recetario', nombre) +
+    '<div class="intro-box" style="margin-top:30px">' + esc(intro) + '</div></div>' : '';
+
   return '<div class="ag-doc" id="doc-rec">' +
     buildCover('Recetario', nombre, fecha, 'gen_cv_rec') +
     '<div class="doc-page" style="background:#FAF8F4">' +
@@ -916,11 +951,9 @@ function buildRecDoc() {
     '</div>' +
     (idxItems ? '<div class="sec-label">&Iacute;ndice de recetas</div><ul class="idx-list">' + idxItems + '</ul>' : '') +
     '</div>' +
-    '<div class="doc-page">' +
-    pgHdr('Recetario', nombre) +
-    (intro ? '<div class="intro-box">' + esc(intro) + '</div>' : '') +
-    (recHtml || '<p style="font-size:11px;color:#8C7E78">Agrega recetas desde el formulario.</p>') +
-    '</div></div>';
+    introPage +
+    recPagesHtml +
+    '</div>';
 }
 
 var upRec = deb(function() {
