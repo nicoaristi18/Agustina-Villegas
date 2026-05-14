@@ -1435,19 +1435,32 @@ function updatePlanSavesUI(arr) {
   var sel = $('plan-saves-sel');
   if (!sel) return;
   if (!arr) { try { arr = JSON.parse(localStorage.getItem('ag_plan_saves')||'[]'); } catch(e){ arr=[]; } }
+  // Asegurar que TODOS los snapshots tengan _id (fix retro de guardados viejos)
+  arr.forEach(function(s, i){
+    if (s && !s._id) s._id = 'legacy_' + (s._ts||'').replace(/\W/g,'_') + '_' + i;
+  });
+  // IMPORTANTE: option.value es el _id del snapshot, no el índice. Así si el array
+  // se reordena entre el render del UI y el click en "Cargar" se carga el correcto.
   sel.innerHTML = '<option value="">— Cargar guardado… (' + arr.length + ') —</option>' +
-    arr.map(function(s,i){
-      var ts = s._ts ? ' · ' + new Date(s._ts).toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '';
-      return '<option value="'+i+'">'+esc(s._name||'Sin nombre')+ts+'</option>';
+    arr.map(function(s){
+      var ts = s._ts ? ' · ' + new Date(s._ts).toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' + new Date(s._ts).toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'}) : '';
+      var safeId = (s._id||'').replace(/"/g,'&quot;');
+      return '<option value="'+safeId+'">'+esc(s._name||'Sin nombre')+ts+'</option>';
     }).join('');
 }
 
 async function loadPlanSnapshot() {
   var sel = $('plan-saves-sel');
   if (!sel || sel.value === '') { showSaveStatus('Seleccioná un guardado primero.', true); return; }
+  var selectedId = sel.value;
   var arr = await cloudGetSaves();
-  var snap = arr[parseInt(sel.value)];
-  if (!snap) return;
+  // Buscar por _id (no por índice — el array puede haberse reordenado)
+  var snap = arr.find(function(s){ return s && s._id === selectedId; });
+  if (!snap) {
+    showSaveStatus('No se encontró el guardado seleccionado. Refrescando lista…', true);
+    updatePlanSavesUI(arr);
+    return;
+  }
   applyPlanData(snap);
   if ($('plan-save-name')) $('plan-save-name').value = snap._name || '';
   upPlan();
@@ -1457,9 +1470,17 @@ async function loadPlanSnapshot() {
 async function deletePlanSnapshot() {
   var sel = $('plan-saves-sel');
   if (!sel || sel.value === '') { showSaveStatus('Seleccioná un guardado primero.', true); return; }
-  if (!confirm('¿Borrar este guardado?')) return;
+  var selectedId = sel.value;
   var arr = await cloudGetSaves();
-  arr.splice(parseInt(sel.value), 1);
+  var snap = arr.find(function(s){ return s && s._id === selectedId; });
+  if (!snap) {
+    showSaveStatus('No se encontró el guardado. Refrescando lista…', true);
+    updatePlanSavesUI(arr);
+    return;
+  }
+  if (!confirm('¿Borrar el guardado "' + (snap._name || 'sin nombre') + '"?')) return;
+  // Filtrar por _id
+  arr = arr.filter(function(s){ return !(s && s._id === selectedId); });
   await cloudPutSaves(arr);
   updatePlanSavesUI(arr);
   showSaveStatus('Guardado eliminado.');
