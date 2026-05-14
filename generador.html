@@ -579,24 +579,25 @@ async function cloudGetSaves() {
   var results = await Promise.all([_fetchKVSaves(), _fetchECSaves()]);
   var kv = results[0], ec = results[1], ls = _getLSSaves();
 
-  // Merge: dedupe por _id, prefer el _ts más reciente
+  // Merge: dedupe por _id, prefer el _ts más reciente.
+  // En caso de empate de _ts, la fuente que se ingiere DESPUÉS gana (LS gana en empates,
+  // porque conserva las imágenes base64 que stripeamos para subir a la nube).
   var byId = {};
   function ingest(arr, sourceTag) {
     if (!Array.isArray(arr)) return;
     arr.forEach(function(s){
       if (!s) return;
-      // Si no tiene _id, generar uno desde _name+_ts como fallback (compat con saves viejos)
       var id = s._id || ((s._name||'noname')+'_'+(s._ts||''));
       var prev = byId[id];
       if (!prev) { byId[id] = s; return; }
       var prevTs = prev._ts || '';
       var curTs = s._ts || '';
-      if (curTs > prevTs) byId[id] = s;
+      if (curTs >= prevTs) byId[id] = s; // >= para que LS (último ingest) gane en empates
     });
   }
   ingest(kv, 'kv');
   ingest(ec, 'ec');
-  ingest(ls, 'ls');
+  ingest(ls, 'ls'); // LS último → en empates gana y preserva las imágenes locales
 
   // Convertir a array, ordenar por _ts descendente (más nuevo primero)
   var merged = Object.keys(byId).map(function(k){ return byId[k]; });
@@ -613,15 +614,39 @@ async function cloudGetSaves() {
   return merged;
 }
 
+/* Para la nube removemos imágenes base64 (Edge Config tiene límite de ~8KB).
+   Las imágenes quedan SOLO en este dispositivo (localStorage). El texto se
+   sincroniza entre todos los dispositivos. */
+function _stripImagesFromSnap(snap) {
+  var copy = JSON.parse(JSON.stringify(snap));
+  if (Array.isArray(copy.macros4)) {
+    copy.macros4.forEach(function(m){
+      if (m && Array.isArray(m.imgs)) m.imgs = ['','','',''];
+    });
+  }
+  if (Array.isArray(copy.ideas)) {
+    copy.ideas.forEach(function(x){
+      if (x && Array.isArray(x.imgs)) x.imgs = x.imgs.map(function(){ return ''; });
+    });
+  }
+  return copy;
+}
+
 async function cloudPutSaves(arr) {
-  // Guardar SIEMPRE en localStorage primero (síncrono, instantáneo)
+  // localStorage SIEMPRE primero (síncrono) — con imágenes intactas
   try { localStorage.setItem('ag_plan_saves', JSON.stringify(arr)); } catch(e) {}
-  // Y en paralelo: KV + Edge Config (no bloqueamos el UI si fallan)
-  var kvP = fetch('/api/kv', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'set',key:'ag:gen_saves',value:JSON.stringify(arr)})}).catch(function(){ return null; });
-  var ecP = fetch('/api/data', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'agustina_generator_saves',value:JSON.stringify(arr)})}).catch(function(){ return null; });
+  // Para la nube usamos versión liviana (sin imágenes base64)
+  var lite = arr.map(_stripImagesFromSnap);
+  var liteStr = JSON.stringify(lite);
+  console.log('[cloudPutSaves] tamaños — full:', JSON.stringify(arr).length, 'lite:', liteStr.length, 'bytes');
+  var kvP = fetch('/api/kv', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'set',key:'ag:gen_saves',value:liteStr})}).catch(function(e){ console.warn('KV err', e); return null; });
+  var ecP = fetch('/api/data', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'agustina_generator_saves',value:liteStr})}).catch(function(e){ console.warn('EC err', e); return null; });
   var results = await Promise.all([kvP, ecP]);
   var kvOk = results[0] && results[0].ok;
   var ecOk = results[1] && results[1].ok;
+  // Diagnóstico detallado
+  if (!kvOk && results[0]) try { results[0].clone().json().then(function(d){ console.warn('[KV detail]', d); }); } catch(e){}
+  if (!ecOk && results[1]) try { results[1].clone().json().then(function(d){ console.warn('[EC detail]', d); }); } catch(e){}
   console.log('[cloudPutSaves] localStorage:✓ KV:'+(kvOk?'✓':'✗')+' EC:'+(ecOk?'✓':'✗'));
   return { kvOk: kvOk, ecOk: ecOk, lsOk: true };
 }
