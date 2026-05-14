@@ -1511,6 +1511,8 @@ async function initSavesUI() {
   initCoverButtons();
   // Si admin abrió un plan específico, cargarlo automáticamente
   var loadId = localStorage.getItem('ag_load_plan_id');
+  // Limpiar valor inválido legacy ("undefined" como string)
+  if (loadId === 'undefined' || loadId === 'null' || loadId === '') loadId = null;
   if (loadId) {
     console.log('[initSavesUI] admin pidió cargar plan _id:', loadId);
     localStorage.removeItem('ag_load_plan_id');

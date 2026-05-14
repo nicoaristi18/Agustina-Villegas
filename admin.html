@@ -1396,10 +1396,34 @@ async function renderClientes(filter) {
 
   const saves = await adminCloudGetSaves();
 
-  // Group by nombre (patient name field from collectPlanData)
+  // Asegurar que cada snap tenga _id válido (fix retro para datos viejos)
+  // Si no tiene, se le inventa uno determinístico para que el botón "Abrir" funcione
+  let needsResave = false;
+  saves.forEach((s, i) => {
+    if (s && !s._id) {
+      s._id = 'legacy_' + (s._ts || '').replace(/\W/g, '_') + '_' + i;
+      needsResave = true;
+    }
+  });
+  // Si arreglamos algún _id faltante, guardar de vuelta para que persista
+  if (needsResave) {
+    adminCloudPutSaves(saves);
+    console.log('[renderClientes] reparé _id de snaps viejos y los re-guardé');
+  }
+
+  // Group by nombre del cliente. Si no hay, intentar extraer del _name del guardado
+  // (formato típico: "NombrePaciente — DD/MM/YYYY HH:MM")
   const clients = {};
   saves.forEach(s => {
-    const key = (s.nombre || 'Sin nombre').trim();
+    let key = (s.nombre || '').trim();
+    if (!key && s._name) {
+      // Intentar extraer el nombre del paciente del título del guardado
+      const m = String(s._name).match(/^([^—–-]+?)\s*[—–-]/);
+      if (m && m[1].trim() && m[1].trim().toLowerCase() !== 'sin nombre') {
+        key = m[1].trim() + ' (sin nombre en form)';
+      }
+    }
+    if (!key) key = 'Sin nombre';
     if (!clients[key]) clients[key] = [];
     clients[key].push(s);
   });
@@ -1452,6 +1476,10 @@ function toggleClient(hd) {
 }
 
 function openPlanInGenerator(planId) {
+  if (!planId || planId === 'undefined' || planId === 'null') {
+    alert('Este plan no tiene un identificador válido (es un guardado viejo y dañado). Volvé a guardarlo desde el generador para arreglarlo.');
+    return;
+  }
   localStorage.setItem('gen_auth', '1');
   localStorage.setItem('ag_load_plan_id', planId);
   window.open('generador.html', '_blank');
