@@ -1998,9 +1998,14 @@ async function dlPDF(docId, filename, btnId) {
     var pageEls = docEl.querySelectorAll('.doc-page, .macro-pg, .ideas-photo-page');
     console.log('[dlPDF] páginas a renderizar:', pageEls.length);
 
-    // Helper: cargar imagen + croparla con "object-fit:cover" para que matchee
-    // la relación de aspecto del cell SIN estirar. Devuelve data URL.
-    function loadImageCropped(url, targetW, targetH) {
+    // Helper: cargar imagen + croparla "object-fit:cover" + bordes redondeados.
+    // vAlign: 0=arriba, 0.5=centro (default), 1=abajo. Controla qué porción
+    //   del source se mantiene cuando la imagen es más alta que el cell.
+    // radius: radio del border-radius en pt (igual a px en este pipeline).
+    function loadImageCropped(url, targetW, targetH, opts) {
+      opts = opts || {};
+      var vAlign = opts.vAlign !== undefined ? opts.vAlign : 0.5;
+      var radius = opts.radius !== undefined ? opts.radius : 12;
       return new Promise(function(resolve){
         var img = new Image();
         img.crossOrigin = 'anonymous';
@@ -2010,20 +2015,18 @@ async function dlPDF(docId, filename, btnId) {
           var targetRatio = targetW / targetH;
           var srcW, srcH, srcX, srcY;
           if (imgRatio > targetRatio) {
-            // imagen más ancha → recortar a los costados
+            // imagen más ancha → recortar a los costados (centrado horizontal)
             srcH = ih;
             srcW = Math.round(srcH * targetRatio);
             srcX = Math.round((iw - srcW) / 2);
             srcY = 0;
           } else {
-            // imagen más alta → recortar arriba/abajo
+            // imagen más alta → recortar arriba/abajo según vAlign
             srcW = iw;
             srcH = Math.round(srcW / targetRatio);
             srcX = 0;
-            srcY = Math.round((ih - srcH) / 2);
+            srcY = Math.round((ih - srcH) * vAlign);
           }
-          // Canvas de salida en alta resolución (4x del tamaño en pt)
-          // para que se vea nítido al hacer zoom
           var OUT = 4;
           var c = document.createElement('canvas');
           c.width = Math.round(targetW * OUT);
@@ -2031,13 +2034,37 @@ async function dlPDF(docId, filename, btnId) {
           var ctx = c.getContext('2d');
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
+          // Aplicar clip con esquinas redondeadas (compatible con todos los browsers)
+          if (radius > 0) {
+            var r = radius * OUT;
+            var w = c.width, h = c.height;
+            ctx.beginPath();
+            ctx.moveTo(r, 0);
+            ctx.lineTo(w - r, 0);
+            ctx.quadraticCurveTo(w, 0, w, r);
+            ctx.lineTo(w, h - r);
+            ctx.quadraticCurveTo(w, h, w - r, h);
+            ctx.lineTo(r, h);
+            ctx.quadraticCurveTo(0, h, 0, h - r);
+            ctx.lineTo(0, r);
+            ctx.quadraticCurveTo(0, 0, r, 0);
+            ctx.closePath();
+            ctx.clip();
+          }
           ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, c.width, c.height);
-          resolve(c.toDataURL('image/jpeg', 0.95));
+          // PNG preserva la transparencia de las esquinas → se ven los bordes
+          // redondeados con el fondo de la página atrás (no rectángulo blanco)
+          resolve(c.toDataURL('image/png'));
         };
         img.onerror = function(){ resolve(null); };
         img.src = url;
       });
     }
+
+    // Config de crop por imagen específica (si querés que no quede centrado)
+    var MACRO_IMG_CROP_OPTS = {
+      'images/macros/proteinas-1.jpg': { vAlign: 0.7 }  // bajar la imagen del polvo
+    };
 
     // Posiciones EXACTAS de las 4 fotos en una página de macronutrientes
     // (matchean el CSS .macro-img-grid: left:58 right:58 bottom:52, gap:12, height:140)
@@ -2119,7 +2146,7 @@ async function dlPDF(docId, filename, btnId) {
         }
 
         // Si es página de macros y es el primer slice → encimar las 4 fotos nativas
-        // con CROP cover (preserva aspect ratio, no estira)
+        // con CROP cover + bordes redondeados (PNG preserva transparencia)
         if (isMacroPg && macroKey && s === 0) {
           var defaults = MACRO_DEFAULT_IMGS[macroKey] || [];
           var userImgs = (macros4.find(function(mm){return mm.key===macroKey;})||{}).imgs || [];
@@ -2128,10 +2155,12 @@ async function dlPDF(docId, filename, btnId) {
             if (!src) continue;
             try {
               var p = MACRO_IMG_POSITIONS[j];
-              // Cropear con cover al exact aspect ratio del cell
-              var imgB64 = await loadImageCropped(src, p.w, p.h);
+              var cropOpts = MACRO_IMG_CROP_OPTS[src] || {};
+              cropOpts.radius = cropOpts.radius !== undefined ? cropOpts.radius : 12;
+              var imgB64 = await loadImageCropped(src, p.w, p.h, cropOpts);
               if (!imgB64) continue;
-              pdf.addImage(imgB64, 'JPEG', p.x, p.y, p.w, p.h, undefined, 'SLOW');
+              // PNG con transparencia en las esquinas redondeadas
+              pdf.addImage(imgB64, 'PNG', p.x, p.y, p.w, p.h, undefined, 'SLOW');
             } catch(e) { console.warn('error embebiendo imagen macro', j, e); }
           }
         }
