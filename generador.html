@@ -1400,9 +1400,17 @@ function autoFillSaveName() {
 async function savePlanSnapshot() {
   var nameInp = $('plan-save-name');
   var name = nameInp ? nameInp.value.trim() : '';
-  var pNombre = val('plan-nombre') || 'Sin nombre';
+  var pNombre = val('plan-nombre');
   var now = new Date();
-  // Siempre construimos el nombre con paciente + fecha + hora si está vacío
+  // Aviso si está intentando guardar sin haber puesto nombre del paciente
+  if (!pNombre) {
+    if (!confirm('El campo "Nombre del cliente" está vacío.\n\n¿Querés guardar el plan igual? El guardado se va a llamar "Sin nombre" y al cargarlo en otro dispositivo no vas a poder distinguirlo de otros guardados vacíos.')) {
+      showSaveStatus('Guardado cancelado. Completá "Nombre del cliente" primero.', true);
+      return;
+    }
+    pNombre = 'Sin nombre';
+  }
+  // Construir nombre de guardado automático si no hay uno
   if (!name) {
     name = pNombre + ' — ' + now.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + now.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'});
     if (nameInp) nameInp.value = name;
@@ -1411,6 +1419,7 @@ async function savePlanSnapshot() {
   snap._name = name;
   snap._ts = now.toISOString();
   snap._id = 'man_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+  console.log('[savePlanSnapshot] guardando snap:', {_id: snap._id, _name: snap._name, nombre: snap.nombre, kcal: snap.kcal});
   showSaveStatus('Guardando…');
   var arr = await cloudGetSaves();
   arr.unshift(snap);
@@ -1453,18 +1462,28 @@ async function loadPlanSnapshot() {
   var sel = $('plan-saves-sel');
   if (!sel || sel.value === '') { showSaveStatus('Seleccioná un guardado primero.', true); return; }
   var selectedId = sel.value;
+  console.log('[loadPlanSnapshot] selectedId:', selectedId);
   var arr = await cloudGetSaves();
+  console.log('[loadPlanSnapshot] arr.length:', arr.length, 'ids:', arr.map(function(s){return s._id;}));
   // Buscar por _id (no por índice — el array puede haberse reordenado)
   var snap = arr.find(function(s){ return s && s._id === selectedId; });
+  console.log('[loadPlanSnapshot] snap encontrado:', !!snap, 'campos:', snap ? Object.keys(snap).filter(function(k){ return snap[k] && !k.startsWith('_'); }) : null);
   if (!snap) {
     showSaveStatus('No se encontró el guardado seleccionado. Refrescando lista…', true);
     updatePlanSavesUI(arr);
     return;
   }
+  // Verificar que tenga datos básicos. Si está vacío, mostrar diagnóstico.
+  var hasFormData = snap.nombre || snap.kcal || snap.objetivo || (snap.days && snap.days.length) || (snap.meals && snap.meals.length);
+  console.log('[loadPlanSnapshot] hasFormData:', hasFormData, 'snap.nombre:', snap.nombre, 'snap.kcal:', snap.kcal);
   applyPlanData(snap);
   if ($('plan-save-name')) $('plan-save-name').value = snap._name || '';
   upPlan();
-  showSaveStatus('✓ Cargado: ' + (snap._name||'guardado'));
+  if (hasFormData) {
+    showSaveStatus('✓ Cargado: ' + (snap._name||'guardado') + ' (' + (snap.nombre||'sin nombre de cliente') + ')');
+  } else {
+    showSaveStatus('⚠ Cargado pero el guardado estaba vacío: ' + (snap._name||'sin nombre'), true);
+  }
 }
 
 async function deletePlanSnapshot() {
@@ -1490,15 +1509,30 @@ async function initSavesUI() {
   var arr = await cloudGetSaves();
   updatePlanSavesUI(arr);
   initCoverButtons();
-  // Si admin abrió una plan específico, cargarlo automáticamente
+  // Si admin abrió un plan específico, cargarlo automáticamente
   var loadId = localStorage.getItem('ag_load_plan_id');
   if (loadId) {
+    console.log('[initSavesUI] admin pidió cargar plan _id:', loadId);
     localStorage.removeItem('ag_load_plan_id');
     var snap = arr.find(function(s){ return s._id === loadId; });
+    console.log('[initSavesUI] snap encontrado:', !!snap, 'campos:', snap?Object.keys(snap):null);
     if (snap) {
       applyPlanData(snap);
+      // Seleccionar en el dropdown
+      var sel = $('plan-saves-sel');
+      if (sel) sel.value = loadId;
+      if ($('plan-save-name')) $('plan-save-name').value = snap._name || '';
       switchTab('plan');
-      showSaveStatus('Plan cargado: ' + (snap._name || snap.nombre || ''));
+      upPlan();
+      var hasFormData = snap.nombre || snap.kcal || (snap.days && snap.days.length);
+      if (hasFormData) {
+        showSaveStatus('✓ Plan cargado: ' + (snap.nombre || snap._name || ''));
+      } else {
+        showSaveStatus('⚠ Plan cargado pero estaba vacío: ' + (snap._name || ''), true);
+      }
+    } else {
+      showSaveStatus('No se encontró el plan ' + loadId + ' — puede haber sido eliminado', true);
+      switchTab('plan');
     }
   }
 }

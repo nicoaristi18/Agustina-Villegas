@@ -1331,21 +1331,58 @@ async function sendSurvey(){
   document.getElementById('surv-email').value='';
 }
 
-// ── CLIENTES — helpers cloud (misma lógica que generador.html) ──
-async function adminCloudGetSaves() {
+// ── CLIENTES — helpers cloud (misma lógica de merge que generador.html) ──
+async function _admFetchKV() {
   try {
     const r = await fetch('/api/kv?op=get&key=ag:gen_saves', {cache:'no-store'});
     if (r.ok) { const d = await r.json(); if (d.value) return typeof d.value==='string'?JSON.parse(d.value):d.value; }
   } catch(e) {}
+  return null;
+}
+async function _admFetchEC() {
   try {
     const r = await fetch('/api/data?key=agustina_generator_saves', {cache:'no-store'});
     if (r.ok) { const d = await r.json(); if (d.value) return typeof d.value==='string'?JSON.parse(d.value):d.value; }
   } catch(e) {}
+  return null;
+}
+function _admGetLS() {
   try { const ls = localStorage.getItem('ag_plan_saves'); if (ls) return JSON.parse(ls); } catch(e) {}
-  return [];
+  return null;
+}
+async function adminCloudGetSaves() {
+  // Merge KV + EC + LS, dedupe por _id, prefiriendo el _ts más reciente
+  // (en empates LS gana porque conserva las imágenes locales)
+  const results = await Promise.all([_admFetchKV(), _admFetchEC()]);
+  const kv = results[0], ec = results[1], ls = _admGetLS();
+  const byId = {};
+  function ingest(arr) {
+    if (!Array.isArray(arr)) return;
+    arr.forEach(function(s){
+      if (!s) return;
+      const id = s._id || ((s._name||'noname')+'_'+(s._ts||''));
+      const prev = byId[id];
+      if (!prev) { byId[id] = s; return; }
+      const prevTs = prev._ts || '';
+      const curTs = s._ts || '';
+      if (curTs >= prevTs) byId[id] = s;
+    });
+  }
+  ingest(kv);
+  ingest(ec);
+  ingest(ls);
+  const merged = Object.keys(byId).map(k => byId[k]);
+  merged.sort((a,b) => {
+    const at = a._ts || '', bt = b._ts || '';
+    if (at === bt) return 0;
+    return at > bt ? -1 : 1;
+  });
+  console.log('[adminCloudGetSaves] KV:'+(Array.isArray(kv)?kv.length:'✗')+' EC:'+(Array.isArray(ec)?ec.length:'✗')+' LS:'+(Array.isArray(ls)?ls.length:'✗')+' → merged:'+merged.length);
+  try { localStorage.setItem('ag_plan_saves', JSON.stringify(merged)); } catch(e) {}
+  return merged;
 }
 async function adminCloudPutSaves(arr) {
-  localStorage.setItem('ag_plan_saves', JSON.stringify(arr));
+  try { localStorage.setItem('ag_plan_saves', JSON.stringify(arr)); } catch(e) {}
   try { await fetch('/api/kv', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'set',key:'ag:gen_saves',value:JSON.stringify(arr)})}); } catch(e) {}
   try { await fetch('/api/data', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'agustina_generator_saves',value:JSON.stringify(arr)})}); } catch(e) {}
 }
