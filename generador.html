@@ -1965,17 +1965,54 @@ async function dlPDF(docId, filename, btnId) {
    PORTFOLIO MODAL (Recetario ← admin portfolio)
    ============================================================ */
 var _pmFiltered = []; // lista visible actual (usada por índice en onclick)
+var _pmCache = null;  // cache en memoria para esta sesión
 
-function getAdminPortfolio() {
+// Carga las recetas desde el cloud (KV → Edge Config → localStorage)
+async function loadAdminPortfolio() {
+  // 1) Intentar KV
+  try {
+    var r = await fetch('/api/kv?op=get&key=ag:recipes', {cache:'no-store'});
+    if (r.ok) {
+      var d = await r.json();
+      if (d.value) {
+        var arr = typeof d.value === 'string' ? JSON.parse(d.value) : d.value;
+        try { localStorage.setItem('ag_recipe_portfolio', JSON.stringify(arr)); } catch(e) {}
+        return arr;
+      }
+    }
+  } catch(e) {}
+  // 2) Edge Config
+  try {
+    var r2 = await fetch('/api/data?key=agustina_recipes', {cache:'no-store'});
+    if (r2.ok) {
+      var d2 = await r2.json();
+      if (d2.value) {
+        var arr2 = typeof d2.value === 'string' ? JSON.parse(d2.value) : d2.value;
+        try { localStorage.setItem('ag_recipe_portfolio', JSON.stringify(arr2)); } catch(e) {}
+        return arr2;
+      }
+    }
+  } catch(e) {}
+  // 3) localStorage (cache local)
   try { return JSON.parse(localStorage.getItem('ag_recipe_portfolio') || '[]'); } catch(e) { return []; }
 }
 
-function openPortfolioModal() {
+// Compat: devuelve la cache si existe, sino fallback sincrónico a localStorage
+function getAdminPortfolio() {
+  if (Array.isArray(_pmCache)) return _pmCache;
+  try { return JSON.parse(localStorage.getItem('ag_recipe_portfolio') || '[]'); } catch(e) { return []; }
+}
+
+async function openPortfolioModal() {
   var modal = $('portfolio-modal');
   if (!modal) return;
   modal.style.display = 'flex';
   var searchEl = $('pm-search');
   if (searchEl) searchEl.value = '';
+  // Cargar desde la nube (mostrar loading mientras tanto)
+  var list = $('pm-list');
+  if (list) list.innerHTML = '<div style="text-align:center;padding:2rem;color:#8C7E78;font-size:.85rem">Cargando recetas…</div>';
+  _pmCache = await loadAdminPortfolio();
   renderPortfolioModal('');
 }
 
