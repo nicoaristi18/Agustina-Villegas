@@ -1998,19 +1998,45 @@ async function dlPDF(docId, filename, btnId) {
     var pageEls = docEl.querySelectorAll('.doc-page, .macro-pg, .ideas-photo-page');
     console.log('[dlPDF] páginas a renderizar:', pageEls.length);
 
-    // Helper: cargar imagen como data URL para embeber nativamente en el PDF
-    async function loadImageAsDataURL(url) {
-      try {
-        var resp = await fetch(url);
-        if (!resp.ok) return null;
-        var blob = await resp.blob();
-        return await new Promise(function(resolve){
-          var reader = new FileReader();
-          reader.onloadend = function(){ resolve(reader.result); };
-          reader.onerror = function(){ resolve(null); };
-          reader.readAsDataURL(blob);
-        });
-      } catch(e) { return null; }
+    // Helper: cargar imagen + croparla con "object-fit:cover" para que matchee
+    // la relación de aspecto del cell SIN estirar. Devuelve data URL.
+    function loadImageCropped(url, targetW, targetH) {
+      return new Promise(function(resolve){
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+          var iw = img.naturalWidth, ih = img.naturalHeight;
+          var imgRatio = iw / ih;
+          var targetRatio = targetW / targetH;
+          var srcW, srcH, srcX, srcY;
+          if (imgRatio > targetRatio) {
+            // imagen más ancha → recortar a los costados
+            srcH = ih;
+            srcW = Math.round(srcH * targetRatio);
+            srcX = Math.round((iw - srcW) / 2);
+            srcY = 0;
+          } else {
+            // imagen más alta → recortar arriba/abajo
+            srcW = iw;
+            srcH = Math.round(srcW / targetRatio);
+            srcX = 0;
+            srcY = Math.round((ih - srcH) / 2);
+          }
+          // Canvas de salida en alta resolución (4x del tamaño en pt)
+          // para que se vea nítido al hacer zoom
+          var OUT = 4;
+          var c = document.createElement('canvas');
+          c.width = Math.round(targetW * OUT);
+          c.height = Math.round(targetH * OUT);
+          var ctx = c.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, c.width, c.height);
+          resolve(c.toDataURL('image/jpeg', 0.95));
+        };
+        img.onerror = function(){ resolve(null); };
+        img.src = url;
+      });
     }
 
     // Posiciones EXACTAS de las 4 fotos en una página de macronutrientes
@@ -2093,7 +2119,7 @@ async function dlPDF(docId, filename, btnId) {
         }
 
         // Si es página de macros y es el primer slice → encimar las 4 fotos nativas
-        // (calidad ORIGINAL del JPG, sin pasar por canvas + JPEG nuevamente)
+        // con CROP cover (preserva aspect ratio, no estira)
         if (isMacroPg && macroKey && s === 0) {
           var defaults = MACRO_DEFAULT_IMGS[macroKey] || [];
           var userImgs = (macros4.find(function(mm){return mm.key===macroKey;})||{}).imgs || [];
@@ -2101,13 +2127,11 @@ async function dlPDF(docId, filename, btnId) {
             var src = userImgs[j] || defaults[j];
             if (!src) continue;
             try {
-              // Si es ruta relativa, fetch + data URL; si ya es data URL, usar directo
-              var imgB64 = src.startsWith('data:') ? src : await loadImageAsDataURL(src);
-              if (!imgB64) continue;
               var p = MACRO_IMG_POSITIONS[j];
-              // 'SLOW' compression + format auto-detect
-              var fmt = imgB64.indexOf('data:image/png') === 0 ? 'PNG' : 'JPEG';
-              pdf.addImage(imgB64, fmt, p.x, p.y, p.w, p.h, undefined, 'SLOW');
+              // Cropear con cover al exact aspect ratio del cell
+              var imgB64 = await loadImageCropped(src, p.w, p.h);
+              if (!imgB64) continue;
+              pdf.addImage(imgB64, 'JPEG', p.x, p.y, p.w, p.h, undefined, 'SLOW');
             } catch(e) { console.warn('error embebiendo imagen macro', j, e); }
           }
         }
