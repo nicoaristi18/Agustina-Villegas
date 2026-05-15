@@ -614,11 +614,12 @@ tbody tr:hover td{background:var(--cream);}
     <div id="p-clientes" class="panel">
       <div class="ph">
         <h1>Clientes</h1>
-        <p>Planes de alimentación guardados automáticamente al descargar cada PDF</p>
+        <p>Planes de alimentación y recetarios guardados desde el Generador</p>
       </div>
       <div class="pb">
         <div class="cl-search-row">
           <input type="text" id="cl-search" placeholder="Buscar cliente..." oninput="renderClientes(this.value)">
+          <button class="cl-gen-btn" onclick="renderClientes(document.getElementById('cl-search').value||'')" title="Recargar lista">↻ Refrescar</button>
           <button class="cl-gen-btn" onclick="localStorage.setItem('gen_auth','1');window.open('generador.html','_blank')">＋ Nuevo plan</button>
         </div>
         <div id="cl-list"></div>
@@ -825,6 +826,18 @@ function go(name,btn){
     resenas:loadResenas
   }[name]||function(){})();
 }
+
+// Cuando el admin recupera el foco (ej: al volver del generador donde se guardó algo),
+// si está en la pestaña Clientes refrescar la lista automáticamente
+document.addEventListener('visibilitychange', function(){
+  if (document.visibilityState === 'visible') {
+    const clientesPanel = document.getElementById('p-clientes');
+    if (clientesPanel && clientesPanel.classList.contains('on')) {
+      console.log('[admin] foco recuperado, refrescando Clientes…');
+      renderClientes(document.getElementById('cl-search')?.value || '');
+    }
+  }
+});
 
 // window.storage shim — dual fallback: Vercel KV → Edge Config → localStorage
 // Cuando KV no está configurado usa Edge Config automáticamente
@@ -1411,16 +1424,25 @@ async function renderClientes(filter) {
     console.log('[renderClientes] reparé _id de snaps viejos y los re-guardé');
   }
 
+  // Log para debug
+  const totalPlans = saves.filter(s => s._type !== 'recetario').length;
+  const totalRecs = saves.filter(s => s._type === 'recetario').length;
+  console.log('[renderClientes] saves totales:', saves.length, '(planes:', totalPlans, ', recetarios:', totalRecs, ')');
+
   // Group by nombre del cliente. Si no hay, intentar extraer del _name del guardado
-  // (formato típico: "NombrePaciente — DD/MM/YYYY HH:MM")
+  // (formato típico: "NombrePaciente — DD/MM/YYYY HH:MM" o "NombrePaciente (Recetario) — ...")
   const clients = {};
   saves.forEach(s => {
     let key = (s.nombre || '').trim();
     if (!key && s._name) {
       // Intentar extraer el nombre del paciente del título del guardado
+      // Removemos sufijo "(Recetario)" si está presente para agrupar con los planes
       const m = String(s._name).match(/^([^—–-]+?)\s*[—–-]/);
-      if (m && m[1].trim() && m[1].trim().toLowerCase() !== 'sin nombre') {
-        key = m[1].trim() + ' (sin nombre en form)';
+      if (m) {
+        let extracted = m[1].trim().replace(/\s*\(Recetario\)\s*$/i, '').trim();
+        if (extracted && extracted.toLowerCase() !== 'sin nombre') {
+          key = extracted;
+        }
       }
     }
     if (!key) key = 'Sin nombre';
@@ -1432,7 +1454,7 @@ async function renderClientes(filter) {
   const filtered = filter ? names.filter(n => n.toLowerCase().includes(filter)) : names;
 
   if (!filtered.length) {
-    container.innerHTML = '<div class="cl-empty">No hay planes guardados aún.<br>Los planes se guardan automáticamente al descargar un PDF desde el Generador.</div>';
+    container.innerHTML = '<div class="cl-empty">No hay planes ni recetarios guardados aún.<br>Los guardados se hacen desde el Generador → Plan / Recetario → botón <b>💾 Guardar</b>.</div>';
     return;
   }
 
