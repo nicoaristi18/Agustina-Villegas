@@ -948,71 +948,73 @@ function buildRecDoc() {
     bySec[s].forEach(function(r){ flat.push({recipe: r, sec: s}); });
   });
 
-  /* Packing inteligente: medimos la altura real de cada receta renderizada,
-     luego empaquetamos en páginas hasta que la siguiente no entre. Así si
-     una receta es corta caben 2 o 3 por hoja; si es larga, va sola. */
+  /* Packing inteligente: vamos agregando recetas de a una a un contenedor
+     que SIMULA EXACTAMENTE la página real (mismo padding, mismas clases).
+     Cuando el contenedor pasa el alto máximo, cerramos la página y
+     empezamos otra. Esto evita errores de cálculo por colapso de márgenes. */
   var recPagesHtml = '';
   if (flat.length) {
-    // Contenedor offscreen con el mismo padding/font que .doc-page para
-    // que las mediciones sean exactas a lo que se renderizará en el PDF
-    var measure = document.createElement('div');
-    measure.style.cssText = 'position:absolute;left:-99999px;top:0;width:595px;box-sizing:border-box;padding:52px 58px 0;font-family:"DM Sans",sans-serif;color:#2A2118;background:#fff;visibility:hidden;';
-    measure.className = 'ag-doc';
-    document.body.appendChild(measure);
+    // Contenedor que mimicra una .doc-page exactamente
+    var measurePage = document.createElement('div');
+    measurePage.className = 'doc-page';
+    measurePage.style.cssText = 'position:absolute;left:-99999px;top:0;visibility:hidden;';
+    var measureDoc = document.createElement('div');
+    measureDoc.className = 'ag-doc';
+    measureDoc.appendChild(measurePage);
+    document.body.appendChild(measureDoc);
 
-    // Medir header de página
-    measure.innerHTML = pgHdr('Recetario', nombre);
-    var PG_HDR_H = (measure.firstChild && measure.firstChild.offsetHeight) || 35;
+    // Alto máximo permitido (page A4 menos un buffer pequeño de seguridad)
+    var MAX_H = 842 - 10; // 832, dejamos 10px de margen visual
 
-    // Medir altura típica de un sec-label
-    measure.innerHTML = '<div class="sec-label first">Test</div>';
-    var SEC_LABEL_H = (measure.firstChild && measure.firstChild.offsetHeight) || 40;
-    measure.innerHTML = '<div class="sec-label">Test</div>';
-    var SEC_LABEL_MID_H = (measure.firstChild && measure.firstChild.offsetHeight) || 50;
-
-    // Medir altura de cada receta
-    var heights = flat.map(function(entry) {
-      measure.innerHTML = buildOneReceta(entry.recipe);
-      return (measure.firstChild && measure.firstChild.offsetHeight) || 200;
-    });
-
-    document.body.removeChild(measure);
-
-    // Altura útil de una página A4 (842) menos padding vertical (52*2)
-    var PAGE_AVAIL = 842 - 52 - 30; // un poco de margen de seguridad abajo
-
-    // Empaquetar
     var pages = [];
-    var current = { html: '', usedH: PG_HDR_H };
-    var lastSec = null;
+    var currentHtml = '';
+    var currentSec = null;
+
+    function setMeasureContent(html) {
+      measurePage.innerHTML = html;
+    }
+    function currentMeasureHeight() {
+      return measurePage.offsetHeight;
+    }
+
     for (var i = 0; i < flat.length; i++) {
       var entry = flat[i];
-      var rH = heights[i];
-      var needsSecLabel = (entry.sec !== lastSec);
-      var labelH = needsSecLabel ? (current.html === '' ? SEC_LABEL_H : SEC_LABEL_MID_H) : 0;
-      var addH = labelH + rH;
-
-      // Si no entra y la página actual ya tiene algo → cerrar y empezar nueva
-      if (current.usedH + addH > PAGE_AVAIL && current.html !== '') {
-        pages.push(current);
-        current = { html: '', usedH: PG_HDR_H };
-        needsSecLabel = true; // arriba de la nueva pag, repetir etiqueta de sección
-        labelH = SEC_LABEL_H;
-        addH = labelH + rH;
-      }
-
+      var needsSecLabel = (entry.sec !== currentSec);
+      var secLabelHtml = '';
       if (needsSecLabel) {
-        var cls = current.html === '' ? 'sec-label first' : 'sec-label';
-        current.html += '<div class="' + cls + '">' + SECS[entry.sec] + '</div>';
-        lastSec = entry.sec;
+        var cls = currentHtml === '' ? 'sec-label first' : 'sec-label';
+        secLabelHtml = '<div class="' + cls + '">' + SECS[entry.sec] + '</div>';
       }
-      current.html += buildOneReceta(entry.recipe);
-      current.usedH += addH;
-    }
-    if (current.html !== '') pages.push(current);
+      var recipeHtml = buildOneReceta(entry.recipe);
 
-    recPagesHtml = pages.map(function(p){
-      return '<div class="doc-page">' + pgHdr('Recetario', nombre) + p.html + '</div>';
+      // Probar a agregar esta receta a la página actual
+      var trialHtml = pgHdr('Recetario', nombre) + currentHtml + secLabelHtml + recipeHtml;
+      setMeasureContent(trialHtml);
+      var trialH = currentMeasureHeight();
+
+      if (trialH > MAX_H && currentHtml !== '') {
+        // No entra → cerramos la página actual y arrancamos nueva con esta receta
+        pages.push(currentHtml);
+        currentHtml = '';
+        currentSec = null;
+        // Re-evaluar sec-label en nueva página (siempre la pondremos como 'first')
+        secLabelHtml = '<div class="sec-label first">' + SECS[entry.sec] + '</div>';
+        currentHtml = secLabelHtml + recipeHtml;
+        currentSec = entry.sec;
+      } else {
+        // Sí entra → agregar
+        if (needsSecLabel) currentSec = entry.sec;
+        currentHtml += secLabelHtml + recipeHtml;
+      }
+    }
+    if (currentHtml !== '') pages.push(currentHtml);
+
+    document.body.removeChild(measureDoc);
+
+    console.log('[buildRecDoc] pages totales:', pages.length);
+
+    recPagesHtml = pages.map(function(pHtml){
+      return '<div class="doc-page" style="overflow:hidden">' + pgHdr('Recetario', nombre) + pHtml + '</div>';
     }).join('');
   } else {
     recPagesHtml = '<div class="doc-page">' + pgHdr('Recetario', nombre) +
