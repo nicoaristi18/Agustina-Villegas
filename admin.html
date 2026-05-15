@@ -1437,23 +1437,34 @@ async function renderClientes(filter) {
   }
 
   container.innerHTML = filtered.map(name => {
-    const plans = clients[name].sort((a, b) => new Date(b._ts||0) - new Date(a._ts||0));
+    const items = clients[name].sort((a, b) => new Date(b._ts||0) - new Date(a._ts||0));
+    const plansCount = items.filter(p => p._type !== 'recetario').length;
+    const recsCount  = items.filter(p => p._type === 'recetario').length;
     const initials = name.split(' ').map(w => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?';
-    const lastSave = plans[0]?._name || '—';
-    const lastDate = plans[0]?._ts ? new Date(plans[0]._ts).toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
-    const plansHtml = plans.map(p => {
+    const lastDate = items[0]?._ts ? new Date(items[0]._ts).toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+    const plansHtml = items.map(p => {
       const pDate = p._ts ? new Date(p._ts).toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
       const pTime = p._ts ? new Date(p._ts).toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'}) : '';
       const safeName = (p._name || 'Plan sin nombre').replace(/'/g, '&#39;');
+      const isRec = p._type === 'recetario';
+      const badge = isRec
+        ? '<span style="display:inline-block;font-size:.62rem;font-weight:500;padding:2px 7px;border-radius:12px;background:#F5E6D9;color:#8B5A2B;letter-spacing:.04em;">RECETARIO</span>'
+        : '<span style="display:inline-block;font-size:.62rem;font-weight:500;padding:2px 7px;border-radius:12px;background:#E8D5D0;color:#8B5550;letter-spacing:.04em;">PLAN</span>';
+      const openFn = isRec ? 'openRecInGenerator' : 'openPlanInGenerator';
       return `
       <div class="cl-plan-row">
         <span class="cl-plan-date">${pDate} ${pTime}</span>
+        ${badge}
         <span class="cl-plan-name">${safeName}</span>
         <div class="cl-plan-actions">
-          <button class="btn-open-plan" onclick="openPlanInGenerator('${p._id}')">Abrir</button>
+          <button class="btn-open-plan" onclick="${openFn}('${p._id}')">Abrir</button>
           <button class="btn-del-plan" onclick="deleteSave('${p._id}')">Eliminar</button>
         </div>
       </div>`}).join('');
+    const countText = [
+      plansCount > 0 ? plansCount + ' plan' + (plansCount > 1 ? 'es' : '') : '',
+      recsCount > 0 ? recsCount + ' recetario' + (recsCount > 1 ? 's' : '') : ''
+    ].filter(Boolean).join(' · ');
 
     return `<div class="cl-card" id="cl-${name.replace(/[^a-zA-Z0-9]/g,'_')}">
       <div class="cl-card-hd" onclick="toggleClient(this)">
@@ -1462,7 +1473,7 @@ async function renderClientes(filter) {
           <div class="cl-name">${name}</div>
           <div class="cl-meta">Último guardado: ${lastDate}</div>
         </div>
-        <span class="cl-badge-count">${plans.length} plan${plans.length > 1 ? 'es' : ''}</span>
+        <span class="cl-badge-count">${countText || items.length + ' item' + (items.length > 1 ? 's' : '')}</span>
         <span class="cl-chevron">▾</span>
       </div>
       <div class="cl-plans-list">${plansHtml}</div>
@@ -1482,6 +1493,18 @@ function openPlanInGenerator(planId) {
   }
   localStorage.setItem('gen_auth', '1');
   localStorage.setItem('ag_load_plan_id', planId);
+  localStorage.removeItem('ag_load_rec_id');
+  window.open('generador.html', '_blank');
+}
+
+function openRecInGenerator(recId) {
+  if (!recId || recId === 'undefined' || recId === 'null') {
+    alert('Este recetario no tiene identificador válido. Volvé a guardarlo desde el generador.');
+    return;
+  }
+  localStorage.setItem('gen_auth', '1');
+  localStorage.setItem('ag_load_rec_id', recId);
+  localStorage.removeItem('ag_load_plan_id');
   window.open('generador.html', '_blank');
 }
 

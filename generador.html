@@ -323,6 +323,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 <!-- TAB 1: RECETARIO -->
 <div id="panel-rec" class="tab-panel on">
   <div class="form-col">
+    <!-- SAVE/LOAD RECETARIO -->
+    <div class="save-bar" style="flex-direction:column;gap:.45rem">
+      <div style="display:flex;gap:.4rem;width:100%;align-items:center">
+        <input id="rec-save-name" type="text" placeholder="Nombre del guardado (auto desde paciente + fecha)" style="flex:1;min-width:0;padding:.35rem .55rem;background:#fff;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text);outline:none;">
+        <button class="sb-btn primary" onclick="saveRecSnapshot()">💾 Guardar</button>
+      </div>
+      <div style="display:flex;gap:.4rem;width:100%;align-items:center">
+        <select id="rec-saves-sel" style="flex:1;min-width:0;padding:.35rem .55rem;background:#fff;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text);outline:none;"><option value="">— Cargar guardado… —</option></select>
+        <button class="sb-btn" onclick="loadRecSnapshot()">Cargar</button>
+        <button class="sb-btn danger" onclick="deleteRecSnapshot()">Borrar</button>
+      </div>
+      <div id="rec-save-status" style="font-size:.75rem;font-weight:500;color:var(--rose-dark);display:none;padding:.3rem .5rem;background:rgba(168,112,106,.1);border-radius:6px;text-align:center"></div>
+    </div>
     <div class="fsec">
       <div class="fsec-title">Datos del documento</div>
       <div class="fg"><label>Nombre del cliente</label><input id="rec-nombre" type="text" placeholder="Mar&iacute;a Garc&iacute;a" oninput="upRec()"></div>
@@ -846,6 +859,18 @@ function syncRec(id, f, v) {
   upRec();
 }
 
+function moveReceta(id, dir) {
+  var idx = recetas.findIndex(function(r){ return r.id === id; });
+  if (idx < 0) return;
+  var newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= recetas.length) return;
+  var tmp = recetas[idx];
+  recetas[idx] = recetas[newIdx];
+  recetas[newIdx] = tmp;
+  renderRecForm();
+  upRec();
+}
+
 function toggleCard(id) {
   var el = $(id);
   if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
@@ -859,12 +884,16 @@ function renderRecForm() {
     return;
   }
   el.innerHTML = recetas.map(function(r, i) {
+    var upDisabled = i === 0 ? ' style="opacity:.3;cursor:not-allowed"' : '';
+    var dnDisabled = i === recetas.length - 1 ? ' style="opacity:.3;cursor:not-allowed"' : '';
     return '<div class="rcard">' +
       '<div class="rcard-head" onclick="toggleCard(\'rc-' + r.id + '\')">' +
-      '<span class="rcard-title">' + (r.nombre ? esc(r.nombre) : 'Receta ' + (i + 1)) + '</span>' +
+      '<span class="rcard-title">' + (i + 1) + '. ' + (r.nombre ? esc(r.nombre) : 'Receta ' + (i + 1)) + '</span>' +
       '<div style="display:flex;align-items:center;gap:.35rem">' +
+      '<button class="del-btn" title="Subir" onclick="event.stopPropagation();moveReceta(' + r.id + ',-1)"' + upDisabled + '>&uarr;</button>' +
+      '<button class="del-btn" title="Bajar" onclick="event.stopPropagation();moveReceta(' + r.id + ',1)"' + dnDisabled + '>&darr;</button>' +
       '<span class="rcard-badge">' + (r.sec === 'desayuno' ? 'D/M' : r.sec === 'almuerzo' ? 'A/C' : 'Extra') + '</span>' +
-      '<button class="del-btn" onclick="event.stopPropagation();removeReceta(' + r.id + ')">&#x2715;</button>' +
+      '<button class="del-btn" title="Eliminar" onclick="event.stopPropagation();removeReceta(' + r.id + ')">&#x2715;</button>' +
       '</div></div>' +
       '<div class="rcard-body" id="rc-' + r.id + '">' +
       '<div class="fg-row">' +
@@ -912,32 +941,80 @@ function buildRecDoc() {
       '</div></div></div>';
   }
 
-  /* Agrupar TODAS las recetas en lista ordenada por sección, anotando dónde
-     empieza cada sección para insertar el sec-label en la pag correspondiente */
+  /* Agrupar TODAS las recetas en lista ordenada por sección manteniendo
+     el orden dentro de cada sección (que se puede modificar con las flechas) */
   var flat = [];
   ['desayuno','almuerzo','extra'].forEach(function(s) {
     bySec[s].forEach(function(r){ flat.push({recipe: r, sec: s}); });
   });
 
-  /* Chunk en páginas de máximo 2 recetas. Si una receta entra sola, sola va.
-     Si entran 2, juntas. El sec-label aparece arriba de la primera receta
-     de su sección (puede coincidir con cambio de página o no). */
-  var MAX_PER_PAGE = 2;
+  /* Packing inteligente: medimos la altura real de cada receta renderizada,
+     luego empaquetamos en páginas hasta que la siguiente no entre. Así si
+     una receta es corta caben 2 o 3 por hoja; si es larga, va sola. */
   var recPagesHtml = '';
-  var lastSec = null;
-  for (var i = 0; i < flat.length; i += MAX_PER_PAGE) {
-    var chunk = flat.slice(i, i + MAX_PER_PAGE);
-    var inner = '';
-    chunk.forEach(function(entry, idx) {
-      if (entry.sec !== lastSec) {
-        inner += '<div class="sec-label' + (idx === 0 ? ' first' : '') + '">' + SECS[entry.sec] + '</div>';
+  if (flat.length) {
+    // Contenedor offscreen con el mismo padding/font que .doc-page para
+    // que las mediciones sean exactas a lo que se renderizará en el PDF
+    var measure = document.createElement('div');
+    measure.style.cssText = 'position:absolute;left:-99999px;top:0;width:595px;box-sizing:border-box;padding:52px 58px 0;font-family:"DM Sans",sans-serif;color:#2A2118;background:#fff;visibility:hidden;';
+    measure.className = 'ag-doc';
+    document.body.appendChild(measure);
+
+    // Medir header de página
+    measure.innerHTML = pgHdr('Recetario', nombre);
+    var PG_HDR_H = (measure.firstChild && measure.firstChild.offsetHeight) || 35;
+
+    // Medir altura típica de un sec-label
+    measure.innerHTML = '<div class="sec-label first">Test</div>';
+    var SEC_LABEL_H = (measure.firstChild && measure.firstChild.offsetHeight) || 40;
+    measure.innerHTML = '<div class="sec-label">Test</div>';
+    var SEC_LABEL_MID_H = (measure.firstChild && measure.firstChild.offsetHeight) || 50;
+
+    // Medir altura de cada receta
+    var heights = flat.map(function(entry) {
+      measure.innerHTML = buildOneReceta(entry.recipe);
+      return (measure.firstChild && measure.firstChild.offsetHeight) || 200;
+    });
+
+    document.body.removeChild(measure);
+
+    // Altura útil de una página A4 (842) menos padding vertical (52*2)
+    var PAGE_AVAIL = 842 - 52 - 30; // un poco de margen de seguridad abajo
+
+    // Empaquetar
+    var pages = [];
+    var current = { html: '', usedH: PG_HDR_H };
+    var lastSec = null;
+    for (var i = 0; i < flat.length; i++) {
+      var entry = flat[i];
+      var rH = heights[i];
+      var needsSecLabel = (entry.sec !== lastSec);
+      var labelH = needsSecLabel ? (current.html === '' ? SEC_LABEL_H : SEC_LABEL_MID_H) : 0;
+      var addH = labelH + rH;
+
+      // Si no entra y la página actual ya tiene algo → cerrar y empezar nueva
+      if (current.usedH + addH > PAGE_AVAIL && current.html !== '') {
+        pages.push(current);
+        current = { html: '', usedH: PG_HDR_H };
+        needsSecLabel = true; // arriba de la nueva pag, repetir etiqueta de sección
+        labelH = SEC_LABEL_H;
+        addH = labelH + rH;
+      }
+
+      if (needsSecLabel) {
+        var cls = current.html === '' ? 'sec-label first' : 'sec-label';
+        current.html += '<div class="' + cls + '">' + SECS[entry.sec] + '</div>';
         lastSec = entry.sec;
       }
-      inner += buildOneReceta(entry.recipe);
-    });
-    recPagesHtml += '<div class="doc-page">' + pgHdr('Recetario', nombre) + inner + '</div>';
-  }
-  if (!recPagesHtml) {
+      current.html += buildOneReceta(entry.recipe);
+      current.usedH += addH;
+    }
+    if (current.html !== '') pages.push(current);
+
+    recPagesHtml = pages.map(function(p){
+      return '<div class="doc-page">' + pgHdr('Recetario', nombre) + p.html + '</div>';
+    }).join('');
+  } else {
     recPagesHtml = '<div class="doc-page">' + pgHdr('Recetario', nombre) +
       '<p style="font-size:11px;color:#8C7E78;margin-top:40px">Agrega recetas desde el formulario.</p></div>';
   }
@@ -1449,6 +1526,121 @@ function autoFillSaveName() {
   nameInp.placeholder = pNombre + (fechaStr ? ' — ' + fechaStr : '') + ' (auto)';
 }
 
+/* ============================================================
+   GUARDADO RECETARIO — usa el mismo array que planes, pero con _type='recetario'
+   ============================================================ */
+function collectRecData() {
+  return {
+    _type: 'recetario',
+    nombre: val('rec-nombre'),
+    fecha: val('rec-fecha'),
+    intro: val('rec-intro'),
+    recetas: JSON.parse(JSON.stringify(recetas))
+  };
+}
+
+function applyRecData(d) {
+  function setV(id,v){var e=$(id);if(e)e.value=v||'';}
+  setV('rec-nombre', d.nombre);
+  setV('rec-fecha', d.fecha);
+  setV('rec-intro', d.intro);
+  if (Array.isArray(d.recetas)) {
+    recetas = d.recetas.map(function(r){ return Object.assign({}, r); });
+    // Asegurar IDs únicos
+    var maxId = recetas.reduce(function(m, r){ return Math.max(m, r.id||0); }, 0);
+    recCtr = Math.max(recCtr, maxId);
+    renderRecForm();
+  }
+}
+
+function showRecSaveStatus(msg, isErr) {
+  var el = $('rec-save-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = isErr ? '#a32d2d' : 'var(--rose-dark)';
+  el.style.background = isErr ? 'rgba(163,45,45,.1)' : 'rgba(168,112,106,.1)';
+  el.style.display = '';
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.style.display='none'; }, 5000);
+}
+
+function updateRecSavesUI(arr) {
+  var sel = $('rec-saves-sel');
+  if (!sel) return;
+  // Filtrar solo recetarios para este dropdown
+  var recetariosOnly = (arr||[]).filter(function(s){ return s && s._type === 'recetario'; });
+  recetariosOnly.forEach(function(s, i){
+    if (s && !s._id) s._id = 'legacy_rec_' + (s._ts||'').replace(/\W/g,'_') + '_' + i;
+  });
+  sel.innerHTML = '<option value="">— Cargar guardado… (' + recetariosOnly.length + ') —</option>' +
+    recetariosOnly.map(function(s){
+      var ts = s._ts ? ' · ' + new Date(s._ts).toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' + new Date(s._ts).toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'}) : '';
+      var safeId = (s._id||'').replace(/"/g,'&quot;');
+      return '<option value="'+safeId+'">'+esc(s._name||'Sin nombre')+ts+'</option>';
+    }).join('');
+}
+
+async function saveRecSnapshot() {
+  var nameInp = $('rec-save-name');
+  var name = nameInp ? nameInp.value.trim() : '';
+  var pNombre = val('rec-nombre');
+  var now = new Date();
+  if (!pNombre && !recetas.length) {
+    showRecSaveStatus('Agregá al menos una receta o nombre de cliente antes de guardar.', true);
+    return;
+  }
+  if (!pNombre) pNombre = 'Sin nombre';
+  if (!name) {
+    name = pNombre + ' (Recetario) — ' + now.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + now.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'});
+    if (nameInp) nameInp.value = name;
+  }
+  var snap = collectRecData();
+  snap._name = name;
+  snap._ts = now.toISOString();
+  snap._id = 'rec_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+  showRecSaveStatus('Guardando…');
+  var arr = await cloudGetSaves();
+  arr.unshift(snap);
+  if (arr.length > 100) arr = arr.slice(0, 100);
+  var res = await cloudPutSaves(arr);
+  updateRecSavesUI(arr);
+  var msg = '✓ Recetario guardado';
+  if (res.kvOk || res.ecOk) msg += ' (sincroniza entre dispositivos)';
+  else msg += ' SOLO en este dispositivo';
+  showRecSaveStatus(msg, !res.kvOk && !res.ecOk);
+}
+
+async function loadRecSnapshot() {
+  var sel = $('rec-saves-sel');
+  if (!sel || sel.value === '') { showRecSaveStatus('Seleccioná un guardado primero.', true); return; }
+  var selectedId = sel.value;
+  var arr = await cloudGetSaves();
+  var snap = arr.find(function(s){ return s && s._id === selectedId && s._type === 'recetario'; });
+  if (!snap) {
+    showRecSaveStatus('No se encontró el recetario. Refrescando lista…', true);
+    updateRecSavesUI(arr);
+    return;
+  }
+  applyRecData(snap);
+  if ($('rec-save-name')) $('rec-save-name').value = snap._name || '';
+  upRec();
+  showRecSaveStatus('✓ Cargado: ' + (snap._name || 'recetario'));
+}
+
+async function deleteRecSnapshot() {
+  var sel = $('rec-saves-sel');
+  if (!sel || sel.value === '') { showRecSaveStatus('Seleccioná un guardado primero.', true); return; }
+  var selectedId = sel.value;
+  var arr = await cloudGetSaves();
+  var snap = arr.find(function(s){ return s && s._id === selectedId; });
+  if (!snap) { showRecSaveStatus('No se encontró el guardado.', true); return; }
+  if (!confirm('¿Borrar el recetario "' + (snap._name || 'sin nombre') + '"?')) return;
+  arr = arr.filter(function(s){ return !(s && s._id === selectedId); });
+  await cloudPutSaves(arr);
+  updateRecSavesUI(arr);
+  showRecSaveStatus('Recetario eliminado.');
+}
+
 async function savePlanSnapshot() {
   var nameInp = $('plan-save-name');
   var name = nameInp ? nameInp.value.trim() : '';
@@ -1468,6 +1660,7 @@ async function savePlanSnapshot() {
     if (nameInp) nameInp.value = name;
   }
   var snap = collectPlanData();
+  snap._type = 'plan';
   snap._name = name;
   snap._ts = now.toISOString();
   snap._id = 'man_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
@@ -1496,18 +1689,21 @@ function updatePlanSavesUI(arr) {
   var sel = $('plan-saves-sel');
   if (!sel) return;
   if (!arr) { try { arr = JSON.parse(localStorage.getItem('ag_plan_saves')||'[]'); } catch(e){ arr=[]; } }
+  // Filtrar SOLO planes (no recetarios). Los snaps viejos sin _type también
+  // los consideramos planes (compat retroactiva).
+  var plansOnly = arr.filter(function(s){ return s && s._type !== 'recetario'; });
   // Asegurar que TODOS los snapshots tengan _id (fix retro de guardados viejos)
-  arr.forEach(function(s, i){
+  plansOnly.forEach(function(s, i){
     if (s && !s._id) s._id = 'legacy_' + (s._ts||'').replace(/\W/g,'_') + '_' + i;
   });
-  // IMPORTANTE: option.value es el _id del snapshot, no el índice. Así si el array
-  // se reordena entre el render del UI y el click en "Cargar" se carga el correcto.
-  sel.innerHTML = '<option value="">— Cargar guardado… (' + arr.length + ') —</option>' +
-    arr.map(function(s){
+  sel.innerHTML = '<option value="">— Cargar guardado… (' + plansOnly.length + ') —</option>' +
+    plansOnly.map(function(s){
       var ts = s._ts ? ' · ' + new Date(s._ts).toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' + new Date(s._ts).toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'}) : '';
       var safeId = (s._id||'').replace(/"/g,'&quot;');
       return '<option value="'+safeId+'">'+esc(s._name||'Sin nombre')+ts+'</option>';
     }).join('');
+  // También actualizar dropdown del recetario
+  updateRecSavesUI(arr);
 }
 
 async function loadPlanSnapshot() {
@@ -1561,6 +1757,28 @@ async function initSavesUI() {
   var arr = await cloudGetSaves();
   updatePlanSavesUI(arr);
   initCoverButtons();
+
+  // Si admin abrió un recetario específico, cargarlo
+  var loadRecId = localStorage.getItem('ag_load_rec_id');
+  if (loadRecId === 'undefined' || loadRecId === 'null' || loadRecId === '') loadRecId = null;
+  if (loadRecId) {
+    console.log('[initSavesUI] admin pidió cargar recetario _id:', loadRecId);
+    localStorage.removeItem('ag_load_rec_id');
+    var rsnap = arr.find(function(s){ return s && s._id === loadRecId && s._type === 'recetario'; });
+    if (rsnap) {
+      applyRecData(rsnap);
+      var rsel = $('rec-saves-sel');
+      if (rsel) rsel.value = loadRecId;
+      if ($('rec-save-name')) $('rec-save-name').value = rsnap._name || '';
+      switchTab('rec');
+      upRec();
+      showRecSaveStatus('✓ Recetario cargado: ' + (rsnap.nombre || rsnap._name || ''));
+    } else {
+      showRecSaveStatus('No se encontró el recetario solicitado', true);
+    }
+    return;
+  }
+
   // Si admin abrió un plan específico, cargarlo automáticamente
   var loadId = localStorage.getItem('ag_load_plan_id');
   // Limpiar valor inválido legacy ("undefined" como string)
