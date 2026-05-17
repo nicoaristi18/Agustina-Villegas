@@ -844,6 +844,9 @@ document.addEventListener('visibilitychange', function(){
 if(!window.storage){
   const KEY_MAP={'agustina_blocked_slots':'ag:blocked_slots','agustina_bookings_v2':'ag:bookings','agustina_users':'ag:users','agustina_content':'ag:content','habito_orders':'ag:habito_orders','agustina_recipes':'ag:recipes','agustina_prices':'ag:prices','agustina_coupons':'ag:coupons'};
   const LEGACY=new Set(Object.keys(KEY_MAP));
+  // Claves que NUNCA escribimos a Edge Config porque superan su límite
+  // (32KB total / 8KB por valor en plan Hobby). Solo KV + localStorage.
+  const SKIP_EC_WRITE=new Set(['agustina_recipes','agustina_generator_saves','agustina_bookings_v2','habito_orders']);
   function kvKey(k){return KEY_MAP[k]||k;}
   window.storage={
     async get(k){
@@ -859,10 +862,12 @@ if(!window.storage){
     },
     async set(k,v){
       const kk=kvKey(k);localStorage.setItem('__kv_'+k,v);
-      // 1. Intentar KV
+      // 1. Intentar KV (siempre)
       let ok=false;try{const r=await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'set',key:kk,value:v})});ok=r.ok;}catch(e){}
-      // 2. Si KV falla, usar Edge Config
-      if(!ok&&LEGACY.has(k)){try{await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k,value:v})});}catch(e){}}
+      // 2. Si KV falla, usar Edge Config como fallback — pero SOLO para keys chicas.
+      //    Para keys que pueden crecer mucho (recetas, bookings, planes) nunca intentamos
+      //    EC: Vercel rechaza por size limit y manda warnings por email.
+      if(!ok&&LEGACY.has(k)&&!SKIP_EC_WRITE.has(k)){try{await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k,value:v})});}catch(e){}}
     },
     async lpush(k,v){const kk=kvKey(k);try{await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'lpush',key:kk,value:v})});}catch(e){}},
     async lrange(k,s,e){const kk=kvKey(k);try{const r=await fetch('/api/kv?op=lrange&key='+encodeURIComponent(kk)+'&start='+s+'&stop='+e,{cache:'no-store'});if(r.ok){const d=await r.json();return d.value||[];}}catch(e){}return[];}
