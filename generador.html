@@ -500,22 +500,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
       <button class="add-btn" onclick="addIdeaSection()">+ Agregar categor&iacute;a</button>
     </div>
     <div class="fsec" id="fsec-tabla" style="display:none">
-      <div class="fsec-title">Tabla semanal</div>
-      <p style="font-size:.7rem;color:var(--text-muted);margin-bottom:.8rem">7 días × 4 comidas. Completá solo las celdas que necesites.</p>
-      <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:.68rem">
-          <thead>
-            <tr>
-              <th style="padding:.3rem .4rem;background:var(--rose-deep);color:#fff;text-align:left;border-radius:6px 0 0 0;font-weight:500">Día</th>
-              <th style="padding:.3rem .4rem;background:var(--rose-deep);color:#fff;text-align:center;font-weight:500">Desayuno</th>
-              <th style="padding:.3rem .4rem;background:var(--rose-deep);color:#fff;text-align:center;font-weight:500">Almuerzo</th>
-              <th style="padding:.3rem .4rem;background:var(--rose-deep);color:#fff;text-align:center;font-weight:500">Merienda</th>
-              <th style="padding:.3rem .4rem;background:var(--rose-deep);color:#fff;text-align:center;border-radius:0 6px 0 0;font-weight:500">Cena</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-semanal-body"></tbody>
-        </table>
-      </div>
+      <div class="fsec-title">Tablas semanales</div>
+      <p style="font-size:.7rem;color:var(--text-muted);margin-bottom:.8rem">Podés crear varias tablas (semana 1, semana 2, etc.). Cada una se imprime en su propia hoja.</p>
+      <div id="tablas-list"></div>
+      <button class="add-btn" onclick="addTabla()">+ Agregar otra tabla semanal</button>
     </div>
     <div class="fsec">
       <div class="fsec-title">Notas finales</div>
@@ -1850,7 +1838,7 @@ function collectPlanData() {
     crudoOn:!!($('plan-crudo-on')&&$('plan-crudo-on').checked),
     ideasOn:!!($('plan-ideas-on')&&$('plan-ideas-on').checked),
     tablaOn:!!($('plan-tabla-on')&&$('plan-tabla-on').checked),
-    tablaData:JSON.parse(JSON.stringify(tablaData)),
+    tablas:JSON.parse(JSON.stringify(tablas)),
     porcSub:val('plan-porc-sub'), crudoNota:val('plan-crudo-nota'),
     evitar:val('plan-evitar'), recs:val('plan-recs'), prox:val('plan-prox'),
     days:JSON.parse(JSON.stringify(days)),
@@ -1877,7 +1865,13 @@ function applyPlanData(d) {
   setCb('plan-macros-on',d.macrosOn);setCb('plan-porc-on',d.porcOn);
   setCb('plan-crudo-on',d.crudoOn);setCb('plan-ideas-on',d.ideasOn);
   setCb('plan-tabla-on',d.tablaOn);
-  if(d.tablaData){tablaData=d.tablaData;initTabla();}
+  // Migración: aceptamos tanto el formato nuevo (d.tablas) como el viejo (d.tablaData)
+  var migrated = _migrateTablaIfNeeded(d);
+  if (migrated && migrated.length) {
+    tablas = migrated.map(function(t,i){ return {id: i+1, label: t.label||'Distribución semanal', data: t.data}; });
+    tablaCtr = tablas.length;
+    initTabla();
+  }
   setV('plan-porc-sub',d.porcSub);setV('plan-crudo-nota',d.crudoNota);
   setV('plan-evitar',d.evitar);setV('plan-recs',d.recs);setV('plan-prox',d.prox);
   /* Backward-compat: prefer d.days, fall back to wrapping d.meals in single day */
@@ -2602,41 +2596,113 @@ document.addEventListener('click', function(e) {
 /* TABLA SEMANAL */
 var DIAS_SEMANA = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 var COMIDAS_TABLA = ['Desayuno','Almuerzo','Merienda','Cena'];
-var tablaData = DIAS_SEMANA.map(function(d){ return {dia:d, desayuno:'', almuerzo:'', merienda:'', cena:''}; });
+
+function _newTablaData() {
+  return DIAS_SEMANA.map(function(d){ return {dia:d, desayuno:'', almuerzo:'', merienda:'', cena:''}; });
+}
+
+// Array de tablas: cada una con id, label (título) y data (filas)
+var tablas = [{ id: 1, label: 'Distribución semanal', data: _newTablaData() }];
+var tablaCtr = 1;
+
+function addTabla() {
+  tablaCtr++;
+  tablas.push({
+    id: tablaCtr,
+    label: 'Distribución semanal ' + tablas.length + (tablas.length===1?'':' (' + (tablas.length+1) + ')'),
+    data: _newTablaData()
+  });
+  // Renombrar la nueva como "Semana N" para que quede prolijo
+  tablas[tablas.length - 1].label = 'Semana ' + tablas.length;
+  initTabla();
+  upPlan();
+}
+
+function removeTabla(id) {
+  if (tablas.length <= 1) {
+    alert('Tiene que quedar al menos una tabla. Si no la querés, destildá "Tabla semanal" en Secciones adicionales.');
+    return;
+  }
+  tablas = tablas.filter(function(t){ return t.id !== id; });
+  initTabla();
+  upPlan();
+}
+
+function syncTablaCell(tablaId, rowIdx, key, value) {
+  var t = tablas.find(function(tt){ return tt.id === tablaId; });
+  if (!t || !t.data[rowIdx]) return;
+  t.data[rowIdx][key] = value;
+  upPlan();
+}
+
+function syncTablaLabel(tablaId, value) {
+  var t = tablas.find(function(tt){ return tt.id === tablaId; });
+  if (!t) return;
+  t.label = value;
+  upPlan();
+}
+
+// Backward-compat: si un guardado viejo tiene tablaData (single), lo convertimos a tablas[]
+function _migrateTablaIfNeeded(d) {
+  if (Array.isArray(d.tablas)) return d.tablas; // formato nuevo
+  if (Array.isArray(d.tablaData) && d.tablaData.length) {
+    return [{ id: 1, label: 'Distribución semanal', data: d.tablaData }];
+  }
+  return null;
+}
 
 function initTabla() {
-  var tbody = $('tabla-semanal-body');
-  if (!tbody) return;
-  tbody.innerHTML = tablaData.map(function(row, ri) {
+  var container = $('tablas-list');
+  if (!container) return;
+  container.innerHTML = tablas.map(function(t, ti) {
     var keys = ['desayuno','almuerzo','merienda','cena'];
-    var cols = keys.map(function(k) {
-      return '<td style="padding:.15rem;border:1px solid var(--border)"><textarea rows="2" style="width:100%;min-width:0;resize:vertical;font-size:.62rem;border:none;outline:none;font-family:\'DM Sans\',sans-serif;background:transparent;padding:.2rem;box-sizing:border-box" oninput="tablaData['+ri+'].'+k+'=this.value;upPlan()" placeholder="…">'+esc(row[k])+'</textarea></td>';
+    var rows = t.data.map(function(row, ri) {
+      var cols = keys.map(function(k) {
+        return '<td style="padding:.15rem;border:1px solid var(--border)"><textarea rows="2" style="width:100%;min-width:0;resize:vertical;font-size:.62rem;border:none;outline:none;font-family:\'DM Sans\',sans-serif;background:transparent;padding:.2rem;box-sizing:border-box" oninput="syncTablaCell('+t.id+','+ri+',\''+k+'\',this.value)" placeholder="…">'+esc(row[k])+'</textarea></td>';
+      }).join('');
+      var bg = ri%2===0?'#fff':'var(--cream)';
+      return '<tr style="background:'+bg+'"><td style="padding:.3rem .4rem;font-weight:500;font-size:.68rem;white-space:nowrap;border:1px solid var(--border)">'+esc(row.dia)+'</td>'+cols+'</tr>';
     }).join('');
-    var bg = ri%2===0?'#fff':'var(--cream)';
-    return '<tr style="background:'+bg+'"><td style="padding:.3rem .4rem;font-weight:500;font-size:.68rem;white-space:nowrap;border:1px solid var(--border)">'+esc(row.dia)+'</td>'+cols+'</tr>';
+    var canDelete = tablas.length > 1;
+    return '<div style="margin-bottom:1.1rem;padding:.7rem;border:1px solid var(--border);border-radius:8px;background:#FDFBF7">' +
+      '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">' +
+      '<input type="text" value="'+esc(t.label)+'" oninput="syncTablaLabel('+t.id+',this.value)" placeholder="Título de la tabla" style="flex:1;padding:.3rem .55rem;border:1px solid var(--border);border-radius:6px;background:#fff;font-family:\'Cormorant Garamond\',serif;font-size:.95rem;color:var(--rose-dark);outline:none">' +
+      (canDelete ? '<button class="del-btn" onclick="removeTabla('+t.id+')" title="Eliminar esta tabla">&#x2715;</button>' : '') +
+      '</div>' +
+      '<div style="overflow-x:auto">' +
+      '<table style="width:100%;border-collapse:collapse;font-size:.68rem">' +
+      '<thead><tr>' +
+      '<th style="padding:.3rem .4rem;background:var(--rose-deep);color:#fff;text-align:left;border-radius:6px 0 0 0;font-weight:500">Día</th>' +
+      '<th style="padding:.3rem .4rem;background:var(--rose-deep);color:#fff;text-align:center;font-weight:500">Desayuno</th>' +
+      '<th style="padding:.3rem .4rem;background:var(--rose-deep);color:#fff;text-align:center;font-weight:500">Almuerzo</th>' +
+      '<th style="padding:.3rem .4rem;background:var(--rose-deep);color:#fff;text-align:center;font-weight:500">Merienda</th>' +
+      '<th style="padding:.3rem .4rem;background:var(--rose-deep);color:#fff;text-align:center;border-radius:0 6px 0 0;font-weight:500">Cena</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
   }).join('');
 }
 
 function buildTablaPage(nombre) {
-  var keys = ['desayuno','almuerzo','merienda','cena'];
-  // Anchos fijos: Día=75px, las 4 comidas se reparten el resto (479-75=404px ÷ 4 ≈ 101px cada una)
-  var colgroup = '<colgroup><col style="width:75px"><col style="width:101px"><col style="width:101px"><col style="width:101px"><col style="width:101px"></colgroup>';
-  var headerCells = ['Día'].concat(COMIDAS_TABLA).map(function(h,i){
-    return '<th style="padding:6px 8px;background:#8B5550;color:#fff;font-size:8px;font-weight:500;text-align:'+(i===0?'left':'center')+';letter-spacing:.04em;text-transform:uppercase;overflow:hidden">'+h+'</th>';
-  }).join('');
-  var rows = tablaData.map(function(row, ri) {
-    var cells = keys.map(function(k){
-      var txt = (row[k]||'').replace(/\n/g,'<br>');
-      return '<td style="padding:5px 7px;font-size:8px;color:#2A2118;text-align:left;border:1px solid rgba(169,138,130,.18);vertical-align:top;line-height:1.5;word-break:break-word">'+txt+'</td>';
+  // Genera UNA hoja por cada tabla en `tablas[]`
+  return tablas.map(function(t) {
+    var keys = ['desayuno','almuerzo','merienda','cena'];
+    var colgroup = '<colgroup><col style="width:75px"><col style="width:101px"><col style="width:101px"><col style="width:101px"><col style="width:101px"></colgroup>';
+    var headerCells = ['Día'].concat(COMIDAS_TABLA).map(function(h,i){
+      return '<th style="padding:6px 8px;background:#8B5550;color:#fff;font-size:8px;font-weight:500;text-align:'+(i===0?'left':'center')+';letter-spacing:.04em;text-transform:uppercase;overflow:hidden">'+h+'</th>';
     }).join('');
-    var bg = ri%2===0?'#fff':'#FAF8F4';
-    return '<tr style="background:'+bg+'"><td style="padding:5px 8px;font-size:8px;font-weight:600;color:#2A2118;border:1px solid rgba(169,138,130,.18)">'+esc(row.dia)+'</td>'+cells+'</tr>';
+    var rows = t.data.map(function(row, ri) {
+      var cells = keys.map(function(k){
+        var txt = esc(row[k]||'').replace(/\n/g,'<br>');
+        return '<td style="padding:5px 7px;font-size:8px;color:#2A2118;text-align:left;border:1px solid rgba(169,138,130,.18);vertical-align:top;line-height:1.5;word-break:break-word">'+txt+'</td>';
+      }).join('');
+      var bg = ri%2===0?'#fff':'#FAF8F4';
+      return '<tr style="background:'+bg+'"><td style="padding:5px 8px;font-size:8px;font-weight:600;color:#2A2118;border:1px solid rgba(169,138,130,.18)">'+esc(row.dia)+'</td>'+cells+'</tr>';
+    }).join('');
+    return '<div class="doc-page" style="background:#FAF8F4">'+
+      pgHdr('Tabla semanal', nombre)+
+      '<div class="sec-label first">'+esc(t.label||'Distribución semanal')+'</div>'+
+      '<table style="width:100%;border-collapse:collapse;margin-top:8px;table-layout:fixed">'+colgroup+'<thead><tr>'+headerCells+'</tr></thead><tbody>'+rows+'</tbody></table>'+
+      '</div>';
   }).join('');
-  return '<div class="doc-page" style="background:#FAF8F4">'+
-    pgHdr('Tabla semanal', nombre)+
-    '<div class="sec-label first">Distribución semanal</div>'+
-    '<table style="width:100%;border-collapse:collapse;margin-top:8px;table-layout:fixed">'+colgroup+'<thead><tr>'+headerCells+'</tr></thead><tbody>'+rows+'</tbody></table>'+
-    '</div>';
 }
 
 document.addEventListener('DOMContentLoaded', function() {
