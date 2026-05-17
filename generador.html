@@ -573,10 +573,8 @@ async function _fetchKVSaves() {
   return null;
 }
 async function _fetchECSaves() {
-  try {
-    const r = await fetch('/api/data?key=agustina_generator_saves', {cache:'no-store'});
-    if (r.ok) { const d = await r.json(); if (d.value) return typeof d.value==='string'?JSON.parse(d.value):d.value; }
-  } catch(e) {}
+  // Skip: agustina_generator_saves excede el límite de Edge Config en plan Hobby
+  // y devuelve 500 al leerlo. Los datos viven en KV (Upstash).
   return null;
 }
 function _getLSSaves() {
@@ -2420,7 +2418,8 @@ async function dlPDF(docId, filename, btnId) {
 var _pmFiltered = []; // lista visible actual (usada por índice en onclick)
 var _pmCache = null;  // cache en memoria para esta sesión
 
-// Carga las recetas desde el cloud (KV → Edge Config → localStorage)
+// Carga las recetas desde el cloud (KV → localStorage). Edge Config skip
+// porque las recetas pueden crecer mucho y EC tira 500 cuando supera límite.
 async function loadAdminPortfolio() {
   // 1) Intentar KV
   try {
@@ -2434,19 +2433,7 @@ async function loadAdminPortfolio() {
       }
     }
   } catch(e) {}
-  // 2) Edge Config
-  try {
-    var r2 = await fetch('/api/data?key=agustina_recipes', {cache:'no-store'});
-    if (r2.ok) {
-      var d2 = await r2.json();
-      if (d2.value) {
-        var arr2 = typeof d2.value === 'string' ? JSON.parse(d2.value) : d2.value;
-        try { localStorage.setItem('ag_recipe_portfolio', JSON.stringify(arr2)); } catch(e) {}
-        return arr2;
-      }
-    }
-  } catch(e) {}
-  // 3) localStorage (cache local)
+  // 2) localStorage (cache local)
   try { return JSON.parse(localStorage.getItem('ag_recipe_portfolio') || '[]'); } catch(e) { return []; }
 }
 

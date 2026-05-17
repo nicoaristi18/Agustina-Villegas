@@ -854,8 +854,10 @@ if(!window.storage){
       // 1. Intentar Vercel KV
       try{const r=await fetch('/api/kv?op=get&key='+encodeURIComponent(kk),{cache:'no-store'});
         if(r.ok){const d=await r.json();if(d.value!==null&&d.value!==undefined){const sv=typeof d.value==='string'?d.value:JSON.stringify(d.value);localStorage.setItem('__kv_'+k,sv);return{value:sv};}}}catch(e){}
-      // 2. Fallback a Edge Config (claves legacy)
-      if(LEGACY.has(k)){try{const r=await fetch('/api/data?key='+encodeURIComponent(k),{cache:'no-store'});
+      // 2. Fallback a Edge Config solo para keys chicas. Las keys grandes
+      //    (SKIP_EC_WRITE) tampoco se leen de EC porque pueden estar corruptas
+      //    o devolver 500 si el size limit fue excedido en una escritura.
+      if(LEGACY.has(k)&&!SKIP_EC_WRITE.has(k)){try{const r=await fetch('/api/data?key='+encodeURIComponent(k),{cache:'no-store'});
         if(r.ok){const d=await r.json();if(d.value!==null&&d.value!==undefined){localStorage.setItem('__kv_'+k,d.value);return{value:d.value};}}}catch(e){}}
       // 3. Fallback a localStorage
       const v=localStorage.getItem('__kv_'+k);return v!==null?{value:v}:null;
@@ -1358,10 +1360,8 @@ async function _admFetchKV() {
   return null;
 }
 async function _admFetchEC() {
-  try {
-    const r = await fetch('/api/data?key=agustina_generator_saves', {cache:'no-store'});
-    if (r.ok) { const d = await r.json(); if (d.value) return typeof d.value==='string'?JSON.parse(d.value):d.value; }
-  } catch(e) {}
+  // Skip: agustina_generator_saves excede el límite de Edge Config en plan Hobby
+  // y devuelve 500 al leerlo. Los datos viven en KV (Upstash).
   return null;
 }
 function _admGetLS() {
