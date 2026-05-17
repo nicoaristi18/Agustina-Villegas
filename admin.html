@@ -313,12 +313,11 @@ tbody tr:hover td{background:var(--cream);}
   <div class="login-card">
     <div class="login-logo">Lic. <span>Agustina</span> Villegas</div>
     <div class="login-sub">Panel de administración</div>
-    <div class="fg"><label>Email</label><input id="aEmail" type="email" placeholder="tu@email.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <div class="fg"><label>Contraseña</label><input id="aPass" type="password" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="fg"><label>Usuario</label><input id="aEmail" type="text" autocomplete="username" placeholder="Usuario" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="fg"><label>Contraseña</label><input id="aPass" type="password" autocomplete="current-password" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <button class="login-btn" onclick="doLogin()">Ingresar al panel</button>
-    <div class="login-err" id="loginErr">Email o contraseña incorrectos</div>
+    <div class="login-err" id="loginErr">Usuario o contraseña incorrectos</div>
   </div>
-  <div class="login-hint">Contraseña por defecto: agustina2025</div>
 </div>
 
 <!-- APP SHELL -->
@@ -788,14 +787,14 @@ tbody tr:hover td{background:var(--cream);}
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("eF8R0hxnnAPWRxx6i");</script>
 <script>
-const PASS = 'agustina2025';
-const MAIL = 'lic.agustinavillegase@gmail.com';
+const ADMIN_USER = 'agustina';
+const ADMIN_PASS = 'admin2026';
 
 function doLogin(){
-  const e=document.getElementById('aEmail').value.trim().toLowerCase();
+  const u=document.getElementById('aEmail').value.trim().toLowerCase();
   const p=document.getElementById('aPass').value;
   document.getElementById('loginErr').style.display='none';
-  if(e===MAIL.toLowerCase()&&p===PASS){
+  if(u===ADMIN_USER.toLowerCase()&&p===ADMIN_PASS){
     sessionStorage.setItem('adm','1');
     bootApp();
   } else {
