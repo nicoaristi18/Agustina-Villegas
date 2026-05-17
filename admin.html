@@ -1397,7 +1397,8 @@ async function adminCloudGetSaves() {
 async function adminCloudPutSaves(arr) {
   try { localStorage.setItem('ag_plan_saves', JSON.stringify(arr)); } catch(e) {}
   try { await fetch('/api/kv', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'set',key:'ag:gen_saves',value:JSON.stringify(arr)})}); } catch(e) {}
-  try { await fetch('/api/data', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'agustina_generator_saves',value:JSON.stringify(arr)})}); } catch(e) {}
+  // NOTA: ya no escribimos a Edge Config para agustina_generator_saves —
+  // los datos superan el límite del plan Hobby. KV (256MB) es suficiente.
 }
 
 // ── CLIENTES ──

@@ -671,22 +671,21 @@ async function cloudPutSaves(arr) {
   var lite = arr.map(_stripImagesFromSnap);
   console.log('[cloudPutSaves] tamaño full:', JSON.stringify(arr).length, 'lite total:', JSON.stringify(lite).length, 'bytes');
 
-  // Auto-retry con tamaños decrecientes hasta que entre
-  var kvRes = _tryCloudWrite('/api/kv', function(sliced){
+  // Vercel KV (Upstash) admite hasta 256MB → siempre cabe todo aquí
+  var kvRes = await _tryCloudWrite('/api/kv', function(sliced){
     return JSON.stringify({op:'set', key:'ag:gen_saves', value: JSON.stringify(sliced)});
   }, lite);
-  var ecRes = _tryCloudWrite('/api/data', function(sliced){
-    return JSON.stringify({key:'agustina_generator_saves', value: JSON.stringify(sliced)});
-  }, lite);
-  var results = await Promise.all([kvRes, ecRes]);
-  var kvOk = results[0].ok, ecOk = results[1].ok;
-  var syncCount = Math.max(kvOk ? results[0].count : 0, ecOk ? results[1].count : 0);
+  var kvOk = kvRes.ok;
+  var syncCount = kvOk ? kvRes.count : 0;
 
-  // Diagnóstico
-  if (!kvOk && results[0].response) try { results[0].response.clone().json().then(function(d){ console.warn('[KV detail]', d); }); } catch(e){}
-  if (!ecOk && results[1].response) try { results[1].response.clone().json().then(function(d){ console.warn('[EC detail]', d); }); } catch(e){}
-  console.log('[cloudPutSaves] localStorage:✓ KV:'+(kvOk?('✓('+results[0].count+')'):'✗')+' EC:'+(ecOk?('✓('+results[1].count+')'):'✗'));
-  return { kvOk: kvOk, ecOk: ecOk, lsOk: true, syncCount: syncCount, totalCount: arr.length };
+  // NOTA: ya no escribimos a Edge Config para este key.
+  // EC tiene límite de 32KB total y 8KB por valor en plan Hobby; nuestros
+  // datos de planes+recetarios siempre lo superan y Vercel manda warnings
+  // por email. KV es suficiente porque maneja 256MB.
+
+  if (!kvOk && kvRes.response) try { kvRes.response.clone().json().then(function(d){ console.warn('[KV detail]', d); }); } catch(e){}
+  console.log('[cloudPutSaves] localStorage:✓ KV:'+(kvOk?('✓('+kvRes.count+')'):'✗')+' EC:skipped(plan-saves-too-big)');
+  return { kvOk: kvOk, ecOk: false, lsOk: true, syncCount: syncCount, totalCount: arr.length };
 }
 
 function showSaveStatus(msg, isErr) {

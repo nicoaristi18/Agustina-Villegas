@@ -17,7 +17,7 @@ const ALLOWED = new Set([
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -65,6 +65,24 @@ export default async function handler(req, res) {
       const data = await r.json();
       if (!r.ok) return res.status(r.status).json({ error: data.error?.message || 'Error de escritura', detail: data });
       return res.status(200).json({ ok: true });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  // DELETE → borrar un item de Edge Config (útil para liberar espacio)
+  if (req.method === 'DELETE') {
+    const key = req.query.key;
+    if (!key || !ALLOWED.has(key)) return res.status(400).json({ error: 'Clave inválida' });
+    try {
+      const r = await fetch(`https://api.vercel.com/v1/edge-config/${ECFG}/items${teamParam}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: [{ operation: 'delete', key }] })
+      });
+      const data = await r.json();
+      if (!r.ok) return res.status(r.status).json({ error: data.error?.message || 'Error al eliminar', detail: data });
+      return res.status(200).json({ ok: true, deleted: key });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
