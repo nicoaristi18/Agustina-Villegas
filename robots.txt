@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Páginas privadas — no indexar
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /generador
+Disallow: /generador.html
+Disallow: /mi-cuenta
+Disallow: /mi-cuenta.html
+Disallow: /api/
+
+Sitemap: https://www.nutricionistaagustinavillegas.com/sitemap.xml
