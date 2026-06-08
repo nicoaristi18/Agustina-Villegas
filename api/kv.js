@@ -9,6 +9,9 @@
 // Todas las claves DEBEN empezar con "ag:"
 
 const ALLOWED_PREFIX = 'ag:';
+// ⚠️ Claves SENSIBLES: jamás se acceden desde este endpoint público.
+// El cliente NO puede leer/escribir la lista de usuarios — solo via /api/auth/*.
+const BLOCKED_KEYS = new Set(['ag:users']);
 
 async function upstash(url, token, ...cmd) {
   const r = await fetch(url, {
@@ -38,6 +41,8 @@ export default async function handler(req, res) {
     const { op, key, start, stop, field } = req.query;
     if (!key || !key.startsWith(ALLOWED_PREFIX))
       return res.status(400).json({ error: 'Clave inválida (debe empezar con ag:)' });
+    if (BLOCKED_KEYS.has(key))
+      return res.status(403).json({ error: 'Esta clave es privada. Usá /api/auth/*' });
 
     try {
       if (op === 'get') {
@@ -78,6 +83,8 @@ export default async function handler(req, res) {
     const { op, key, value, field, by } = body || {};
     if (!key || !key.startsWith(ALLOWED_PREFIX))
       return res.status(400).json({ error: 'Clave inválida (debe empezar con ag:)' });
+    if (BLOCKED_KEYS.has(key))
+      return res.status(403).json({ error: 'Esta clave es privada. Usá /api/auth/*' });
 
     try {
       if (op === 'set') {

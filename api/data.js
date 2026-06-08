@@ -3,10 +3,11 @@
 // POST /api/data  body:{key,value} → guarda
 // Solo claves whitelisted: agustina_blocked_slots, agustina_bookings_v2, agustina_users
 
+// ⚠️ NOTA DE SEGURIDAD: NO incluir 'agustina_users' aquí.
+// Los usuarios solo se acceden vía /api/auth/* (que devuelve datos scrubbed sin passwords).
 const ALLOWED = new Set([
   'agustina_blocked_slots',
   'agustina_bookings_v2',
-  'agustina_users',
   'agustina_content',
   'habito_orders',
   'agustina_prices',
