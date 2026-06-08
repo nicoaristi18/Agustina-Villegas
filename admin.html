@@ -1041,16 +1041,27 @@ async function loadCreditos(){
   const list=Object.values(us);
   document.getElementById('pat-cnt').textContent=list.length;
   document.getElementById('pat-rows').innerHTML=list.map(u=>{
-    const hasPass = !!u.hasPass; // flag del backend (no expone el hash)
-    const status = u.pendingPlan
-      ? `<span class="badge b-amber">⏳ ${u.pendingPlan.name}</span>`
-      : (hasPass ? `<span class="badge b-green">Activo</span>` : `<span class="badge b-amber" title="Sin password, no puede loguear">⚠ Sin password</span>`);
+    const hasPass = !!u.hasPass;
+    // 'Plan activo' SOLO si el paciente pagó (u.plan setado) y no tiene un nuevo pendingPlan
+    // pendingPlan = intent registrado pero pago no confirmado → no es "activo"
+    const planActivo = u.pendingPlan ? '—' : (u.plan || '—');
+    let status;
+    if (u.pendingPlan) {
+      const price = Number(u.pendingPlan.price||0).toLocaleString('es');
+      status = `<span class="badge b-amber" title="Eligió plan pero aún no pagó. Cuando pague por MercadoPago, los créditos se activan solos.">⏳ Esperando pago — ${u.pendingPlan.name} ($${price})</span>`;
+    } else if (!hasPass) {
+      status = `<span class="badge b-amber" title="Sin password, no puede loguear">⚠ Sin password</span>`;
+    } else if ((u.credits||0) > 0 || u.plan) {
+      status = `<span class="badge b-green">Activo</span>`;
+    } else {
+      status = `<span class="badge b-gray">Sin plan</span>`;
+    }
     return `
     <tr>
       <td class="td-bold">${u.name||'—'}</td>
       <td class="td-sm">${u.email}</td>
       <td class="td-sm">${u.phone||'—'}</td>
-      <td>${u.plan||'—'}</td>
+      <td>${planActivo}</td>
       <td><strong style="color:var(--sage);font-size:1.1rem;">${u.credits||0}</strong></td>
       <td>${(u.bookings||[]).length}</td>
       <td>${status}</td>
