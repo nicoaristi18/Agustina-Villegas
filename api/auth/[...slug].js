@@ -12,9 +12,18 @@ import {
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
 
-  const slug = req.query.slug;
-  const path = Array.isArray(slug) ? slug.join('/') : (slug || '');
+  // Extraer el path después de /api/auth/ — primero del slug query (Vercel dynamic route),
+  // sino parseamos req.url directamente (fallback robusto)
+  let path = '';
+  const slug = req.query?.slug;
+  if (slug) {
+    path = Array.isArray(slug) ? slug.join('/') : String(slug);
+  } else if (req.url) {
+    const u = new URL(req.url, 'http://x');
+    path = u.pathname.replace(/^\/api\/auth\/?/, '').replace(/\/$/, '');
+  }
   const method = req.method;
+  console.log('[auth dispatcher]', method, 'path:', path, 'slug:', slug, 'url:', req.url);
 
   try {
     // ==== USER ENDPOINTS ====
@@ -33,7 +42,7 @@ export default async function handler(req, res) {
       if (method === 'DELETE') return await handleAdminUsersDelete(req, res);
     }
 
-    return res.status(404).json({ error: 'Endpoint no encontrado', path, method });
+    return res.status(404).json({ error: 'Endpoint no encontrado', path, method, slug, url: req.url });
   } catch (err) {
     console.error('[auth dispatcher]', path, err);
     return res.status(500).json({ error: 'Error de servidor' });

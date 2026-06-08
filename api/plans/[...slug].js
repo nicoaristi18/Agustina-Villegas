@@ -5,13 +5,20 @@ import { getUserFromRequest, getUserByEmail, getUsers, saveUsers, scrubUser } fr
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
-  const slug = req.query.slug;
-  const path = Array.isArray(slug) ? slug.join('/') : (slug || '');
+  let path = '';
+  const slug = req.query?.slug;
+  if (slug) {
+    path = Array.isArray(slug) ? slug.join('/') : String(slug);
+  } else if (req.url) {
+    const u = new URL(req.url, 'http://x');
+    path = u.pathname.replace(/^\/api\/plans\/?/, '').replace(/\/$/, '');
+  }
+  console.log('[plans dispatcher]', req.method, 'path:', path, 'slug:', slug);
 
   try {
     if (path === 'checkout' && req.method === 'POST') return await handleCheckout(req, res);
     if (path === 'confirm'  && req.method === 'GET')  return await handleConfirm(req, res);
-    return res.status(404).json({ error: 'Endpoint no encontrado', path });
+    return res.status(404).json({ error: 'Endpoint no encontrado', path, method: req.method, slug, url: req.url });
   } catch (err) {
     console.error('[plans dispatcher]', path, err);
     return res.status(500).json({ error: 'Error de servidor' });
