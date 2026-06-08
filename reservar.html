@@ -564,7 +564,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 if(!window.storage){
-  const KEY_MAP={'agustina_blocked_slots':'ag:blocked_slots','agustina_bookings_v2':'ag:bookings','agustina_users':'ag:users','agustina_content':'ag:content','habito_orders':'ag:habito_orders'};
+  // 'agustina_users' removido a propósito: el cliente no lee la lista de usuarios.
+  // Toda interacción con datos de usuario pasa por /api/auth/* (devuelve datos scrubbed).
+  const KEY_MAP={'agustina_blocked_slots':'ag:blocked_slots','agustina_bookings_v2':'ag:bookings','agustina_content':'ag:content','habito_orders':'ag:habito_orders'};
   const LEGACY=new Set(Object.keys(KEY_MAP));
   function kvKey(k){return KEY_MAP[k]||k;}
   window.storage={
