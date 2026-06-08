@@ -128,10 +128,28 @@ async function handleLogout(req, res) {
 
 async function handleAdminLogin(req, res) {
   const body = await readJsonBody(req);
-  if (!body) return res.status(400).json({ error: 'Body inválido' });
+  if (!body) {
+    console.error('[admin/login] body es null. req.body:', req.body, 'typeof:', typeof req.body);
+    return res.status(400).json({ error: 'Body inválido', _debug: { body: req.body, type: typeof req.body } });
+  }
   const { user, pass } = body;
   const ok = await verifyAdminCredentials(user, pass);
-  if (!ok) return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+  if (!ok) {
+    // Debug temporal (no leakea valores, solo metadatos para diagnostico)
+    const debug = {
+      receivedUserType: typeof user,
+      receivedUserEmpty: !user,
+      receivedPassType: typeof pass,
+      receivedPassLength: typeof pass === 'string' ? pass.length : null,
+      expectedUserLower: (process.env.ADMIN_USERNAME || 'agustina').toLowerCase(),
+      hasAdminPasswordHashEnv: !!process.env.ADMIN_PASSWORD_HASH,
+      hasAdminPasswordPlainEnv: !!process.env.ADMIN_PASSWORD_PLAIN,
+      adminPasswordPlainLength: process.env.ADMIN_PASSWORD_PLAIN ? process.env.ADMIN_PASSWORD_PLAIN.length : null,
+      userMatchesExpected: typeof user === 'string' && user.toLowerCase() === (process.env.ADMIN_USERNAME || 'agustina').toLowerCase()
+    };
+    console.error('[admin/login] failed', debug);
+    return res.status(401).json({ error: 'Usuario o contraseña incorrectos', _debug: debug });
+  }
   const token = signSessionToken({ admin: true, user: String(user).toLowerCase() });
   setAdminCookie(res, token);
   return res.status(200).json({ ok: true });
