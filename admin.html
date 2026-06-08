@@ -788,21 +788,35 @@ tbody tr:hover td{background:var(--cream);}
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("eF8R0hxnnAPWRxx6i");</script>
 <script>
-const ADMIN_USER = 'agustina';
-const ADMIN_PASS = 'admin2026';
+// Auth admin via /api/auth/admin/*. La cookie ag_admin (HttpOnly, 7 días) maneja la sesión.
+// Las credenciales se validan server-side contra env vars (ADMIN_PASSWORD_HASH o ADMIN_PASSWORD_PLAIN).
+async function authFetch(url, opts = {}) {
+  const resp = await fetch(url, {
+    ...opts,
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) }
+  });
+  let data = null;
+  try { data = await resp.json(); } catch {}
+  return { ok: resp.ok, status: resp.status, data };
+}
 
-function doLogin(){
-  const u=document.getElementById('aEmail').value.trim().toLowerCase();
+async function doLogin(){
+  const u=document.getElementById('aEmail').value.trim();
   const p=document.getElementById('aPass').value;
   document.getElementById('loginErr').style.display='none';
-  if(u===ADMIN_USER.toLowerCase()&&p===ADMIN_PASS){
-    sessionStorage.setItem('adm','1');
-    bootApp();
-  } else {
-    document.getElementById('loginErr').style.display='block';
-  }
+  const { ok } = await authFetch('/api/auth/admin/login', {
+    method: 'POST',
+    body: JSON.stringify({ user: u, pass: p })
+  });
+  if (ok) bootApp();
+  else document.getElementById('loginErr').style.display='block';
 }
-function doLogout(){sessionStorage.removeItem('adm');location.reload();}
+
+async function doLogout(){
+  await authFetch('/api/auth/admin/logout', { method: 'POST' });
+  location.reload();
+}
 
 function bootApp(){
   document.getElementById('loginPage').style.display='none';
@@ -843,7 +857,10 @@ document.addEventListener('visibilitychange', function(){
 // window.storage shim — dual fallback: Vercel KV → Edge Config → localStorage
 // Cuando KV no está configurado usa Edge Config automáticamente
 if(!window.storage){
-  const KEY_MAP={'agustina_blocked_slots':'ag:blocked_slots','agustina_bookings_v2':'ag:bookings','agustina_users':'ag:users','agustina_content':'ag:content','habito_orders':'ag:habito_orders','agustina_recipes':'ag:recipes','agustina_prices':'ag:prices','agustina_coupons':'ag:coupons'};
+  // NOTA: 'agustina_users' NO está acá a propósito. Los usuarios se acceden solo
+  // via /api/auth/admin/users (cookie ag_admin requerida). El blob de usuarios
+  // con passwords nunca llega al cliente.
+  const KEY_MAP={'agustina_blocked_slots':'ag:blocked_slots','agustina_bookings_v2':'ag:bookings','agustina_content':'ag:content','habito_orders':'ag:habito_orders','agustina_recipes':'ag:recipes','agustina_prices':'ag:prices','agustina_coupons':'ag:coupons'};
   const LEGACY=new Set(Object.keys(KEY_MAP));
   // Claves que NUNCA escribimos a Edge Config porque superan su límite
   // (32KB total / 8KB por valor en plan Hobby). Solo KV + localStorage.
@@ -879,6 +896,35 @@ if(!window.storage){
 async function st(key){try{const r=await window.storage.get(key);return r?JSON.parse(r.value):null;}catch{return null;}}
 async function sv(key,val){try{await window.storage.set(key,JSON.stringify(val));}catch{}}
 
+// === Acceso a usuarios via endpoint admin protegido (cookie ag_admin) ===
+// Nunca recibimos passwords; el servidor las scrubea.
+async function adminGetUsers(){
+  try{
+    const r=await fetch('/api/auth/admin/users',{credentials:'same-origin',cache:'no-store'});
+    if(!r.ok) return {};
+    const d=await r.json();
+    return d.users || {};
+  }catch{return {};}
+}
+async function adminUpdateUser(email, patch){
+  try{
+    const r=await fetch('/api/auth/admin/users',{
+      method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email, patch})
+    });
+    return r.ok;
+  }catch{return false;}
+}
+async function adminDeleteUser(email){
+  try{
+    const r=await fetch('/api/auth/admin/users?email='+encodeURIComponent(email),{
+      method:'DELETE', credentials:'same-origin'
+    });
+    return r.ok;
+  }catch{return false;}
+}
+
 function fmtD(s){
   if(!s)return'—';
   const p=s.split('-');
@@ -889,7 +935,7 @@ function fmtD(s){
 // ── DASHBOARD ──
 async function loadDashboard(){
   const bk=await st('agustina_bookings_v2')||{};
-  const us=await st('agustina_users')||{};
+  const us=await adminGetUsers();
   const od=await st('habito_orders')||[];
   const today=new Date().toISOString().split('T')[0];
   const thisMonth=today.slice(0,7); // "YYYY-MM"
@@ -991,7 +1037,7 @@ async function delRes(d,t){
 
 // ── CRÉDITOS ──
 async function loadCreditos(){
-  const us=await st('agustina_users')||{};
+  const us=await adminGetUsers();
   const list=Object.values(us);
   document.getElementById('pat-cnt').textContent=list.length;
   document.getElementById('pat-rows').innerHTML=list.map(u=>`
@@ -1011,14 +1057,18 @@ async function activateCredits(){
   const[plan,cs]=document.getElementById('cr-plan').value.split('|');
   const credits=parseInt(cs);
   if(!email)return alert('Ingresá el email del paciente.');
-  const us=await st('agustina_users')||{};
+  const us=await adminGetUsers();
   if(!us[email]){
-    if(!confirm(`${email} no está registrado. ¿Crear cuenta?`))return;
-    us[email]={name:'Paciente',email,credits:0,plan:null,bookings:[],createdAt:new Date().toISOString()};
+    alert(`${email} no está registrado. La paciente debe crear su cuenta primero en "Mi cuenta" antes de poder activar créditos.`);
+    return;
   }
-  us[email].credits=(us[email].credits||0)+credits;
-  us[email].plan=plan;us[email].pendingPlan=null;
-  await sv('agustina_users',us);
+  const newCredits = (us[email].credits||0) + credits;
+  const ok = await adminUpdateUser(email, {
+    credits: newCredits,
+    plan: plan,
+    pendingPlan: null
+  });
+  if (!ok) return alert('Error al actualizar créditos.');
   loadCreditos();toast(`${credits} créditos activados para ${email}`);
   document.getElementById('cr-email').value='';
 }
@@ -1296,7 +1346,7 @@ async function clearDayBlocks(){
 // ── ENCUESTA INICIAL ──
 const SURVEY_URL='https://docs.google.com/forms/d/e/1FAIpQLSe8yCzzrWHLlZ-vWB0ktdj2VMhh-ouPBQp6had-84pieNbrRA/viewform?usp=dialog';
 async function loadEncuesta(){
-  const us=await st('agustina_users')||{};
+  const us=await adminGetUsers();
   const bk=await st('agustina_bookings_v2')||{};
   const patients={};
   for(const[email,u] of Object.entries(us)) patients[email]={name:u.name||'—',email};
@@ -1928,9 +1978,10 @@ async function runMigration(){
   }catch(e){alert('Error en migración: '+e.message);}
 }
 
-// Auto-boot
-window.addEventListener('DOMContentLoaded',()=>{
-  if(sessionStorage.getItem('adm')==='1') bootApp();
+// Auto-boot: verifica si la cookie admin sigue vigente
+window.addEventListener('DOMContentLoaded', async ()=>{
+  const { ok } = await authFetch('/api/auth/admin/me');
+  if (ok) bootApp();
 });
 </script>
 </body>
