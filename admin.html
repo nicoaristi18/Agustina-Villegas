@@ -439,7 +439,7 @@ tbody tr:hover td{background:var(--cream);}
             <span class="badge b-green" id="pat-cnt">0</span>
           </div>
           <div class="tw"><table>
-            <thead><tr><th>Nombre</th><th>Email</th><th>WhatsApp</th><th>Plan activo</th><th>Créditos</th><th>Consultas usadas</th><th>Estado</th><th>Alta</th></tr></thead>
+            <thead><tr><th>Nombre</th><th>Email</th><th>WhatsApp</th><th>Plan activo</th><th>Créditos</th><th>Consultas usadas</th><th>Estado</th><th>Alta</th><th></th></tr></thead>
             <tbody id="pat-rows"></tbody>
           </table></div>
         </div>
@@ -1040,7 +1040,12 @@ async function loadCreditos(){
   const us=await adminGetUsers();
   const list=Object.values(us);
   document.getElementById('pat-cnt').textContent=list.length;
-  document.getElementById('pat-rows').innerHTML=list.map(u=>`
+  document.getElementById('pat-rows').innerHTML=list.map(u=>{
+    const hasPass = !!u.hasPass; // flag del backend (no expone el hash)
+    const status = u.pendingPlan
+      ? `<span class="badge b-amber">⏳ ${u.pendingPlan.name}</span>`
+      : (hasPass ? `<span class="badge b-green">Activo</span>` : `<span class="badge b-amber" title="Sin password, no puede loguear">⚠ Sin password</span>`);
+    return `
     <tr>
       <td class="td-bold">${u.name||'—'}</td>
       <td class="td-sm">${u.email}</td>
@@ -1048,9 +1053,20 @@ async function loadCreditos(){
       <td>${u.plan||'—'}</td>
       <td><strong style="color:var(--sage);font-size:1.1rem;">${u.credits||0}</strong></td>
       <td>${(u.bookings||[]).length}</td>
-      <td>${u.pendingPlan?`<span class="badge b-amber">⏳ ${u.pendingPlan.name}</span>`:`<span class="badge b-green">Activo</span>`}</td>
+      <td>${status}</td>
       <td class="td-sm">${u.createdAt?u.createdAt.split('T')[0]:'—'}</td>
-    </tr>`).join('')||`<tr class="empty"><td colspan="8">No hay pacientes</td></tr>`;
+      <td><button class="btn-xs btn-del" onclick="deletePaciente('${u.email}')">Eliminar</button></td>
+    </tr>`;
+  }).join('')||`<tr class="empty"><td colspan="9">No hay pacientes</td></tr>`;
+}
+
+async function deletePaciente(email){
+  if(!confirm(`¿Eliminar definitivamente el paciente ${email}?\n\nSe pierden todos sus datos (créditos, plan, historial). El paciente tendrá que registrarse de nuevo si quiere volver a usar el sistema.`))return;
+  const ok = await adminDeleteUser(email);
+  if(!ok) return alert('Error al eliminar.');
+  toast(`Paciente ${email} eliminado.`);
+  loadCreditos();
+  loadDashboard();
 }
 async function activateCredits(){
   const email=document.getElementById('cr-email').value.trim().toLowerCase();
