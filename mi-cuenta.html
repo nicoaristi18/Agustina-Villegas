@@ -166,35 +166,23 @@ function showError(msg) {
 }
 function hideError() { document.getElementById('errorMsg').style.display='none'; }
 
-// window.storage shim — dual fallback: Vercel KV → Edge Config → localStorage
-if(!window.storage){
-  const KEY_MAP={'agustina_blocked_slots':'ag:blocked_slots','agustina_bookings_v2':'ag:bookings','agustina_users':'ag:users','agustina_content':'ag:content','habito_orders':'ag:habito_orders'};
-  const LEGACY=new Set(Object.keys(KEY_MAP));
-  function kvKey(k){return KEY_MAP[k]||k;}
-  window.storage={
-    async get(k){
-      const kk=kvKey(k);
-      try{const r=await fetch('/api/kv?op=get&key='+encodeURIComponent(kk),{cache:'no-store'});if(r.ok){const d=await r.json();if(d.value!==null&&d.value!==undefined){const sv=typeof d.value==='string'?d.value:JSON.stringify(d.value);localStorage.setItem('__kv_'+k,sv);return{value:sv};}}}catch(e){}
-      if(LEGACY.has(k)){try{const r=await fetch('/api/data?key='+encodeURIComponent(k),{cache:'no-store'});if(r.ok){const d=await r.json();if(d.value!==null&&d.value!==undefined){localStorage.setItem('__kv_'+k,d.value);return{value:d.value};}}}catch(e){}}
-      const v=localStorage.getItem('__kv_'+k);return v!==null?{value:v}:null;
-    },
-    async set(k,v){
-      const kk=kvKey(k);localStorage.setItem('__kv_'+k,v);
-      let ok=false;try{const r=await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'set',key:kk,value:v})});ok=r.ok;}catch(e){}
-      if(!ok&&LEGACY.has(k)){try{await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k,value:v})});}catch(e){}}
-    },
-    async lpush(k,v){const kk=kvKey(k);try{await fetch('/api/kv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'lpush',key:kk,value:v})});}catch(e){}},
-    async lrange(k,s,e){const kk=kvKey(k);try{const r=await fetch('/api/kv?op=lrange&key='+encodeURIComponent(kk)+'&start='+s+'&stop='+e,{cache:'no-store'});if(r.ok){const d=await r.json();return d.value||[];}}catch(e){}return[];}
-  };
+// === AUTH client — todas las operaciones pasan por /api/auth/* ===
+// El servidor maneja hashing (bcrypt), validación y cookies (HttpOnly).
+// El cliente NUNCA tiene acceso al hash ni a la lista de usuarios.
+
+// Cache local de la sesión del usuario (NO incluye password)
+let currentUser = null;
+
+async function authFetch(url, opts = {}) {
+  const resp = await fetch(url, {
+    ...opts,
+    credentials: 'same-origin', // envía cookies HttpOnly automáticamente
+    headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) }
+  });
+  let data = null;
+  try { data = await resp.json(); } catch {}
+  return { ok: resp.ok, status: resp.status, data };
 }
-// Storage helpers
-async function getUsers() {
-  try { const r = await window.storage.get('agustina_users'); return r ? JSON.parse(r.value) : {}; } catch { return {}; }
-}
-async function saveUsers(data) {
-  try { await window.storage.set('agustina_users', JSON.stringify(data)); } catch {}
-}
-function hashPass(p) { return btoa(p + '_agustina_salt'); }
 
 async function doRegister() {
   const name = document.getElementById('reg-name').value.trim();
@@ -206,20 +194,14 @@ async function doRegister() {
   if(!name||!email||!pass) return showError('Completá todos los campos obligatorios.');
   if(pass.length < 6) return showError('La contraseña debe tener al menos 6 caracteres.');
   if(pass !== pass2) return showError('Las contraseñas no coinciden.');
-  const users = await getUsers();
-  if(users[email]) return showError('Ya existe una cuenta con ese email. Iniciá sesión.');
-  users[email] = {
-    name, email, phone,
-    pass: hashPass(pass),
-    plan: planName || null,
-    credits: 0, // Agustina activates manually
-    pendingPlan: planName ? {name:planName, credits:planCredits, price:planPrice} : null,
-    bookings: [],
-    createdAt: new Date().toISOString()
-  };
-  await saveUsers(users);
-  sessionStorage.setItem('loggedUser', email);
-  showDashboard(users[email]);
+  const plan = planName ? { name: planName, credits: planCredits, price: planPrice } : null;
+  const { ok, status, data } = await authFetch('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ name, email, phone, pass, plan })
+  });
+  if (!ok) return showError(data?.error || 'No se pudo crear la cuenta.');
+  currentUser = data.user;
+  showDashboard(currentUser);
 }
 
 async function doLogin() {
@@ -227,11 +209,13 @@ async function doLogin() {
   const pass = document.getElementById('login-pass').value;
   hideError();
   if(!email||!pass) return showError('Completá email y contraseña.');
-  const users = await getUsers();
-  if(!users[email]) return showError('No encontramos una cuenta con ese email.');
-  if(users[email].pass !== hashPass(pass)) return showError('Contraseña incorrecta.');
-  sessionStorage.setItem('loggedUser', email);
-  showDashboard(users[email]);
+  const { ok, data } = await authFetch('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, pass })
+  });
+  if (!ok) return showError(data?.error || 'Email o contraseña incorrectos.');
+  currentUser = data.user;
+  showDashboard(currentUser);
 }
 
 function showDashboard(user) {
@@ -272,24 +256,24 @@ function showDashboard(user) {
 }
 
 async function reserveWithCredit() {
-  const email = sessionStorage.getItem('loggedUser');
-  const users = await getUsers();
-  if(!users[email] || users[email].credits <= 0) return;
-  // Pass to reservar with credit mode
-  location.href = 'reservar.html?mode=credit&user=' + encodeURIComponent(email);
+  if (!currentUser || (currentUser.credits||0) <= 0) return;
+  // El servidor identifica al usuario por la cookie de sesión en /api/auth/me
+  // No hace falta pasar email por URL (no es seguro).
+  location.href = 'reservar.html?mode=credit';
 }
 
 async function doLogout() {
-  sessionStorage.removeItem('loggedUser');
+  await authFetch('/api/auth/logout', { method: 'POST' });
+  currentUser = null;
   location.reload();
 }
 
-// Auto-login if session active
+// Auto-login si la cookie de sesión sigue vigente
 window.addEventListener('DOMContentLoaded', async () => {
-  const email = sessionStorage.getItem('loggedUser');
-  if(email) {
-    const users = await getUsers();
-    if(users[email]) showDashboard(users[email]);
+  const { ok, data } = await authFetch('/api/auth/me');
+  if (ok && data?.user) {
+    currentUser = data.user;
+    showDashboard(currentUser);
   }
 });
 </script>
