@@ -37,7 +37,8 @@ export default async function handler(req, res) {
       email: emailLower,
       phone: phone ? String(phone).trim() : '',
       pass: passHash,
-      plan: plan?.name || null,
+      // 'plan' queda null hasta que pague — se setea desde /api/plans/confirm
+      plan: null,
       credits: 0,
       pendingPlan: plan && plan.name ? {
         name: plan.name,
@@ -45,6 +46,7 @@ export default async function handler(req, res) {
         price: Number(plan.price) || 0
       } : null,
       bookings: [],
+      paidPayments: [], // para idempotencia de pagos MP
       createdAt: new Date().toISOString()
     };
     users[emailLower] = newUser;
