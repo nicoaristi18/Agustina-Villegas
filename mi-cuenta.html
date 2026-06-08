@@ -121,6 +121,15 @@
         <div class="credits-label">Créditos disponibles</div>
         <div class="credits-plan" id="creditsPlan"></div>
       </div>
+      <!-- Banner pendingPlan: aparece cuando el usuario tiene un plan que aún no pagó -->
+      <div id="pendingPlanBox" style="display:none;background:linear-gradient(135deg,#FAF4E8,#F0E6D2);border:1.5px solid #C9985A;border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;">
+        <div style="font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:#8B5A2B;font-weight:600;margin-bottom:.4rem;">⏳ Pago pendiente</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:#2A2118;margin-bottom:.3rem;" id="pendingPlanName">—</div>
+        <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;" id="pendingPlanDesc">Completá el pago para activar tus créditos.</div>
+        <button id="payPlanBtn" onclick="payPendingPlan()" style="background:linear-gradient(135deg,#00B0CF,#0095B7);color:white;border:none;padding:.85rem 1.6rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:.5rem;">
+          💳 Pagar con MercadoPago — <span id="payPlanAmount">$0</span>
+        </button>
+      </div>
       <div class="dash-actions">
         <button class="dash-btn primary" id="reserveBtn" onclick="reserveWithCredit()">Usar crédito — Reservar consulta</button>
         <button class="dash-btn secondary" onclick="location.href='planes.html'">Ver planes y agregar créditos</button>
@@ -237,6 +246,10 @@ function showDashboard(user) {
     btn.disabled = true;
     btn.style.opacity = '.5';
     btn.textContent = 'Sin créditos disponibles';
+  } else {
+    btn.disabled = false;
+    btn.style.opacity = '';
+    btn.textContent = 'Usar crédito — Reservar consulta';
   }
   // History
   const list = document.getElementById('historyList');
@@ -249,10 +262,74 @@ function showDashboard(user) {
         <span class="status ${b.status==='usado'?'status-used':'status-upcoming'}">${b.status==='usado'?'Realizada':'Próxima'}</span>
       </div>`).join('');
   }
-  // Show pending plan notice
-  if(user.pendingPlan) {
-    document.getElementById('creditsPlan').textContent = '⏳ ' + user.pendingPlan.name + ' — pendiente de activación por Agustina';
+  // Pending plan banner — botón directo de pago
+  const pendingBox = document.getElementById('pendingPlanBox');
+  if (user.pendingPlan && user.pendingPlan.name) {
+    pendingBox.style.display = 'block';
+    document.getElementById('pendingPlanName').textContent = user.pendingPlan.name;
+    document.getElementById('pendingPlanDesc').textContent =
+      `Te incluye ${user.pendingPlan.credits} consultas. Una vez confirmado el pago, los créditos se activan automáticamente en tu cuenta.`;
+    document.getElementById('payPlanAmount').textContent = '$' + Number(user.pendingPlan.price||0).toLocaleString('es');
+  } else {
+    pendingBox.style.display = 'none';
   }
+  document.getElementById('creditsPlan').textContent = user.plan ? user.plan : '';
+}
+
+async function payPendingPlan() {
+  const btn = document.getElementById('payPlanBtn');
+  btn.disabled = true;
+  btn.style.opacity = '.6';
+  btn.innerHTML = '⏳ Generando link de pago…';
+  const { ok, data } = await authFetch('/api/plans/checkout', { method: 'POST', body: '{}' });
+  if (!ok || !data?.init_point) {
+    btn.disabled = false;
+    btn.style.opacity = '';
+    btn.innerHTML = '💳 Pagar con MercadoPago — <span id="payPlanAmount">$' + Number(currentUser?.pendingPlan?.price||0).toLocaleString('es') + '</span>';
+    showError(data?.error || 'No se pudo iniciar el pago. Probá de nuevo.');
+    return;
+  }
+  // Redirigir al checkout de MercadoPago
+  location.href = data.init_point;
+}
+
+// Manejo del retorno de MercadoPago
+async function handlePlanPaymentReturn() {
+  const params = new URLSearchParams(location.search);
+  const status = params.get('plan_payment');
+  if (!status) return false;
+  const paymentId = params.get('payment_id') || params.get('collection_id');
+
+  // Limpiar la URL para evitar re-procesar al recargar
+  const clean = new URL(location.href);
+  ['plan_payment','payment_id','collection_id','collection_status','external_reference','merchant_order_id','preference_id','site_id','processing_mode','merchant_account_id'].forEach(p => clean.searchParams.delete(p));
+  history.replaceState({}, '', clean.toString());
+
+  if (status === 'failure') {
+    alert('❌ El pago no se completó. Si intentaste pagar, podés volver a intentarlo desde tu cuenta.');
+    return false;
+  }
+  if (status === 'pending') {
+    alert('⏳ Tu pago está pendiente de aprobación. Una vez confirmado por MercadoPago, los créditos se activarán automáticamente.');
+    return false;
+  }
+  if (status === 'success' && paymentId) {
+    const { ok, data } = await authFetch('/api/plans/confirm?payment_id=' + encodeURIComponent(paymentId));
+    if (ok && data?.user) {
+      currentUser = data.user;
+      if (data.status === 'activated') {
+        alert(`✅ ¡Pago confirmado! Se activaron ${data.added_credits} créditos en tu cuenta.`);
+      } else if (data.status === 'already_processed') {
+        // Recarga silenciosa — créditos ya estaban activos
+      } else {
+        alert('Tu pago todavía no fue aprobado. Estado: ' + (data.status||'desconocido'));
+      }
+      return true;
+    } else {
+      alert('No pudimos confirmar el pago. Si el dinero salió de tu cuenta, contactá a Agustina.');
+    }
+  }
+  return false;
 }
 
 async function reserveWithCredit() {
@@ -274,6 +351,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (ok && data?.user) {
     currentUser = data.user;
     showDashboard(currentUser);
+    // Si venimos de un retorno de MercadoPago, procesarlo
+    const processed = await handlePlanPaymentReturn();
+    if (processed) {
+      // Refrescar UI con los nuevos créditos
+      showDashboard(currentUser);
+    }
   }
 });
 </script>
