@@ -510,7 +510,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         modality: modLabel, paid: true
       };
       await saveBookings(bookings);
-      // Email de confirmación
+      // Email al paciente
       try {
         await emailjs.send('service_nnsgrl9','template_4pmzmjm',{
           patient_name: bookingData.name, patient_email: bookingData.email,
@@ -518,6 +518,20 @@ window.addEventListener('DOMContentLoaded', async () => {
           time: bookingData.time, modality: modLabel
         });
       } catch(e){}
+      // Email a Agustina (notificación de nueva reserva)
+      try {
+        await emailjs.send('service_nnsgrl9','template_admin_notif',{
+          patient_name: bookingData.name,
+          patient_email: bookingData.email,
+          patient_phone: bookingData.phone || 'No proporcionado',
+          service: bookingData.svc,
+          date: bookingData.dateStr,
+          time: bookingData.time,
+          modality: modLabel,
+          payment_type: 'Pago vía MercadoPago',
+          notes: bookingData.notes || 'Sin notas adicionales'
+        });
+      } catch(e){ console.warn('[admin notif]', e); }
       // Mostrar éxito
       document.getElementById('s4-icon').textContent = '✅';
       document.getElementById('s4-title').innerHTML = '¡Pago <em>confirmado!</em>';
@@ -808,7 +822,7 @@ async function confirmBooking(){
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'No se pudo reservar con crédito');
 
-      // Email de confirmación (opcional, mismo template que pago)
+      // Email al paciente
       try {
         await emailjs.send('service_nnsgrl9','template_4pmzmjm',{
           patient_name: name+' '+last, patient_email: email,
@@ -816,6 +830,20 @@ async function confirmBooking(){
           time: sel.time, modality: modLabel
         });
       } catch(e){}
+      // Email a Agustina (notificación de nueva reserva)
+      try {
+        await emailjs.send('service_nnsgrl9','template_admin_notif',{
+          patient_name: name+' '+last,
+          patient_email: email,
+          patient_phone: phone || 'No proporcionado',
+          service: sel.svc,
+          date: sel.dateStr,
+          time: sel.time,
+          modality: modLabel,
+          payment_type: 'Crédito de plan (1 consumido)',
+          notes: notes || 'Sin notas adicionales'
+        });
+      } catch(e){ console.warn('[admin notif]', e); }
 
       // Mostrar éxito
       document.getElementById('s4-icon').textContent = '✅';
