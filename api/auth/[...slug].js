@@ -1,19 +1,14 @@
-// Catch-all dispatcher para /api/auth/*
-// Vercel Hobby tiene límite de 12 serverless functions → consolidamos.
-// El frontend sigue llamando a /api/auth/login, /api/auth/me, /api/auth/admin/users, etc.
+// Catch-all dispatcher para /api/auth/* (solo endpoints de paciente).
+// Admin se separó a /api/admin/* porque Vercel no rutea sub-paths anidados al catch-all.
 
 import {
   getUsers, saveUsers, getUserByEmail, hashPassword, verifyPassword,
   isLegacyHash, signSessionToken, setUserCookie, clearUserCookie,
-  setAdminCookie, clearAdminCookie, getUserFromRequest, getAdminFromRequest,
-  verifyAdminCredentials, scrubUser, readJsonBody
+  getUserFromRequest, scrubUser, readJsonBody
 } from '../../lib/auth.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
-
-  // Extraer el path después de /api/auth/ — primero del slug query (Vercel dynamic route),
-  // sino parseamos req.url directamente (fallback robusto)
   let path = '';
   const slug = req.query?.slug;
   if (slug) {
@@ -23,26 +18,14 @@ export default async function handler(req, res) {
     path = u.pathname.replace(/^\/api\/auth\/?/, '').replace(/\/$/, '');
   }
   const method = req.method;
-  console.log('[auth dispatcher]', method, 'path:', path, 'slug:', slug, 'url:', req.url);
+  console.log('[auth dispatcher]', method, 'path:', path);
 
   try {
-    // ==== USER ENDPOINTS ====
     if (path === 'register' && method === 'POST')  return await handleRegister(req, res);
     if (path === 'login'    && method === 'POST')  return await handleLogin(req, res);
     if (path === 'me'       && method === 'GET')   return await handleMe(req, res);
     if (path === 'logout'   && method === 'POST')  return await handleLogout(req, res);
-
-    // ==== ADMIN ENDPOINTS ====
-    if (path === 'admin/login'  && method === 'POST') return await handleAdminLogin(req, res);
-    if (path === 'admin/me'     && method === 'GET')  return await handleAdminMe(req, res);
-    if (path === 'admin/logout' && method === 'POST') return await handleAdminLogout(req, res);
-    if (path === 'admin/users') {
-      if (method === 'GET')    return await handleAdminUsersList(req, res);
-      if (method === 'POST')   return await handleAdminUsersUpdate(req, res);
-      if (method === 'DELETE') return await handleAdminUsersDelete(req, res);
-    }
-
-    return res.status(404).json({ error: 'Endpoint no encontrado', path, method, slug, url: req.url });
+    return res.status(404).json({ error: 'Endpoint no encontrado', path, method });
   } catch (err) {
     console.error('[auth dispatcher]', path, err);
     return res.status(500).json({ error: 'Error de servidor' });
@@ -119,86 +102,5 @@ async function handleMe(req, res) {
 
 async function handleLogout(req, res) {
   clearUserCookie(res);
-  return res.status(200).json({ ok: true });
-}
-
-// ============================================================
-// ADMIN HANDLERS
-// ============================================================
-
-async function handleAdminLogin(req, res) {
-  const body = await readJsonBody(req);
-  if (!body) {
-    console.error('[admin/login] body es null. req.body:', req.body, 'typeof:', typeof req.body);
-    return res.status(400).json({ error: 'Body inválido', _debug: { body: req.body, type: typeof req.body } });
-  }
-  const { user, pass } = body;
-  const ok = await verifyAdminCredentials(user, pass);
-  if (!ok) {
-    // Debug temporal (no leakea valores, solo metadatos para diagnostico)
-    const debug = {
-      receivedUserType: typeof user,
-      receivedUserEmpty: !user,
-      receivedPassType: typeof pass,
-      receivedPassLength: typeof pass === 'string' ? pass.length : null,
-      expectedUserLower: (process.env.ADMIN_USERNAME || 'agustina').toLowerCase(),
-      hasAdminPasswordHashEnv: !!process.env.ADMIN_PASSWORD_HASH,
-      hasAdminPasswordPlainEnv: !!process.env.ADMIN_PASSWORD_PLAIN,
-      adminPasswordPlainLength: process.env.ADMIN_PASSWORD_PLAIN ? process.env.ADMIN_PASSWORD_PLAIN.length : null,
-      userMatchesExpected: typeof user === 'string' && user.toLowerCase() === (process.env.ADMIN_USERNAME || 'agustina').toLowerCase()
-    };
-    console.error('[admin/login] failed', debug);
-    return res.status(401).json({ error: 'Usuario o contraseña incorrectos', _debug: debug });
-  }
-  const token = signSessionToken({ admin: true, user: String(user).toLowerCase() });
-  setAdminCookie(res, token);
-  return res.status(200).json({ ok: true });
-}
-
-async function handleAdminMe(req, res) {
-  const session = getAdminFromRequest(req);
-  if (!session?.admin) return res.status(401).json({ error: 'No autenticado' });
-  return res.status(200).json({ ok: true, user: session.user });
-}
-
-async function handleAdminLogout(req, res) {
-  clearAdminCookie(res);
-  return res.status(200).json({ ok: true });
-}
-
-async function handleAdminUsersList(req, res) {
-  const session = getAdminFromRequest(req);
-  if (!session?.admin) return res.status(401).json({ error: 'No autenticado' });
-  const users = await getUsers();
-  const scrubbed = {};
-  Object.keys(users).forEach(k => { scrubbed[k] = scrubUser(users[k]); });
-  return res.status(200).json({ users: scrubbed });
-}
-
-async function handleAdminUsersUpdate(req, res) {
-  const session = getAdminFromRequest(req);
-  if (!session?.admin) return res.status(401).json({ error: 'No autenticado' });
-  const body = await readJsonBody(req);
-  if (!body?.email || !body?.patch) return res.status(400).json({ error: 'Faltan email o patch' });
-  const emailLower = String(body.email).toLowerCase();
-  const users = await getUsers();
-  if (!users[emailLower]) return res.status(404).json({ error: 'Usuario no encontrado' });
-  const ALLOWED = ['credits','plan','phone','name','pendingPlan','bookings'];
-  const patch = {};
-  Object.keys(body.patch).forEach(k => { if (ALLOWED.includes(k)) patch[k] = body.patch[k]; });
-  users[emailLower] = { ...users[emailLower], ...patch };
-  await saveUsers(users);
-  return res.status(200).json({ user: scrubUser(users[emailLower]) });
-}
-
-async function handleAdminUsersDelete(req, res) {
-  const session = getAdminFromRequest(req);
-  if (!session?.admin) return res.status(401).json({ error: 'No autenticado' });
-  const email = String(req.query.email || '').toLowerCase();
-  if (!email) return res.status(400).json({ error: 'Falta email' });
-  const users = await getUsers();
-  if (!users[email]) return res.status(404).json({ error: 'Usuario no encontrado' });
-  delete users[email];
-  await saveUsers(users);
   return res.status(200).json({ ok: true });
 }

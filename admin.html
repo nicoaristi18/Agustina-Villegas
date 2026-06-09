@@ -788,7 +788,7 @@ tbody tr:hover td{background:var(--cream);}
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("eF8R0hxnnAPWRxx6i");</script>
 <script>
-// Auth admin via /api/auth/admin/*. La cookie ag_admin (HttpOnly, 7 días) maneja la sesión.
+// Auth admin via /api/admin/*. La cookie ag_admin (HttpOnly, 7 días) maneja la sesión.
 // Las credenciales se validan server-side contra env vars (ADMIN_PASSWORD_HASH o ADMIN_PASSWORD_PLAIN).
 async function authFetch(url, opts = {}) {
   const resp = await fetch(url, {
@@ -805,7 +805,7 @@ async function doLogin(){
   const u=document.getElementById('aEmail').value.trim();
   const p=document.getElementById('aPass').value;
   document.getElementById('loginErr').style.display='none';
-  const { ok } = await authFetch('/api/auth/admin/login', {
+  const { ok } = await authFetch('/api/admin/login', {
     method: 'POST',
     body: JSON.stringify({ user: u, pass: p })
   });
@@ -814,7 +814,7 @@ async function doLogin(){
 }
 
 async function doLogout(){
-  await authFetch('/api/auth/admin/logout', { method: 'POST' });
+  await authFetch('/api/admin/logout', { method: 'POST' });
   location.reload();
 }
 
@@ -858,7 +858,7 @@ document.addEventListener('visibilitychange', function(){
 // Cuando KV no está configurado usa Edge Config automáticamente
 if(!window.storage){
   // NOTA: 'agustina_users' NO está acá a propósito. Los usuarios se acceden solo
-  // via /api/auth/admin/users (cookie ag_admin requerida). El blob de usuarios
+  // via /api/admin/users (cookie ag_admin requerida). El blob de usuarios
   // con passwords nunca llega al cliente.
   const KEY_MAP={'agustina_blocked_slots':'ag:blocked_slots','agustina_bookings_v2':'ag:bookings','agustina_content':'ag:content','habito_orders':'ag:habito_orders','agustina_recipes':'ag:recipes','agustina_prices':'ag:prices','agustina_coupons':'ag:coupons'};
   const LEGACY=new Set(Object.keys(KEY_MAP));
@@ -900,7 +900,7 @@ async function sv(key,val){try{await window.storage.set(key,JSON.stringify(val))
 // Nunca recibimos passwords; el servidor las scrubea.
 async function adminGetUsers(){
   try{
-    const r=await fetch('/api/auth/admin/users',{credentials:'same-origin',cache:'no-store'});
+    const r=await fetch('/api/admin/users',{credentials:'same-origin',cache:'no-store'});
     if(!r.ok) return {};
     const d=await r.json();
     return d.users || {};
@@ -908,7 +908,7 @@ async function adminGetUsers(){
 }
 async function adminUpdateUser(email, patch){
   try{
-    const r=await fetch('/api/auth/admin/users',{
+    const r=await fetch('/api/admin/users',{
       method:'POST', credentials:'same-origin',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({email, patch})
@@ -918,7 +918,7 @@ async function adminUpdateUser(email, patch){
 }
 async function adminDeleteUser(email){
   try{
-    const r=await fetch('/api/auth/admin/users?email='+encodeURIComponent(email),{
+    const r=await fetch('/api/admin/users?email='+encodeURIComponent(email),{
       method:'DELETE', credentials:'same-origin'
     });
     return r.ok;
@@ -2007,7 +2007,7 @@ async function runMigration(){
 
 // Auto-boot: verifica si la cookie admin sigue vigente
 window.addEventListener('DOMContentLoaded', async ()=>{
-  const { ok } = await authFetch('/api/auth/admin/me');
+  const { ok } = await authFetch('/api/admin/me');
   if (ok) bootApp();
 });
 </script>
