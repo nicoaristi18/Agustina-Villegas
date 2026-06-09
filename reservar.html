@@ -561,7 +561,53 @@ window.addEventListener('DOMContentLoaded', async () => {
     const el = document.querySelector(`.svc-opt[data-key="${key}"]`);
     if (el) el.click();
   }
+
+  // ── Detectar si hay paciente logueado para ofrecer reserva con créditos ──
+  await detectLoggedUser();
 });
+
+// Estado global del paciente logueado
+window._loggedUser = null;
+
+async function detectLoggedUser() {
+  try {
+    const r = await fetch('/api/auth/me', { credentials: 'same-origin' });
+    if (!r.ok) return; // no hay sesión activa
+    const d = await r.json();
+    if (!d.user) return;
+    window._loggedUser = d.user;
+    const credits = d.user.credits || 0;
+
+    // Pre-rellenar nombre/email en el form
+    const [first, ...rest] = (d.user.name || '').split(' ');
+    if (document.getElementById('f-name'))  document.getElementById('f-name').value  = first || '';
+    if (document.getElementById('f-last'))  document.getElementById('f-last').value  = rest.join(' ') || '';
+    if (document.getElementById('f-email')) document.getElementById('f-email').value = d.user.email || '';
+    if (document.getElementById('f-phone')) document.getElementById('f-phone').value = d.user.phone || '';
+
+    // Si tiene créditos, mostrar banner verde y cambiar el botón "Ir a pagar"
+    if (credits > 0) {
+      const banner = document.createElement('div');
+      banner.id = 'creditBanner';
+      banner.style.cssText = 'background:#E8F2E8;border:1.5px solid #7A9E7E;border-radius:14px;padding:1rem 1.3rem;margin:0 0 1.2rem;display:flex;align-items:center;gap:.9rem;font-family:"DM Sans",sans-serif;';
+      banner.innerHTML = `
+        <div style="font-size:1.4rem">✅</div>
+        <div style="flex:1">
+          <div style="font-size:.92rem;font-weight:500;color:#2A2118;">Tenés ${credits} crédito${credits>1?'s':''} disponible${credits>1?'s':''}</div>
+          <div style="font-size:.78rem;color:#5F7060;">Al confirmar, se descuenta 1 crédito y reservás sin pagar de nuevo.</div>
+        </div>`;
+      const wrap = document.querySelector('.res-wrap');
+      const steps = document.querySelector('.steps');
+      if (wrap && steps) wrap.insertBefore(banner, steps);
+
+      // Cambiar el texto del botón confirmar
+      const btnConfirm = document.getElementById('btnConfirm');
+      if (btnConfirm) btnConfirm.textContent = `Usar 1 crédito y reservar ✓`;
+    }
+  } catch(e) {
+    console.warn('[detectLoggedUser]', e);
+  }
+}
 
 if(!window.storage){
   // 'agustina_users' removido a propósito: el cliente no lee la lista de usuarios.
@@ -742,8 +788,54 @@ async function confirmBooking(){
   const btn = document.getElementById('btnConfirm');
   btn.disabled = true; btn.textContent = 'Procesando…';
 
-  // Guardar datos de reserva en sessionStorage (persiste durante el redirect a MP y la vuelta)
   const dateKey = sel.date.toISOString().split('T')[0];
+  const modLabel = sel.type==='masaje'?'Presencial':(sel.modality==='online'?'Online':'Presencial');
+
+  // ── Si el paciente está logueado y tiene créditos, usar 1 crédito en vez de pagar ──
+  const hasCredit = window._loggedUser && (window._loggedUser.credits || 0) > 0;
+  if (hasCredit) {
+    try {
+      const r = await fetch('/api/auth/book-with-credit', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          dateKey, time: sel.time, dateStr: sel.dateStr,
+          svc: sel.svc, dur: sel.dur, type: sel.type, modality: sel.modality,
+          name: name+' '+last, email, phone, notes
+        })
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo reservar con crédito');
+
+      // Email de confirmación (opcional, mismo template que pago)
+      try {
+        await emailjs.send('service_nnsgrl9','template_4pmzmjm',{
+          patient_name: name+' '+last, patient_email: email,
+          service: sel.svc, date: sel.dateStr,
+          time: sel.time, modality: modLabel
+        });
+      } catch(e){}
+
+      // Mostrar éxito
+      document.getElementById('s4-icon').textContent = '✅';
+      document.getElementById('s4-title').innerHTML = '¡Turno <em>reservado!</em>';
+      document.getElementById('s4-msg').textContent = `Usaste 1 crédito. Te quedan ${data.remainingCredits} crédito${data.remainingCredits!==1?'s':''} disponible${data.remainingCredits!==1?'s':''}.`;
+      document.getElementById('success-detail').innerHTML =
+        `<p><strong>Servicio:</strong> ${sel.svc}</p>
+         <p><strong>Fecha:</strong> ${sel.dateStr}</p>
+         <p><strong>Horario:</strong> ${sel.time}</p>
+         <p><strong>Paciente:</strong> ${name+' '+last}</p>`;
+      goStep(4);
+      return;
+    } catch(err) {
+      btn.disabled=false; btn.textContent='Usar 1 crédito y reservar ✓';
+      alert('No se pudo reservar con crédito: '+err.message);
+      return;
+    }
+  }
+
+  // ── Flujo de pago (cliente sin sesión o sin créditos) ──
   const bookingData = {
     dateKey, time: sel.time, dateStr: sel.dateStr,
     svc: sel.svc, dur: sel.dur, price: sel.price,
@@ -752,11 +844,9 @@ async function confirmBooking(){
   };
   sessionStorage.setItem('pending_booking', JSON.stringify(bookingData));
 
-  // Precio numérico — si hay cupón aplicado, usar ese precio
   const priceNum = (appliedCoupon && appliedCoupon._finalPrice !== undefined)
     ? appliedCoupon._finalPrice
     : (parseInt((sel.price||'0').replace(/[^0-9]/g,''), 10) || 1);
-  const modLabel = sel.type==='masaje'?'Presencial':(sel.modality==='online'?'Online':'Presencial');
 
   try {
     const r = await fetch('/api/create-preference', {
@@ -772,7 +862,7 @@ async function confirmBooking(){
     });
     const data = await r.json();
     if(data.init_point){
-      window.location.href = data.init_point; // redirige a MercadoPago
+      window.location.href = data.init_point;
     } else {
       throw new Error(data.error || 'No se pudo iniciar el pago');
     }

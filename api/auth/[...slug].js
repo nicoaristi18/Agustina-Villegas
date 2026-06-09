@@ -4,7 +4,8 @@
 import {
   getUsers, saveUsers, getUserByEmail, hashPassword, verifyPassword,
   isLegacyHash, signSessionToken, setUserCookie, clearUserCookie,
-  getUserFromRequest, scrubUser, readJsonBody
+  getUserFromRequest, scrubUser, readJsonBody,
+  getBookings, saveBookings
 } from '../../lib/auth.js';
 
 export default async function handler(req, res) {
@@ -21,10 +22,11 @@ export default async function handler(req, res) {
   console.log('[auth dispatcher]', method, 'path:', path);
 
   try {
-    if (path === 'register' && method === 'POST')  return await handleRegister(req, res);
-    if (path === 'login'    && method === 'POST')  return await handleLogin(req, res);
-    if (path === 'me'       && method === 'GET')   return await handleMe(req, res);
-    if (path === 'logout'   && method === 'POST')  return await handleLogout(req, res);
+    if (path === 'register'         && method === 'POST') return await handleRegister(req, res);
+    if (path === 'login'            && method === 'POST') return await handleLogin(req, res);
+    if (path === 'me'               && method === 'GET')  return await handleMe(req, res);
+    if (path === 'logout'           && method === 'POST') return await handleLogout(req, res);
+    if (path === 'book-with-credit' && method === 'POST') return await handleBookWithCredit(req, res);
     return res.status(404).json({ error: 'Endpoint no encontrado', path, method });
   } catch (err) {
     console.error('[auth dispatcher]', path, err);
@@ -103,4 +105,65 @@ async function handleMe(req, res) {
 async function handleLogout(req, res) {
   clearUserCookie(res);
   return res.status(200).json({ ok: true });
+}
+
+// === BOOK WITH CREDIT ===
+// POST /api/auth/book-with-credit
+// Body: { dateKey, time, dateStr, svc, dur, type, modality, name, email, phone, notes }
+// Requiere sesión activa. Descuenta 1 crédito y registra la reserva.
+async function handleBookWithCredit(req, res) {
+  const session = getUserFromRequest(req);
+  if (!session?.email) return res.status(401).json({ error: 'Tenés que iniciar sesión para usar créditos.' });
+
+  const body = await readJsonBody(req);
+  if (!body) return res.status(400).json({ error: 'Body inválido' });
+
+  const { dateKey, time, dateStr, svc, dur, type, modality, name, email, phone, notes } = body;
+  if (!dateKey || !time || !svc || !name || !email) {
+    return res.status(400).json({ error: 'Faltan datos del turno (fecha, hora, servicio, nombre, email).' });
+  }
+
+  // Cargar el usuario y verificar créditos
+  const users = await getUsers();
+  const user = users[session.email];
+  if (!user) return res.status(401).json({ error: 'Usuario no encontrado' });
+  if ((user.credits || 0) <= 0) {
+    return res.status(403).json({ error: 'No tenés créditos disponibles. Comprá un plan para reservar consultas.' });
+  }
+
+  // Cargar bookings y verificar que el slot no esté tomado
+  const bookings = await getBookings();
+  if (bookings[dateKey] && bookings[dateKey][time]) {
+    return res.status(409).json({ error: 'Ese horario ya fue reservado por otro paciente. Elegí otro.' });
+  }
+
+  // Crear la reserva
+  if (!bookings[dateKey]) bookings[dateKey] = {};
+  const modLabel = type === 'masaje' ? 'Presencial' : (modality === 'online' ? 'Online (videollamada)' : 'Presencial');
+  bookings[dateKey][time] = {
+    dur, svc, name, email, phone: phone || '', notes: notes || '',
+    modality: modLabel, paid: true, paidWithCredit: true
+  };
+
+  // Descontar crédito + agregar al historial del paciente
+  user.credits = (user.credits || 0) - 1;
+  user.bookings = user.bookings || [];
+  user.bookings.push({
+    service: svc,
+    date: dateStr || dateKey,
+    time,
+    status: 'upcoming',
+    modality: modLabel,
+    createdAt: new Date().toISOString()
+  });
+  users[session.email] = user;
+
+  // Guardar ambos
+  await Promise.all([saveBookings(bookings), saveUsers(users)]);
+
+  return res.status(200).json({
+    ok: true,
+    remainingCredits: user.credits,
+    booking: { dateKey, time, svc, modality: modLabel }
+  });
 }
