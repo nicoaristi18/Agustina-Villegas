@@ -75,11 +75,14 @@
 /* ===== Tabla de contenidos ===== */
 .runners-content{padding:6rem 2rem;background:linear-gradient(135deg,#FAF8F4 0%,#F5F0E8 100%);}
 .toc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4rem;margin-top:1rem;}
-.toc-card{background:white;border-radius:14px;padding:1.8rem 1.6rem;border:1px solid rgba(168,112,106,.08);transition:transform .2s,box-shadow .2s;}
+.toc-card{background:white;border-radius:14px;padding:1.8rem 1.6rem;border:1px solid rgba(168,112,106,.08);transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;}
 .toc-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(42,33,24,.08);}
 .toc-number{font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:300;color:var(--rose-dark);line-height:1;margin-bottom:.6rem;}
-.toc-card h4{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:400;color:var(--text);margin-bottom:.5rem;line-height:1.2;}
-.toc-card p{font-size:.85rem;color:var(--text-muted);line-height:1.55;}
+.toc-card h4{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:400;color:var(--text);margin-bottom:.6rem;line-height:1.2;}
+.toc-card p{font-size:.85rem;color:var(--text-muted);line-height:1.55;margin-bottom:1rem;}
+.toc-card ul{list-style:none;padding:0;margin:0;border-top:1px solid rgba(168,112,106,.12);padding-top:.85rem;margin-top:auto;}
+.toc-card ul li{font-size:.78rem;color:var(--text);padding:.3rem 0 .3rem 1.2rem;position:relative;line-height:1.45;}
+.toc-card ul li::before{content:"→";position:absolute;left:0;color:var(--rose-dark);font-weight:500;}
 
 /* ===== Autora ===== */
 .runners-author{padding:6rem 2rem;background:white;}
@@ -245,37 +248,72 @@
       <div class="toc-card">
         <div class="toc-number">01</div>
         <h4>Qué comer antes, durante y después</h4>
-        <p>Fuentes de carbohidratos complejos y simples, y cuándo usar cada uno para rendir mejor.</p>
+        <p>Los carbohidratos son tu combustible, pero no todos sirven en el mismo momento. Aprendé a distinguir los complejos de los simples y cuándo usar cada uno para rendir más.</p>
+        <ul>
+          <li>Lista de carbohidratos complejos y simples</li>
+          <li>Función de cada macronutriente en el cuerpo</li>
+          <li>Ejemplos concretos de pre y post entreno</li>
+        </ul>
       </div>
       <div class="toc-card">
         <div class="toc-number">02</div>
         <h4>Anticipación según intensidad</h4>
-        <p>Cómo saber qué consumir según el tipo y duración del entrenamiento.</p>
+        <p>No es lo mismo un trote suave de 30 minutos que un fondo de 1:30. Te explico cómo adaptar tu pre-entreno al tipo y duración del ejercicio, sin reglas rígidas.</p>
+        <ul>
+          <li>Entrenamientos suaves vs intensos</li>
+          <li>Tiempos de anticipación (30 min a 1:30 hs)</li>
+          <li>Cuándo NO necesitás cargar carbohidratos</li>
+        </ul>
       </div>
       <div class="toc-card">
         <div class="toc-number">03</div>
         <h4>Pautas día antes y día de carrera</h4>
-        <p>Cena previa, alimentos a evitar, cómo organizar el día de competencia.</p>
+        <p>Considerando 5K y 10K, te explico cómo planificar la cena previa y el día de competencia. Qué alimentos evitar y por qué — para que la carrera salga como vos querés.</p>
+        <ul>
+          <li>Cena previa: qué incluir y en qué cantidad</li>
+          <li>Alimentos a evitar antes de correr</li>
+          <li>Cómo organizar el día según el horario de tu carrera</li>
+        </ul>
       </div>
       <div class="toc-card">
         <div class="toc-number">04</div>
         <h4>Hidratación</h4>
-        <p>Qué hidrata y qué no. El mate, agua, bebidas isotónicas.</p>
+        <p>La hidratación es lo que más se descuida y lo que más afecta el rendimiento. ¿El mate hidrata o deshidrata? ¿Cuánta agua necesitás? ¿Sirven las isotónicas? Las respuestas claras.</p>
+        <ul>
+          <li>El mate: mito o realidad</li>
+          <li>Cuánto tomar antes, durante y después</li>
+          <li>Cuándo conviene una bebida isotónica</li>
+        </ul>
       </div>
       <div class="toc-card">
         <div class="toc-number">05</div>
         <h4>Suplementación</h4>
-        <p>¿Es necesario? Cuándo sí y cuándo no, qué tener en cuenta.</p>
+        <p>El mercado está lleno de suplementos que prometen milagros. Te cuento cuáles tienen evidencia, cuándo realmente los necesitás y cuándo es plata tirada.</p>
+        <ul>
+          <li>¿Es necesario suplementarte?</li>
+          <li>Qué buscar (y qué evitar) en el rótulo</li>
+          <li>Casos en que sí conviene</li>
+        </ul>
       </div>
       <div class="toc-card">
         <div class="toc-number">06</div>
         <h4>Qué consumir intra-entreno</h4>
-        <p>Tabla práctica de carbohidratos según tiempo e intensidad.</p>
+        <p>En fondos de más de 1 hora, lo que comés mientras corrés define si terminás o quedás "vacío" a mitad de camino. Te dejo una tabla práctica de gramos de carbohidratos según tu caso.</p>
+        <ul>
+          <li>Tabla por tiempo (0-1h, 1-2h) e intensidad</li>
+          <li>Rangos: 30g a 90g de carbohidratos</li>
+          <li>Qué formato usar (gel, fruta, bebida)</li>
+        </ul>
       </div>
       <div class="toc-card">
         <div class="toc-number">07</div>
         <h4>Hábitos para mejor rendimiento</h4>
-        <p>Descanso, entrada en calor y otros factores clave.</p>
+        <p>La nutrición es una pieza más. El descanso, la entrada en calor y la consistencia hacen la diferencia entre estancarse y progresar. Los hábitos que la mayoría subestima.</p>
+        <ul>
+          <li>Cómo dormir mejor para recuperar</li>
+          <li>Entrada en calor adecuada</li>
+          <li>Errores comunes que retrasan tu progreso</li>
+        </ul>
       </div>
     </div>
   </div>
