@@ -72,18 +72,6 @@
 .for-who-card.yes .for-who-list li::before{content:"✓";color:#7A9E7E;}
 .for-who-card.no .for-who-list li::before{content:"✗";color:#C9958E;}
 
-/* ===== Tabla de contenidos ===== */
-.runners-content{padding:6rem 2rem;background:linear-gradient(135deg,#FAF8F4 0%,#F5F0E8 100%);}
-.toc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4rem;margin-top:1rem;}
-.toc-grid-3{grid-template-columns:repeat(3,1fr);max-width:1000px;margin:0 auto;}
-.toc-card{background:white;border-radius:16px;padding:2.4rem 2rem;border:1px solid rgba(168,112,106,.08);transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;}
-.toc-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(42,33,24,.08);}
-.toc-number{font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:300;color:var(--rose-dark);line-height:1;margin-bottom:.6rem;}
-.toc-card h4{font-family:'Cormorant Garamond',serif;font-size:1.45rem;font-weight:400;color:var(--text);margin-bottom:1.4rem;line-height:1.2;padding-bottom:1.2rem;border-bottom:1px solid rgba(168,112,106,.15);}
-.toc-card ul{list-style:none;padding:0;margin:0;}
-.toc-card ul li{font-size:.9rem;color:var(--text);padding:.45rem 0 .45rem 1.4rem;position:relative;line-height:1.5;}
-.toc-card ul li::before{content:"→";position:absolute;left:0;color:var(--rose-dark);font-weight:500;font-size:1rem;}
-
 /* ===== Autora ===== */
 .runners-author{padding:6rem 2rem;background:white;}
 .author-card{max-width:780px;margin:0 auto;display:grid;grid-template-columns:auto 1fr;gap:2.4rem;align-items:center;background:linear-gradient(135deg,#FAF8F4,#F5F0E8);border-radius:24px;padding:3rem 3rem;}
@@ -127,7 +115,6 @@
   .runners-hero-visual{order:-1;}
   .runners-mockup{width:280px;}
   .for-who-grid{grid-template-columns:1fr;}
-  .toc-grid,.toc-grid-3{grid-template-columns:1fr;}
   .author-card{grid-template-columns:1fr;text-align:center;padding:2.5rem 1.8rem;}
   .author-avatar-big{margin:0 auto;}
   .runners-price-box{flex-direction:column;align-items:flex-start;gap:.8rem;}
@@ -163,7 +150,6 @@
         <button class="runners-cta-primary" onclick="openPurchaseModal()">
           Quiero el plan →
         </button>
-        <button class="runners-cta-secondary" onclick="document.getElementById('contenido').scrollIntoView({behavior:'smooth'})">Ver contenido</button>
       </div>
 
       <div class="runners-trust">
@@ -233,47 +219,6 @@
   </div>
 </section>
 
-<!-- ===== TABLA DE CONTENIDOS ===== -->
-<section class="runners-content" id="contenido">
-  <div class="section-inner">
-    <span class="section-eyebrow">Contenido práctico</span>
-    <h2 class="section-title">Qué te vas a llevar</h2>
-    <p class="section-subtitle">3 ejes prácticos. Sin teoría innecesaria, solo lo que vas a usar en tus entrenamientos.</p>
-
-    <div class="toc-grid toc-grid-3">
-      <div class="toc-card">
-        <div class="toc-number">01</div>
-        <h4>Alimentación según el momento</h4>
-        <ul>
-          <li>Qué comer antes, durante y después</li>
-          <li>Carbohidratos complejos vs simples</li>
-          <li>Anticipación según intensidad</li>
-          <li>Tabla intra-entreno (cuántos gramos)</li>
-        </ul>
-      </div>
-      <div class="toc-card">
-        <div class="toc-number">02</div>
-        <h4>El día de carrera</h4>
-        <ul>
-          <li>Cena previa: qué sí, qué no</li>
-          <li>Pautas para 5K y 10K</li>
-          <li>Alimentos a evitar</li>
-          <li>Cómo organizar tu desayuno</li>
-        </ul>
-      </div>
-      <div class="toc-card">
-        <div class="toc-number">03</div>
-        <h4>Hidratación y hábitos</h4>
-        <ul>
-          <li>¿El mate hidrata o deshidrata?</li>
-          <li>Suplementación: cuándo sí</li>
-          <li>Descanso y recuperación</li>
-          <li>Entrada en calor adecuada</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
 
 <!-- ===== AUTORA ===== -->
 <section class="runners-author">
