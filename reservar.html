@@ -494,60 +494,44 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // ── Retorno desde MercadoPago ──
   if (payment) {
+    const paymentId = params.get('payment_id') || params.get('collection_id');
+    const bookingId = params.get('bid');
     history.replaceState({}, '', '/reservar'); // limpiar URL
-    const raw = sessionStorage.getItem('pending_booking');
-    const bookingData = raw ? JSON.parse(raw) : null;
-    sessionStorage.removeItem('pending_booking');
+    sessionStorage.removeItem('pending_booking'); // legacy cleanup
 
-    if (payment === 'success' && bookingData) {
-      // Guardar reserva confirmada
-      const bookings = await getBookings();
-      if (!bookings[bookingData.dateKey]) bookings[bookingData.dateKey] = {};
-      const modLabel = bookingData.type === 'masaje' ? 'Presencial' : (bookingData.modality === 'online' ? 'Online (videollamada)' : 'Presencial');
-      bookings[bookingData.dateKey][bookingData.time] = {
-        dur: bookingData.dur, svc: bookingData.svc,
-        name: bookingData.name, email: bookingData.email,
-        phone: bookingData.phone, notes: bookingData.notes,
-        modality: modLabel, paid: true
-      };
-      await saveBookings(bookings);
-      // Email al paciente (template_4pmzmjm tiene BCC a Agustina configurado en EmailJS,
-      // así que con un solo send se notifica a ambos)
+    if (payment === 'success' && paymentId) {
+      // Confirmar contra el server (idempotente, server-side maneja todo)
       try {
-        await emailjs.send('service_nnsgrl9','template_4pmzmjm',{
-          patient_name: bookingData.name, patient_email: bookingData.email,
-          patient_phone: bookingData.phone || 'No proporcionado',
-          service: bookingData.svc, date: bookingData.dateStr,
-          time: bookingData.time, modality: modLabel,
-          payment_type: 'Pago vía MercadoPago',
-          notes: bookingData.notes || 'Sin notas adicionales'
-        });
-      } catch(e){ console.warn('[email send]', e); }
-      // Mostrar éxito
-      document.getElementById('s4-icon').textContent = '✅';
-      document.getElementById('s4-title').innerHTML = '¡Pago <em>confirmado!</em>';
-      document.getElementById('s4-msg').textContent = 'Tu turno quedó reservado y el pago fue procesado. Te enviamos un email de confirmación.';
-      document.getElementById('success-detail').innerHTML =
-        `<p><strong>Servicio:</strong> ${bookingData.svc}</p>
-         <p><strong>Fecha:</strong> ${bookingData.dateStr}</p>
-         <p><strong>Horario:</strong> ${bookingData.time}</p>
-         <p><strong>Paciente:</strong> ${bookingData.name}</p>`;
-      goStep(4);
+        const r = await fetch('/api/bookings/confirm?payment_id=' + encodeURIComponent(paymentId) + (bookingId ? '&bid=' + encodeURIComponent(bookingId) : ''), { cache: 'no-store' });
+        const data = await r.json();
+        if (r.ok && (data.status === 'confirmed' || data.status === 'already_processed')) {
+          const b = data.booking || {};
+          document.getElementById('s4-icon').textContent = '✅';
+          document.getElementById('s4-title').innerHTML = '¡Pago <em>confirmado!</em>';
+          document.getElementById('s4-msg').textContent = 'Tu turno quedó reservado y el pago fue procesado. Te enviamos un email de confirmación.';
+          document.getElementById('success-detail').innerHTML =
+            `<p><strong>Servicio:</strong> ${b.svc || ''}</p>
+             <p><strong>Fecha:</strong> ${b.dateStr || ''}</p>
+             <p><strong>Horario:</strong> ${b.time || ''}</p>
+             <p><strong>Paciente:</strong> ${b.name || ''}</p>`;
+          goStep(4);
+        } else {
+          document.getElementById('s4-icon').textContent = '⏳';
+          document.getElementById('s4-title').innerHTML = 'Pago en <em>proceso</em>';
+          document.getElementById('s4-msg').textContent = `Estado: ${data.status || 'desconocido'}. Si el pago ya salió de tu cuenta, no te preocupes — Agustina recibirá la notificación y confirmará tu turno.`;
+          goStep(4);
+        }
+      } catch (err) {
+        document.getElementById('s4-icon').textContent = '⏳';
+        document.getElementById('s4-title').innerHTML = 'Verificando <em>pago</em>';
+        document.getElementById('s4-msg').textContent = 'Estamos verificando tu pago. En unos minutos vas a recibir un email de confirmación. Si tenés dudas escribinos por WhatsApp.';
+        goStep(4);
+      }
 
-    } else if (payment === 'pending' && bookingData) {
-      // Pago pendiente — guardar con estado pendiente
-      const bookings = await getBookings();
-      if (!bookings[bookingData.dateKey]) bookings[bookingData.dateKey] = {};
-      bookings[bookingData.dateKey][bookingData.time] = {
-        dur: bookingData.dur, svc: bookingData.svc, name: bookingData.name,
-        email: bookingData.email, phone: bookingData.phone, paid: false, status: 'pending'
-      };
-      await saveBookings(bookings);
+    } else if (payment === 'pending') {
       document.getElementById('s4-icon').textContent = '⏳';
       document.getElementById('s4-title').innerHTML = 'Pago <em>pendiente</em>';
-      document.getElementById('s4-msg').textContent = 'Tu pago está siendo procesado. Una vez confirmado, tu turno quedará registrado. Te avisaremos por email.';
-      document.getElementById('success-detail').innerHTML =
-        `<p><strong>Servicio:</strong> ${bookingData.svc}</p><p><strong>Fecha:</strong> ${bookingData.dateStr} ${bookingData.time}</p>`;
+      document.getElementById('s4-msg').textContent = 'Tu pago está siendo procesado por MercadoPago. Una vez aprobado, tu turno quedará confirmado automáticamente y te avisaremos por email.';
       goStep(4);
 
     } else if (payment === 'failure') {
@@ -844,39 +828,31 @@ async function confirmBooking(){
     }
   }
 
-  // ── Flujo de pago (cliente sin sesión o sin créditos) ──
-  const bookingData = {
-    dateKey, time: sel.time, dateStr: sel.dateStr,
-    svc: sel.svc, dur: sel.dur, price: sel.price,
-    type: sel.type, modality: sel.modality,
-    name: name+' '+last, email, phone, notes
-  };
-  sessionStorage.setItem('pending_booking', JSON.stringify(bookingData));
-
+  // ── Flujo de pago server-side (cliente sin sesión o sin créditos) ──
   const priceNum = (appliedCoupon && appliedCoupon._finalPrice !== undefined)
     ? appliedCoupon._finalPrice
     : (parseInt((sel.price||'0').replace(/[^0-9]/g,''), 10) || 1);
 
   try {
-    const r = await fetch('/api/create-preference', {
+    // El server APARTA el slot, crea preferencia MP, y devuelve init_point.
+    // Si el redirect post-pago falla, el webhook de MP igualmente completa la reserva.
+    const r = await fetch('/api/bookings/checkout', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        title: `${sel.svc} — ${modLabel} · ${sel.dateStr} ${sel.time}`,
-        amount: priceNum,
-        name: name+' '+last,
-        email,
-        bookingRef: `${dateKey}_${sel.time}_${email}`
+        dateKey, time: sel.time, dateStr: sel.dateStr,
+        svc: sel.svc, dur: sel.dur, type: sel.type, modality: sel.modality,
+        name: name+' '+last, email, phone, notes,
+        amount: priceNum
       })
     });
     const data = await r.json();
-    if(data.init_point){
+    if (r.ok && data.init_point) {
       window.location.href = data.init_point;
     } else {
       throw new Error(data.error || 'No se pudo iniciar el pago');
     }
   } catch(err){
-    sessionStorage.removeItem('pending_booking');
     btn.disabled=false; btn.textContent='Ir a pagar →';
     alert('Error al conectar con el sistema de pago:\n'+err.message+'\n\nPor favor contactá a Agustina directamente.');
   }
