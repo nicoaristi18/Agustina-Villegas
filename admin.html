@@ -397,6 +397,12 @@ tbody tr:hover td{background:var(--cream);}
     <div id="p-reservas" class="panel">
       <div class="ph"><h1>Reservas</h1><p>Historial completo de turnos</p></div>
       <div class="pb">
+        <div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap">
+          <button class="cl-gen-btn" onclick="openManualBookingModal()" style="background:var(--rose-dark);color:white">+ Agregar reserva manual</button>
+          <button class="cl-gen-btn" onclick="loadPendingBookings()">🔍 Ver pendientes de pago</button>
+          <button class="cl-gen-btn" onclick="loadReservas()">↻ Refrescar</button>
+        </div>
+        <div id="pending-list" style="display:none;background:#FFF8E1;border:1px solid #F0D78A;border-radius:10px;padding:1rem 1.2rem;margin-bottom:1rem"></div>
         <div class="tcard">
           <div class="tcard-hd">
             <span class="tcard-title">Todas las reservas</span>
@@ -406,12 +412,63 @@ tbody tr:hover td{background:var(--cream);}
             </div>
           </div>
           <div class="tw"><table>
-            <thead><tr><th>Nombre</th><th>Apellido</th><th>Servicio</th><th>Fecha</th><th>Hora</th><th>Modalidad</th><th>Comentario</th><th>Email</th><th>WhatsApp</th><th>Acción</th></tr></thead>
+            <thead><tr><th>Nombre</th><th>Apellido</th><th>Servicio</th><th>Fecha</th><th>Hora</th><th>Modalidad</th><th>Estado</th><th>Email</th><th>Acción</th></tr></thead>
             <tbody id="res-rows"></tbody>
           </table></div>
         </div>
       </div>
     </div>
+
+<!-- MODAL: Agregar reserva manual -->
+<div id="manual-booking-modal" style="display:none;position:fixed;inset:0;background:rgba(43,33,24,.72);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:white;border-radius:14px;padding:1.5rem;max-width:560px;width:100%;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;margin:0">Agregar reserva manual</h3>
+      <button onclick="closeManualBookingModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted)">×</button>
+    </div>
+    <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:1.2rem">Para cargar una reserva que no se registró automáticamente (ej: pago confirmado en MercadoPago pero el sistema no la capturó).</p>
+    <div class="fg-row">
+      <div class="fg"><label>Nombre completo</label><input id="mb-name" type="text" placeholder="Natalia Peña"></div>
+      <div class="fg"><label>Email</label><input id="mb-email" type="email" placeholder="email@ejemplo.com"></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Teléfono (opcional)</label><input id="mb-phone" type="text" placeholder="099 712 691"></div>
+      <div class="fg"><label>Servicio</label><input id="mb-svc" type="text" placeholder="Consulta de nutrición" value="Consulta de nutrición"></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Fecha</label><input id="mb-date" type="date"></div>
+      <div class="fg"><label>Hora</label><input id="mb-time" type="time" value="10:00"></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Modalidad</label>
+        <select id="mb-modality">
+          <option value="Online (videollamada)">Online (videollamada)</option>
+          <option value="Presencial">Presencial</option>
+        </select>
+      </div>
+      <div class="fg"><label>Duración (min)</label><input id="mb-dur" type="number" value="60"></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Estado del pago</label>
+        <select id="mb-paid">
+          <option value="true">✓ Pago confirmado</option>
+          <option value="false">⏳ Sin pago / pendiente</option>
+        </select>
+      </div>
+      <div class="fg"><label>Monto pagado (opcional)</label><input id="mb-amount" type="number" placeholder="1500"></div>
+    </div>
+    <div class="fg"><label>Notas (visible solo en admin)</label><textarea id="mb-notes" rows="2" placeholder="Reserva recuperada — pago confirmado en MP el..."></textarea></div>
+    <div class="fg"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+      <input id="mb-send-email" type="checkbox" checked>
+      Enviar email de confirmación al paciente
+    </label></div>
+    <div id="mb-status" style="display:none;padding:.55rem .8rem;border-radius:8px;margin-top:.6rem;font-size:.8rem"></div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:1.2rem">
+      <button class="btn-xs btn-cancel" onclick="closeManualBookingModal()" style="background:transparent;border:1px solid var(--border);padding:.6rem 1.2rem;border-radius:30px;cursor:pointer">Cancelar</button>
+      <button onclick="submitManualBooking()" style="background:var(--rose-dark);color:white;border:none;padding:.6rem 1.4rem;border-radius:30px;cursor:pointer;font-weight:500">Guardar reserva</button>
+    </div>
+  </div>
+</div>
 
     <!-- CRÉDITOS -->
     <div id="p-creditos" class="panel">
@@ -1013,18 +1070,189 @@ function renderRes(data){
   document.getElementById('res-rows').innerHTML=data.map(b=>{
     const np=(b.name||'').trim().split(' ');
     const first=np[0]||'—', last=np.slice(1).join(' ')||'—';
-    const phone=(b.phone||'').replace(/\D/g,'');
-    return `<tr>
+    // Badge de estado del pago
+    let statusBadge;
+    if (b.status === 'pending_payment' || (b.paid === false && b.status !== 'confirmed')) {
+      statusBadge = '<span class="badge b-amber" title="Esperando confirmación del pago">⏳ Pendiente</span>';
+    } else if (b.paid === true || b.status === 'confirmed') {
+      const isCredit = b.paidWithCredit;
+      statusBadge = `<span class="badge b-green" title="${isCredit?'Pagado con crédito de plan':'Pago confirmado'}">${isCredit?'✓ Crédito':'✓ Pagado'}</span>`;
+    } else {
+      statusBadge = '<span class="badge b-gray">—</span>';
+    }
+    const isOnline = b.modality && b.modality.toLowerCase().includes('online');
+    const isPending = b.status === 'pending_payment';
+    const actionBtns = isPending
+      ? `<button class="btn-xs" onclick="confirmManualPayment('${b.date}','${b.time}')" style="background:#7A9E7E;color:white;border:none;padding:.3rem .6rem;border-radius:6px;font-size:.7rem;cursor:pointer;margin-right:.2rem">✓ Confirmar</button><button class="btn-xs btn-del" onclick="delRes('${b.date}','${b.time}')">Cancelar</button>`
+      : `<button class="btn-xs" onclick="resendBookingEmail('${b.date}','${b.time}')" style="background:transparent;border:1px solid var(--border);padding:.3rem .55rem;border-radius:6px;font-size:.7rem;cursor:pointer;margin-right:.2rem" title="Reenviar email">✉</button><button class="btn-xs btn-del" onclick="delRes('${b.date}','${b.time}')">Cancelar</button>`;
+    return `<tr ${isPending?'style="background:rgba(255,193,7,.06)"':''}>
       <td class="td-bold">${first}</td><td>${last}</td>
-      <td>${b.svc||'Consulta'}</td>
+      <td>${b.svc||'Consulta'} <span style="display:block;font-size:.65rem;color:var(--text-muted)">${isOnline?'Online':'Presencial'}</span></td>
       <td>${fmtD(b.date)}</td><td><strong>${b.time||'—'}</strong></td>
-      <td><span class="badge ${b.modality&&b.modality.toLowerCase().includes('online')?'b-green':'b-gray'}">${b.modality||'Presencial'}</span></td>
-      <td class="td-sm">${b.notes||'—'}</td>
-      <td class="td-sm">${b.email||'—'}</td>
-      <td class="td-sm">${b.phone||'—'}</td>
-      <td><button class="btn-xs btn-del" onclick="delRes('${b.date}','${b.time}')">Cancelar</button></td>
+      <td><span class="badge ${isOnline?'b-green':'b-gray'}">${b.modality||'Presencial'}</span></td>
+      <td>${statusBadge}</td>
+      <td class="td-sm">${b.email||'—'}<br><span style="font-size:.65rem;color:var(--text-muted)">${b.phone||''}</span></td>
+      <td>${actionBtns}</td>
     </tr>`;
-  }).join('')||`<tr class="empty"><td colspan="10">No hay reservas</td></tr>`;
+  }).join('')||`<tr class="empty"><td colspan="9">No hay reservas</td></tr>`;
+}
+
+// ── PENDIENTES DE PAGO ──
+async function loadPendingBookings(){
+  const box = document.getElementById('pending-list');
+  box.style.display = 'block';
+  box.innerHTML = '<div style="font-size:.85rem">Cargando…</div>';
+  try {
+    const r = await fetch('/api/bookings/admin/pending', {credentials:'same-origin', cache:'no-store'});
+    const d = await r.json();
+    const pending = d.pending || [];
+    if (pending.length === 0) {
+      box.innerHTML = '<div style="font-size:.85rem;font-weight:500;color:#7A9E7E">✓ No hay reservas pendientes de pago en este momento.</div>';
+      return;
+    }
+    box.innerHTML = `
+      <div style="font-size:.85rem;font-weight:600;margin-bottom:.6rem;color:#7B5E10">⏳ ${pending.length} reserva${pending.length>1?'s':''} pendiente${pending.length>1?'s':''} de pago</div>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:.8rem">Reservas que el paciente inició pero MercadoPago no terminó de confirmar. Verificá el pago en tu panel de MP y confirmalo manualmente si llegó OK.</div>
+      ${pending.map(b => `
+        <div style="background:white;border-radius:8px;padding:.7rem 1rem;margin-bottom:.45rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <strong>${b.name||'Sin nombre'}</strong>
+            <div style="font-size:.75rem;color:var(--text-muted)">${b.email||'—'} · ${b.phone||'sin teléfono'}</div>
+            <div style="font-size:.75rem">${b.svc||'Consulta'} · ${fmtD(b.dateKey)} ${b.time} · ${b.modality||''}</div>
+          </div>
+          <div style="font-size:.72rem;color:var(--text-muted);min-width:120px">
+            $${(b.paymentAmount||0).toLocaleString('es')}<br>
+            <span style="font-size:.68rem">Iniciado ${b.createdAt?new Date(b.createdAt).toLocaleString('es-UY',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—'}</span>
+          </div>
+          <div style="display:flex;gap:.3rem">
+            <button onclick="confirmManualPayment('${b.dateKey}','${b.time}')" style="background:#7A9E7E;color:white;border:none;padding:.4rem .8rem;border-radius:6px;font-size:.72rem;cursor:pointer">✓ Confirmar pago</button>
+            <button onclick="delRes('${b.dateKey}','${b.time}')" style="background:transparent;border:1px solid #d44;color:#d44;padding:.4rem .8rem;border-radius:6px;font-size:.72rem;cursor:pointer">Cancelar</button>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  } catch (e) {
+    box.innerHTML = '<div style="color:#a32d2d">Error al cargar pendientes: ' + e.message + '</div>';
+  }
+}
+
+async function confirmManualPayment(dateKey, time){
+  if (!confirm('¿Confirmar el pago de esta reserva? Esto la marca como pagada y le envía el email de confirmación al paciente.')) return;
+  try {
+    const r = await fetch('/api/bookings/admin/confirm', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({dateKey, time})
+    });
+    if (!r.ok) throw new Error('No se pudo confirmar');
+    // Reenviar email
+    await fetch('/api/bookings/admin/resend', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({dateKey, time})
+    });
+    toast('Reserva confirmada y email enviado');
+    loadReservas();
+    loadPendingBookings();
+    loadDashboard();
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function resendBookingEmail(dateKey, time){
+  if (!confirm('¿Reenviar el email de confirmación a esta reserva?')) return;
+  try {
+    const r = await fetch('/api/bookings/admin/resend', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({dateKey, time})
+    });
+    const d = await r.json();
+    if (r.ok) toast('✉ Email reenviado');
+    else toast('Error: ' + (d.error || 'falló el envío'));
+  } catch (e) { toast('Error: ' + e.message); }
+}
+
+// ── MODAL: Agregar reserva manual ──
+function openManualBookingModal(){
+  document.getElementById('manual-booking-modal').style.display = 'flex';
+  // Pre-rellenar fecha de mañana por default
+  const t = new Date();
+  t.setDate(t.getDate() + 1);
+  const dateInput = document.getElementById('mb-date');
+  if (dateInput && !dateInput.value) dateInput.value = t.toISOString().slice(0,10);
+}
+
+function closeManualBookingModal(){
+  document.getElementById('manual-booking-modal').style.display = 'none';
+  document.getElementById('mb-status').style.display = 'none';
+  ['mb-name','mb-email','mb-phone','mb-amount','mb-notes'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+}
+
+function mbShowStatus(msg, isErr){
+  const el = document.getElementById('mb-status');
+  el.textContent = msg;
+  el.style.background = isErr ? 'rgba(163,45,45,.1)' : 'rgba(122,158,126,.15)';
+  el.style.color = isErr ? '#a32d2d' : '#3F6443';
+  el.style.display = 'block';
+}
+
+async function submitManualBooking(){
+  const name = document.getElementById('mb-name').value.trim();
+  const email = document.getElementById('mb-email').value.trim();
+  const phone = document.getElementById('mb-phone').value.trim();
+  const svc = document.getElementById('mb-svc').value.trim() || 'Consulta de nutrición';
+  const dateKey = document.getElementById('mb-date').value;
+  const time = document.getElementById('mb-time').value;
+  const modality = document.getElementById('mb-modality').value;
+  const dur = parseInt(document.getElementById('mb-dur').value) || 60;
+  const paid = document.getElementById('mb-paid').value === 'true';
+  const amount = parseFloat(document.getElementById('mb-amount').value) || 0;
+  const notes = document.getElementById('mb-notes').value.trim();
+  const sendEmails = document.getElementById('mb-send-email').checked;
+
+  if (!name || !email || !dateKey || !time) {
+    mbShowStatus('Faltan datos obligatorios (nombre, email, fecha, hora)', true);
+    return;
+  }
+  // Formato dateStr en español
+  const d = new Date(dateKey + 'T12:00:00');
+  const days = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const months = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const dateStr = `${days[d.getDay()]} ${d.getDate()} de ${months[d.getMonth()]}`;
+
+  mbShowStatus('Guardando…');
+  try {
+    const r = await fetch('/api/bookings/admin/create', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        dateKey, time,
+        booking: {
+          svc, dur, name, email, phone, notes, modality,
+          paid, paymentAmount: amount,
+          dateStr,
+          source: 'admin',
+          paidAt: paid ? new Date().toISOString() : null
+        },
+        sendEmails
+      })
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      mbShowStatus(data.error || 'Error al guardar', true);
+      return;
+    }
+    mbShowStatus('✓ Reserva guardada' + (sendEmails ? (data.emailResult?.ok ? ' y email enviado' : ' (email falló — reenviá manual)') : ''));
+    setTimeout(() => {
+      closeManualBookingModal();
+      loadReservas();
+      loadDashboard();
+    }, 1500);
+  } catch (e) {
+    mbShowStatus('Error de red: ' + e.message, true);
+  }
 }
 function filtRes(q){renderRes(q?_resAll.filter(b=>(b.name||'').toLowerCase().includes(q.toLowerCase())):_resAll);}
 async function delRes(d,t){
