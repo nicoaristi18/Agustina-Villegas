@@ -7,12 +7,13 @@
 // WEBHOOK (MercadoPago):
 //   POST /api/bookings/webhook             → MP notifica cambios de estado del pago
 //
-// ADMIN (cookie ag_admin):
-//   POST   /api/bookings/admin/create      → crear booking manual (recovery, agendado por teléfono, etc.)
-//   POST   /api/bookings/admin/confirm     → marcar booking como confirmed manualmente
-//   POST   /api/bookings/admin/resend      → reenviar emails de una reserva
-//   DELETE /api/bookings/admin?date=X&time=Y → cancelar booking
-//   GET    /api/bookings/admin/pending     → listar pendientes de pago
+// ADMIN (cookie ag_admin) — paths de un solo nivel porque Vercel no
+// rutea sub-paths anidados al catch-all [...slug]:
+//   POST   /api/bookings/admin-create     → crear booking manual (recovery, agendado por teléfono, etc.)
+//   POST   /api/bookings/admin-confirm    → marcar booking como confirmed manualmente
+//   POST   /api/bookings/admin-resend     → reenviar emails de una reserva
+//   DELETE /api/bookings/admin-delete?date=X&time=Y → cancelar booking
+//   GET    /api/bookings/admin-pending    → listar pendientes de pago
 
 import {
   getBookings, saveBookings, generateBookingId, sendBookingEmail,
@@ -41,16 +42,16 @@ export default async function handler(req, res) {
     // === WEBHOOK MP ===
     if (path === 'webhook' && (method === 'POST' || method === 'GET')) return await handleWebhook(req, res);
 
-    // === ADMIN ===
-    if (path.startsWith('admin')) {
+    // === ADMIN (paths planos porque Vercel no rutea sub-paths anidados al catch-all) ===
+    if (path.startsWith('admin-')) {
       const session = getAdminFromRequest(req);
       if (!session?.admin) return res.status(401).json({ error: 'No autenticado' });
 
-      if (path === 'admin/create'  && method === 'POST')   return await handleAdminCreate(req, res);
-      if (path === 'admin/confirm' && method === 'POST')   return await handleAdminConfirm(req, res);
-      if (path === 'admin/resend'  && method === 'POST')   return await handleAdminResend(req, res);
-      if (path === 'admin/pending' && method === 'GET')    return await handleAdminPending(req, res);
-      if (path === 'admin'         && method === 'DELETE') return await handleAdminDelete(req, res);
+      if (path === 'admin-create'  && method === 'POST')   return await handleAdminCreate(req, res);
+      if (path === 'admin-confirm' && method === 'POST')   return await handleAdminConfirm(req, res);
+      if (path === 'admin-resend'  && method === 'POST')   return await handleAdminResend(req, res);
+      if (path === 'admin-pending' && method === 'GET')    return await handleAdminPending(req, res);
+      if (path === 'admin-delete'  && method === 'DELETE') return await handleAdminDelete(req, res);
     }
 
     return res.status(404).json({ error: 'Endpoint no encontrado', path, method });

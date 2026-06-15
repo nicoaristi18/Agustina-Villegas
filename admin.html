@@ -1103,7 +1103,7 @@ async function loadPendingBookings(){
   box.style.display = 'block';
   box.innerHTML = '<div style="font-size:.85rem">Cargando…</div>';
   try {
-    const r = await fetch('/api/bookings/admin/pending', {credentials:'same-origin', cache:'no-store'});
+    const r = await fetch('/api/bookings/admin-pending', {credentials:'same-origin', cache:'no-store'});
     const d = await r.json();
     const pending = d.pending || [];
     if (pending.length === 0) {
@@ -1139,14 +1139,14 @@ async function loadPendingBookings(){
 async function confirmManualPayment(dateKey, time){
   if (!confirm('¿Confirmar el pago de esta reserva? Esto la marca como pagada y le envía el email de confirmación al paciente.')) return;
   try {
-    const r = await fetch('/api/bookings/admin/confirm', {
+    const r = await fetch('/api/bookings/admin-confirm', {
       method: 'POST', credentials: 'same-origin',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({dateKey, time})
     });
     if (!r.ok) throw new Error('No se pudo confirmar');
     // Reenviar email
-    await fetch('/api/bookings/admin/resend', {
+    await fetch('/api/bookings/admin-resend', {
       method: 'POST', credentials: 'same-origin',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({dateKey, time})
@@ -1161,7 +1161,7 @@ async function confirmManualPayment(dateKey, time){
 async function resendBookingEmail(dateKey, time){
   if (!confirm('¿Reenviar el email de confirmación a esta reserva?')) return;
   try {
-    const r = await fetch('/api/bookings/admin/resend', {
+    const r = await fetch('/api/bookings/admin-resend', {
       method: 'POST', credentials: 'same-origin',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({dateKey, time})
@@ -1224,7 +1224,7 @@ async function submitManualBooking(){
 
   mbShowStatus('Guardando…');
   try {
-    const r = await fetch('/api/bookings/admin/create', {
+    const r = await fetch('/api/bookings/admin-create', {
       method: 'POST', credentials: 'same-origin',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
