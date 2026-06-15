@@ -459,6 +459,10 @@ tbody tr:hover td{background:var(--cream);}
     </div>
     <div class="fg"><label>Notas (visible solo en admin)</label><textarea id="mb-notes" rows="2" placeholder="Reserva recuperada — pago confirmado en MP el..."></textarea></div>
     <div class="fg"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+      <input id="mb-use-credit" type="checkbox">
+      <span><strong>Descontar 1 crédito del paciente</strong> <span style="font-size:.7rem;color:var(--text-muted);display:block">Usá esto si la paciente tiene plan vigente y agendaste por WhatsApp. Si no tiene cuenta o créditos, te avisa.</span></span>
+    </label></div>
+    <div class="fg"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
       <input id="mb-send-email" type="checkbox" checked>
       Enviar email de confirmación al paciente
     </label></div>
@@ -1188,6 +1192,7 @@ function closeManualBookingModal(){
   ['mb-name','mb-email','mb-phone','mb-amount','mb-notes'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
+  const cb = document.getElementById('mb-use-credit'); if (cb) cb.checked = false;
 }
 
 function mbShowStatus(msg, isErr){
@@ -1211,6 +1216,7 @@ async function submitManualBooking(){
   const amount = parseFloat(document.getElementById('mb-amount').value) || 0;
   const notes = document.getElementById('mb-notes').value.trim();
   const sendEmails = document.getElementById('mb-send-email').checked;
+  const useCredit = document.getElementById('mb-use-credit')?.checked || false;
 
   if (!name || !email || !dateKey || !time) {
     mbShowStatus('Faltan datos obligatorios (nombre, email, fecha, hora)', true);
@@ -1236,7 +1242,8 @@ async function submitManualBooking(){
           source: 'admin',
           paidAt: paid ? new Date().toISOString() : null
         },
-        sendEmails
+        sendEmails,
+        useCredit
       })
     });
     const data = await r.json();
@@ -1244,12 +1251,19 @@ async function submitManualBooking(){
       mbShowStatus(data.error || 'Error al guardar', true);
       return;
     }
-    mbShowStatus('✓ Reserva guardada' + (sendEmails ? (data.emailResult?.ok ? ' y email enviado' : ' (email falló — reenviá manual)') : ''));
+    let msg = '✓ Reserva guardada';
+    if (data.creditConsumed) {
+      msg += ` (1 crédito descontado · le quedan ${data.remainingCredits})`;
+    }
+    if (sendEmails) {
+      msg += data.emailResult?.ok ? ' · email enviado' : ' · email falló (reenviá manual)';
+    }
+    mbShowStatus(msg);
     setTimeout(() => {
       closeManualBookingModal();
       loadReservas();
       loadDashboard();
-    }, 1500);
+    }, 2000);
   } catch (e) {
     mbShowStatus('Error de red: ' + e.message, true);
   }

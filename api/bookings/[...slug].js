@@ -17,7 +17,7 @@
 
 import {
   getBookings, saveBookings, generateBookingId, sendBookingEmail,
-  getAdminFromRequest, readJsonBody
+  getAdminFromRequest, readJsonBody, getUsers, saveUsers
 } from '../../lib/auth.js';
 
 export default async function handler(req, res) {
@@ -324,12 +324,46 @@ async function handleAdminCreate(req, res) {
   if (!body?.dateKey || !body?.time || !body?.booking) {
     return res.status(400).json({ error: 'Faltan dateKey, time o booking' });
   }
-  const { dateKey, time, booking, sendEmails } = body;
+  const { dateKey, time, booking, sendEmails, useCredit } = body;
   const bookings = await getBookings();
   if (!bookings[dateKey]) bookings[dateKey] = {};
   if (bookings[dateKey][time]) {
     return res.status(409).json({ error: 'Ese slot ya tiene reserva. Borrá la existente primero.' });
   }
+
+  // === CONSUMIR CREDITO si admin lo pidio ===
+  let creditConsumed = false;
+  let remainingCredits = null;
+  if (useCredit) {
+    const emailLower = String(booking.email || '').trim().toLowerCase();
+    if (!emailLower) {
+      return res.status(400).json({ error: 'Para descontar crédito hace falta el email del paciente.' });
+    }
+    const users = await getUsers();
+    const user = users[emailLower];
+    if (!user) {
+      return res.status(404).json({ error: `No hay un paciente registrado con el email ${emailLower}. La paciente debe crear su cuenta primero, o desmarcá "descontar crédito".` });
+    }
+    if ((user.credits || 0) <= 0) {
+      return res.status(403).json({ error: `${user.name || 'El paciente'} no tiene créditos disponibles. Desmarcá "descontar crédito" o activale créditos primero.` });
+    }
+    // Descontar 1 credito + agregar al historial del paciente
+    user.credits = (user.credits || 0) - 1;
+    user.bookings = user.bookings || [];
+    user.bookings.push({
+      service: booking.svc || 'Consulta',
+      date: booking.dateStr || dateKey,
+      time,
+      status: 'upcoming',
+      modality: booking.modality || 'Presencial',
+      createdAt: new Date().toISOString()
+    });
+    users[emailLower] = user;
+    await saveUsers(users);
+    creditConsumed = true;
+    remainingCredits = user.credits;
+  }
+
   const bookingId = booking.bookingId || generateBookingId();
   const fullBooking = {
     bookingId,
@@ -340,13 +374,14 @@ async function handleAdminCreate(req, res) {
     phone: booking.phone || '',
     notes: booking.notes || '',
     modality: booking.modality || 'Presencial',
-    paid: booking.paid === true,
-    status: booking.paid ? 'confirmed' : 'pending_payment',
+    paid: creditConsumed ? true : (booking.paid === true),
+    status: (creditConsumed || booking.paid) ? 'confirmed' : 'pending_payment',
     paymentAmount: Number(booking.paymentAmount) || 0,
     paymentId: booking.paymentId || null,
+    paidWithCredit: creditConsumed,
     emailsSent: false,
     createdAt: booking.createdAt || new Date().toISOString(),
-    paidAt: booking.paid ? (booking.paidAt || new Date().toISOString()) : null,
+    paidAt: (creditConsumed || booking.paid) ? (booking.paidAt || new Date().toISOString()) : null,
     source: booking.source || 'admin',
     dateStr: booking.dateStr || dateKey
   };
@@ -362,14 +397,22 @@ async function handleAdminCreate(req, res) {
       date: fullBooking.dateStr,
       time: time,
       modality: fullBooking.modality,
-      payment_type: fullBooking.paid ? 'Pago confirmado (registrado manualmente)' : 'Reserva sin pago',
+      payment_type: creditConsumed
+        ? `Crédito de plan (1 consumido, le quedan ${remainingCredits})`
+        : (fullBooking.paid ? 'Pago confirmado (registrado manualmente)' : 'Reserva sin pago'),
       notes: fullBooking.notes || 'Sin notas adicionales'
     });
     if (emailResult.ok) fullBooking.emailsSent = true;
   }
 
   await saveBookings(bookings);
-  return res.status(200).json({ ok: true, booking: fullBooking, emailResult });
+  return res.status(200).json({
+    ok: true,
+    booking: fullBooking,
+    emailResult,
+    creditConsumed,
+    remainingCredits
+  });
 }
 
 async function handleAdminConfirm(req, res) {
