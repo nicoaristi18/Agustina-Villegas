@@ -1086,8 +1086,9 @@ function renderRes(data){
     }
     const isOnline = b.modality && b.modality.toLowerCase().includes('online');
     const isPending = b.status === 'pending_payment';
+    const reminderInfo = b.reminderCount ? ` (enviado ${b.reminderCount}x)` : '';
     const actionBtns = isPending
-      ? `<button class="btn-xs" onclick="confirmManualPayment('${b.date}','${b.time}')" style="background:#7A9E7E;color:white;border:none;padding:.3rem .6rem;border-radius:6px;font-size:.7rem;cursor:pointer;margin-right:.2rem">✓ Confirmar</button><button class="btn-xs btn-del" onclick="delRes('${b.date}','${b.time}')">Cancelar</button>`
+      ? `<button class="btn-xs" onclick="sendPaymentReminder('${b.date}','${b.time}')" style="background:#BA7517;color:white;border:none;padding:.3rem .55rem;border-radius:6px;font-size:.68rem;cursor:pointer;margin-right:.2rem" title="Enviar email con link de pago${reminderInfo}">✉ Recordar</button><button class="btn-xs" onclick="confirmManualPayment('${b.date}','${b.time}')" style="background:#7A9E7E;color:white;border:none;padding:.3rem .55rem;border-radius:6px;font-size:.68rem;cursor:pointer;margin-right:.2rem">✓ Confirmar</button><button class="btn-xs btn-del" onclick="delRes('${b.date}','${b.time}')">Cancelar</button>`
       : `<button class="btn-xs" onclick="resendBookingEmail('${b.date}','${b.time}')" style="background:transparent;border:1px solid var(--border);padding:.3rem .55rem;border-radius:6px;font-size:.7rem;cursor:pointer;margin-right:.2rem" title="Reenviar email">✉</button><button class="btn-xs btn-del" onclick="delRes('${b.date}','${b.time}')">Cancelar</button>`;
     return `<tr ${isPending?'style="background:rgba(255,193,7,.06)"':''}>
       <td class="td-bold">${first}</td><td>${last}</td>
@@ -1160,6 +1161,28 @@ async function confirmManualPayment(dateKey, time){
     loadPendingBookings();
     loadDashboard();
   } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function sendPaymentReminder(dateKey, time){
+  if (!confirm('¿Enviar email recordatorio con link de pago a la paciente?\n\nEl email va a incluir:\n  • Link nuevo de MercadoPago (válido 48hs)\n  • Indicación de WhatsApp para pago por transferencia\n\nTe llega copia BCC.')) return;
+  try {
+    const r = await fetch('/api/bookings/admin-remind', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({dateKey, time})
+    });
+    const d = await r.json();
+    if (r.ok && d.ok) {
+      toast('✉ Recordatorio enviado (link válido 48hs)');
+      loadReservas();
+    } else if (r.ok && !d.ok) {
+      // Link se generó pero el email falló
+      toast('Link generado pero el email falló. Copialo de tu consola.');
+      console.log('PAYMENT LINK:', d.paymentLink);
+    } else {
+      toast('Error: ' + (d.error || 'no se pudo enviar'));
+    }
+  } catch (e) { toast('Error de red: ' + e.message); }
 }
 
 async function resendBookingEmail(dateKey, time){

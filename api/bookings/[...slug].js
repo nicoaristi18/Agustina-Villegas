@@ -50,6 +50,7 @@ export default async function handler(req, res) {
       if (path === 'admin-create'  && method === 'POST')   return await handleAdminCreate(req, res);
       if (path === 'admin-confirm' && method === 'POST')   return await handleAdminConfirm(req, res);
       if (path === 'admin-resend'  && method === 'POST')   return await handleAdminResend(req, res);
+      if (path === 'admin-remind'  && method === 'POST')   return await handleAdminRemind(req, res);
       if (path === 'admin-pending' && method === 'GET')    return await handleAdminPending(req, res);
       if (path === 'admin-delete'  && method === 'DELETE') return await handleAdminDelete(req, res);
     }
@@ -452,6 +453,102 @@ async function handleAdminResend(req, res) {
     await saveBookings(bookings);
   }
   return res.status(emailRes.ok ? 200 : 500).json({ ok: emailRes.ok, error: emailRes.error });
+}
+
+// Genera nueva URL de pago MP + envía recordatorio por email
+async function handleAdminRemind(req, res) {
+  const body = await readJsonBody(req);
+  if (!body?.dateKey || !body?.time) return res.status(400).json({ error: 'Faltan dateKey y time' });
+  const bookings = await getBookings();
+  const b = bookings[body.dateKey]?.[body.time];
+  if (!b) return res.status(404).json({ error: 'Booking no encontrado' });
+  if (b.paid || b.status === 'confirmed') {
+    return res.status(400).json({ error: 'Esta reserva ya está confirmada / pagada.' });
+  }
+
+  const MP_TOKEN = process.env.MP_ACCESS_TOKEN;
+  const IS_TEST  = process.env.MP_TEST === 'true';
+  const SITE_URL = (process.env.SITE_URL || 'https://nutricionistaagustinavillegas.com').replace(/\/$/, '');
+  if (!MP_TOKEN) return res.status(500).json({ error: 'MP no configurado' });
+
+  // 1. Generar NUEVA preferencia MP (la original ya expiró)
+  const amount = Number(b.paymentAmount) || 1500;
+  const preference = {
+    items: [{
+      id: b.bookingId,
+      title: `${b.svc} — ${b.modality} · ${b.dateStr || body.dateKey} ${body.time}`,
+      quantity: 1,
+      unit_price: amount,
+      currency_id: 'UYU'
+    }],
+    payer: { name: b.name, email: b.email },
+    back_urls: {
+      success: `${SITE_URL}/reservar?payment=success&bid=${b.bookingId}`,
+      failure: `${SITE_URL}/reservar?payment=failure&bid=${b.bookingId}`,
+      pending: `${SITE_URL}/reservar?payment=pending&bid=${b.bookingId}`
+    },
+    auto_return: 'approved',
+    external_reference: b.bookingId,
+    notification_url: `${SITE_URL}/api/bookings/webhook`,
+    statement_descriptor: 'Agustina Villegas',
+    expires: true,
+    // 48hs para pagar
+    expiration_date_to: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+    payment_methods: { excluded_payment_types: [{ id: 'ticket' }, { id: 'atm' }] }
+  };
+
+  let paymentLink = '';
+  try {
+    const mpRes = await fetch('https://api.mercadopago.com/checkout/preferences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${MP_TOKEN}` },
+      body: JSON.stringify(preference)
+    });
+    const data = await mpRes.json();
+    if (!mpRes.ok) {
+      console.error('[remind] MP error:', data);
+      return res.status(mpRes.status).json({ error: data.message || 'Error generando link de pago' });
+    }
+    paymentLink = IS_TEST ? data.sandbox_init_point : data.init_point;
+  } catch (err) {
+    return res.status(500).json({ error: 'Error MP: ' + err.message });
+  }
+
+  // 2. Armar mensaje del recordatorio (va en el campo "notes" de la template)
+  const reminderNotes =
+    `Tu turno todavía no fue confirmado porque falta completar el pago.\n\n` +
+    `Tenés 48 horas para terminar el pago, sino el horario va a quedar liberado.\n\n` +
+    `OPCIÓN 1 — Pagar online por MercadoPago:\n${paymentLink}\n\n` +
+    `OPCIÓN 2 — Pagar por transferencia bancaria:\n` +
+    `Escribinos por WhatsApp al +598 99 712 691 y te pasamos los datos.\n\n` +
+    `Una vez completado el pago, tu reserva queda confirmada automáticamente.`;
+
+  // 3. Enviar email (reusa template_4pmzmjm, BCC a Agustina ya configurado)
+  const emailRes = await sendBookingEmail({
+    patient_name: b.name,
+    patient_email: b.email,
+    patient_phone: b.phone || 'No proporcionado',
+    service: b.svc,
+    date: b.dateStr || body.dateKey,
+    time: body.time,
+    modality: b.modality,
+    payment_type: '⏳ RECORDATORIO — Falta completar el pago',
+    notes: reminderNotes
+  });
+
+  // 4. Actualizar booking con info del recordatorio
+  b.lastReminderAt = new Date().toISOString();
+  b.lastPaymentLink = paymentLink;
+  b.reminderCount = (b.reminderCount || 0) + 1;
+  bookings[body.dateKey][body.time] = b;
+  await saveBookings(bookings);
+
+  return res.status(200).json({
+    ok: emailRes.ok,
+    paymentLink,
+    reminderCount: b.reminderCount,
+    error: emailRes.ok ? null : emailRes.error
+  });
 }
 
 async function handleAdminPending(req, res) {
