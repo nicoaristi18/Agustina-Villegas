@@ -213,15 +213,14 @@ async function handleConfirm(req, res) {
   let emailResult = { ok: false };
   if (!foundBooking.emailsSent) {
     emailResult = await sendBookingEmail({
+      kind: 'confirmation',
       patient_name: foundBooking.name,
       patient_email: foundBooking.email,
-      patient_phone: foundBooking.phone || 'No proporcionado',
       service: foundBooking.svc,
       date: foundBooking.dateStr,
       time: foundBooking.time || foundTime,
       modality: foundBooking.modality,
-      payment_type: 'Pago vía MercadoPago',
-      notes: foundBooking.notes || 'Sin notas adicionales'
+      payment_type: 'Pago vía MercadoPago'
     });
     if (emailResult.ok) foundBooking.emailsSent = true;
   }
@@ -296,15 +295,14 @@ async function handleWebhook(req, res) {
 
     if (!found.emailsSent) {
       const emailRes = await sendBookingEmail({
+        kind: 'confirmation',
         patient_name: found.name,
         patient_email: found.email,
-        patient_phone: found.phone || 'No proporcionado',
         service: found.svc,
         date: found.dateStr,
         time: found.time || foundTime,
         modality: found.modality,
-        payment_type: 'Pago vía MercadoPago (webhook)',
-        notes: found.notes || 'Sin notas adicionales'
+        payment_type: 'Pago vía MercadoPago'
       });
       if (emailRes.ok) found.emailsSent = true;
     }
@@ -390,10 +388,11 @@ async function handleAdminCreate(req, res) {
 
   let emailResult = null;
   if (sendEmails) {
+    const manualKind = (creditConsumed || fullBooking.paid) ? 'confirmation' : 'manual';
     emailResult = await sendBookingEmail({
+      kind: manualKind,
       patient_name: fullBooking.name,
       patient_email: fullBooking.email,
-      patient_phone: fullBooking.phone || 'No proporcionado',
       service: fullBooking.svc,
       date: fullBooking.dateStr,
       time: time,
@@ -401,7 +400,7 @@ async function handleAdminCreate(req, res) {
       payment_type: creditConsumed
         ? `Crédito de plan (1 consumido, le quedan ${remainingCredits})`
         : (fullBooking.paid ? 'Pago confirmado (registrado manualmente)' : 'Reserva sin pago'),
-      notes: fullBooking.notes || 'Sin notas adicionales'
+      notes: fullBooking.notes || ''
     });
     if (emailResult.ok) fullBooking.emailsSent = true;
   }
@@ -436,16 +435,17 @@ async function handleAdminResend(req, res) {
   const bookings = await getBookings();
   const b = bookings[body.dateKey]?.[body.time];
   if (!b) return res.status(404).json({ error: 'Booking no encontrado' });
+  // Reenvío solo para reservas confirmadas. Para pendientes, usar admin-remind.
   const emailRes = await sendBookingEmail({
+    kind: b.paid ? 'confirmation' : 'manual',
     patient_name: b.name,
     patient_email: b.email,
-    patient_phone: b.phone || 'No proporcionado',
     service: b.svc,
     date: b.dateStr || body.dateKey,
     time: body.time,
     modality: b.modality,
-    payment_type: b.paid ? 'Reenvío — pago confirmado' : 'Reenvío — pendiente de pago',
-    notes: b.notes || 'Sin notas adicionales'
+    payment_type: b.paid ? 'Pago confirmado' : '',
+    notes: b.notes || ''
   });
   if (emailRes.ok) {
     b.emailsSent = true;
@@ -514,39 +514,17 @@ async function handleAdminRemind(req, res) {
     return res.status(500).json({ error: 'Error MP: ' + err.message });
   }
 
-  // 2. Armar mensaje del recordatorio (va en el campo "notes" de la template)
-  const firstName = (b.name || '').trim().split(' ')[0] || '';
-  const reminderNotes =
-    (firstName ? `Hola ${firstName}!\n\n` : `Hola!\n\n`) +
-    `Vimos que estuviste intentando reservar tu turno pero aún no completaste el pago. Tu horario sigue apartado, pero necesitamos que termines el pago para confirmar tu reserva.\n\n` +
-    `Tenés 48 horas para terminar el pago, sino el horario va a quedar liberado.\n\n` +
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-    `OPCIÓN 1 — Pagar online por MercadoPago\n` +
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-    `${paymentLink}\n\n` +
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-    `OPCIÓN 2 — Transferencia bancaria\n` +
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `📌 Banco BROU\n` +
-    `   • Cuenta: 001725785-00001\n` +
-    `   • Cuenta anterior: 178-1539492\n` +
-    `   • Desde otros bancos: 00172578500001\n\n` +
-    `📌 Banco Itaú\n` +
-    `   • Cuenta: 0746764\n\n` +
-    `Una vez realizada la transferencia, mandanos el comprobante por WhatsApp al +598 99 712 691 para confirmar tu reserva.\n\n` +
-    `Si pagás por MercadoPago, tu reserva queda confirmada automáticamente.`;
-
-  // 3. Enviar email (reusa template_4pmzmjm, BCC a Agustina ya configurado)
+  // 2. Enviar email con template HTML "reminder" (link MP + datos bancarios)
   const emailRes = await sendBookingEmail({
+    kind: 'reminder',
     patient_name: b.name,
     patient_email: b.email,
-    patient_phone: b.phone || 'No proporcionado',
     service: b.svc,
     date: b.dateStr || body.dateKey,
     time: body.time,
     modality: b.modality,
-    payment_type: '⏳ RECORDATORIO — Falta completar el pago',
-    notes: reminderNotes
+    payment_link: paymentLink,
+    amount
   });
 
   // 4. Actualizar booking con info del recordatorio
