@@ -1164,7 +1164,7 @@ async function confirmManualPayment(dateKey, time){
 }
 
 async function sendPaymentReminder(dateKey, time){
-  if (!confirm('¿Enviar email recordatorio con link de pago a la paciente?\n\nEl email va a incluir:\n  • Link nuevo de MercadoPago (válido 48hs)\n  • Indicación de WhatsApp para pago por transferencia\n\nTe llega copia BCC.')) return;
+  if (!confirm('¿Enviar email recordatorio con link de pago a la paciente?\n\nEl email va a incluir:\n  • Saludo personalizado\n  • Link nuevo de MercadoPago (válido 48hs)\n  • Datos de transferencia (BROU + Itaú)\n  • WhatsApp para comprobante\n\nTe llega copia BCC.')) return;
   try {
     const r = await fetch('/api/bookings/admin-remind', {
       method: 'POST', credentials: 'same-origin',

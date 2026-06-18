@@ -515,13 +515,26 @@ async function handleAdminRemind(req, res) {
   }
 
   // 2. Armar mensaje del recordatorio (va en el campo "notes" de la template)
+  const firstName = (b.name || '').trim().split(' ')[0] || '';
   const reminderNotes =
-    `Tu turno todavía no fue confirmado porque falta completar el pago.\n\n` +
+    (firstName ? `Hola ${firstName}!\n\n` : `Hola!\n\n`) +
+    `Vimos que estuviste intentando reservar tu turno pero aún no completaste el pago. Tu horario sigue apartado, pero necesitamos que termines el pago para confirmar tu reserva.\n\n` +
     `Tenés 48 horas para terminar el pago, sino el horario va a quedar liberado.\n\n` +
-    `OPCIÓN 1 — Pagar online por MercadoPago:\n${paymentLink}\n\n` +
-    `OPCIÓN 2 — Pagar por transferencia bancaria:\n` +
-    `Escribinos por WhatsApp al +598 99 712 691 y te pasamos los datos.\n\n` +
-    `Una vez completado el pago, tu reserva queda confirmada automáticamente.`;
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `OPCIÓN 1 — Pagar online por MercadoPago\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `${paymentLink}\n\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `OPCIÓN 2 — Transferencia bancaria\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+    `📌 Banco BROU\n` +
+    `   • Cuenta: 001725785-00001\n` +
+    `   • Cuenta anterior: 178-1539492\n` +
+    `   • Desde otros bancos: 00172578500001\n\n` +
+    `📌 Banco Itaú\n` +
+    `   • Cuenta: 0746764\n\n` +
+    `Una vez realizada la transferencia, mandanos el comprobante por WhatsApp al +598 99 712 691 para confirmar tu reserva.\n\n` +
+    `Si pagás por MercadoPago, tu reserva queda confirmada automáticamente.`;
 
   // 3. Enviar email (reusa template_4pmzmjm, BCC a Agustina ya configurado)
   const emailRes = await sendBookingEmail({
