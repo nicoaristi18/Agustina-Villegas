@@ -1663,26 +1663,21 @@ async function loadEncuesta(){
 async function sendSurveyTo(name,email){
   if(!email)return;
   if(!confirm(`Enviar formulario de bienvenida a ${name||email}?`))return;
-  // Probamos varios nombres comunes para los parámetros del template — EmailJS hace match por nombre
-  const params={
-    to_name: name||'',
-    to_email: email,
-    name: name||'',
-    email: email,
-    patient_name: name||'',
-    patient_email: email,
-    survey_url: SURVEY_URL,
-    survey_link: SURVEY_URL,
-    link: SURVEY_URL,
-    reply_to: email
-  };
   try{
-    await emailjs.send('service_nnsgrl9','template_survey',params);
+    const r=await fetch('/api/admin/send-survey',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      body:JSON.stringify({name:name||'',email})
+    });
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok){
+      throw new Error(data.error||`HTTP ${r.status}`);
+    }
     toast('✉ Encuesta enviada a '+email);
   }catch(e){
-    console.error('EmailJS encuesta error:',e);
-    const msg=e&&e.text?e.text:(e&&e.message?e.message:JSON.stringify(e));
-    alert('No se pudo enviar la encuesta.\n\nDetalle: '+msg+'\n\nVerificá en EmailJS:\n• Que el template "template_survey" exista en el service "service_nnsgrl9"\n• Que el template tenga el destinatario {{to_email}} o {{email}}\n• Que el contenido use {{survey_url}} o {{link}} para el formulario');
+    console.error('Error encuesta:',e);
+    alert('No se pudo enviar la encuesta.\n\nDetalle: '+(e.message||e));
   }
 }
 async function sendSurvey(){

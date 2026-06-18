@@ -4,7 +4,8 @@
 
 import {
   getUsers, saveUsers, signSessionToken, setAdminCookie, clearAdminCookie,
-  getAdminFromRequest, verifyAdminCredentials, scrubUser, readJsonBody
+  getAdminFromRequest, verifyAdminCredentials, scrubUser, readJsonBody,
+  sendSurveyEmail
 } from '../../lib/auth.js';
 
 export default async function handler(req, res) {
@@ -31,6 +32,7 @@ export default async function handler(req, res) {
       if (method === 'POST')   return await handleAdminUsersUpdate(req, res);
       if (method === 'DELETE') return await handleAdminUsersDelete(req, res);
     }
+    if (path === 'send-survey' && method === 'POST') return await handleSendSurvey(req, res);
     return res.status(404).json({ error: 'Endpoint no encontrado', path, method });
   } catch (err) {
     console.error('[admin dispatcher]', path, err);
@@ -94,5 +96,22 @@ async function handleAdminUsersDelete(req, res) {
   if (!users[email]) return res.status(404).json({ error: 'Usuario no encontrado' });
   delete users[email];
   await saveUsers(users);
+  return res.status(200).json({ ok: true });
+}
+
+// Envía la encuesta inicial (Google Form) a una paciente nueva.
+// La URL del form se puede cambiar via env var SURVEY_URL.
+async function handleSendSurvey(req, res) {
+  const session = getAdminFromRequest(req);
+  if (!session?.admin) return res.status(401).json({ error: 'No autenticado' });
+  const body = await readJsonBody(req);
+  if (!body?.email) return res.status(400).json({ error: 'Falta email' });
+  const surveyUrl = process.env.SURVEY_URL || 'https://docs.google.com/forms/d/e/1FAIpQLSe8yCzzrWHLlZ-vWB0ktdj2VMhh-ouPBQp6had-84pieNbrRA/viewform?usp=dialog';
+  const result = await sendSurveyEmail({
+    name: body.name || '',
+    email: body.email,
+    surveyUrl
+  });
+  if (!result.ok) return res.status(500).json({ error: result.error });
   return res.status(200).json({ ok: true });
 }
