@@ -38,9 +38,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 /* === PDF DOC STYLES (mirror de generador.html) === */
 .ag-doc{width:595px;font-family:'DM Sans',sans-serif;color:#2A2118;background:#fff;max-width:100%;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,.08);}
 .ag-doc *{box-sizing:border-box;}
-.doc-page{width:595px;padding:52px 58px 72px;position:relative;background:#fff;break-before:page;page-break-before:always;max-width:100%;min-height:auto;}
+.doc-page{width:595px;min-width:595px;padding:52px 58px 72px;position:relative;background:#fff;break-before:page;page-break-before:always;min-height:auto;flex-shrink:0;}
 .doc-page:first-child{break-before:auto;page-break-before:auto;}
 .doc-page.tinted{background:#FAF8F4;}
+
+/* ÍNDICE */
+.toc-list{margin-top:14px;}
+.toc-row{display:flex;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(169,138,130,.12);font-size:12px;}
+.toc-row:last-child{border-bottom:none;}
+.toc-title{color:#2A2118;font-weight:400;}
+.toc-dots{flex:1;border-bottom:1px dotted rgba(169,138,130,.4);margin:0 10px 3px;}
+.toc-page-num{color:#A8706A;font-weight:500;font-family:'Cormorant Garamond',serif;font-size:15px;min-width:24px;text-align:right;}
+.toc-intro{font-size:11px;color:#8C7E78;font-weight:300;line-height:1.6;margin-bottom:20px;font-style:italic;}
 
 .page-cover{padding:0;background:#8B5550;height:842px;min-height:842px;overflow:hidden;}
 .cover-bg-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;}
@@ -150,15 +159,20 @@ function buildRunDoc(d, imgs, coverImg) {
 
   const hdr = pgHdr('Guía Running', '');
 
-  // Helper: envuelve contenido en una .doc-page con header estándar
-  const page = (bodyHtml, tinted) => '<div class="doc-page' + (tinted ? ' tinted' : '') + '">' + hdr + bodyHtml + '</div>';
+  // Helper: envuelve contenido en una .doc-page con header estándar.
+  // toc: si se pasa, marca esta página como inicio de un tópico para el índice.
+  const page = (bodyHtml, tinted, tocLabel) => {
+    const cls = 'doc-page' + (tinted ? ' tinted' : '');
+    const attr = tocLabel ? ' data-toc="' + esc(tocLabel) + '"' : '';
+    return '<div class="' + cls + '"' + attr + '>' + hdr + bodyHtml + '</div>';
+  };
 
   // Presentación
-  const pgPres = page(heading(d.presT) + textBlk(d.presX));
+  const pgPres = page(heading(d.presT) + textBlk(d.presX), false, 'Presentación');
 
   // Importancia → 4 páginas (intro / carbs / proteínas / grasas+cierre)
-  const pgImportancia = page(heading(d.impT) + textBlk(d.impX) + itemsBlk(d.impI) + textBlk(d.impC), true);
-  const pgCarbs = page(heading(d.carT) + textBlk(d.carX) + itemsBlk(d.carI));
+  const pgImportancia = page(heading(d.impT) + textBlk(d.impX) + itemsBlk(d.impI) + textBlk(d.impC), true, 'Importancia de la nutrición');
+  const pgCarbs = page(heading(d.carT) + textBlk(d.carX) + itemsBlk(d.carI), false, 'Los macronutrientes');
   const pgProt = page(heading(d.proT) + textBlk(d.proX) + itemsBlk(d.proI));
   const pgGras = page(heading(d.graT) + textBlk(d.graX) + itemsBlk(d.graI) + textBlk(d.graC));
 
@@ -166,7 +180,7 @@ function buildRunDoc(d, imgs, coverImg) {
   const pgAntesIntro = page(
     heading(d.antT) +
     subheading(d.antSt) + textBlk(d.antX) +
-    '<div class="run-inline-t">' + esc(d.ccT) + '</div>' + itemsBlk(d.ccI) + textBlk(d.ccN), true);
+    '<div class="run-inline-t">' + esc(d.ccT) + '</div>' + itemsBlk(d.ccI) + textBlk(d.ccN), true, 'Qué comer antes y después');
   const pgAntesSimples = page(
     '<div class="run-inline-t">' + esc(d.csT) + '</div>' + itemsBlk(d.csI) + textBlk(d.csN) +
     textBlk(d.tim), true);
@@ -180,13 +194,13 @@ function buildRunDoc(d, imgs, coverImg) {
     '<div class="run-inline-t">' + esc(d.epT) + '</div>' + itemsBlk(d.epI), true);
 
   // Cómo saber
-  const pgCom = page(heading(d.comT) + textBlk(d.comX));
+  const pgCom = page(heading(d.comT) + textBlk(d.comX), false, '¿Cómo saber qué consumir?');
 
   // Pautas día previo y carrera → dividido
   const pgPautas = page(heading(d.pauT) + textBlk(d.pauX) +
-    subheading(d.dpT) + textBlk(d.dpX) + itemsBlk(d.dpI) + textBlk(d.dpC));
+    subheading(d.dpT) + textBlk(d.dpX) + itemsBlk(d.dpI) + textBlk(d.dpC), false, 'Pautas día previo y carrera');
   const pgLimitarGrasas = page(subheading(d.limT) +
-    '<div class="run-inline-t">' + esc(d.lgT) + '</div>' + textBlk(d.lgX));
+    '<div class="run-inline-t">' + esc(d.lgT) + '</div>' + textBlk(d.lgX), false, 'Alimentos a limitar');
   const pgLimitarFibra = page(
     '<div class="run-inline-t">' + esc(d.lfT) + '</div>' + textBlk(d.lfX) +
     '<div class="run-inline-t">' + esc(d.evT) + '</div>' + textBlk(d.evX));
@@ -195,22 +209,22 @@ function buildRunDoc(d, imgs, coverImg) {
   const hidImgHtml = imgs.hidImg
     ? '<div style="margin:18px 0;text-align:center"><img src="' + imgs.hidImg + '" style="max-width:100%;max-height:180px;border-radius:8px"></div>'
     : '';
-  const pgHid = page(heading(d.hidT) + textBlk(d.hidX) + hidImgHtml + textBlk(d.hidC), true);
+  const pgHid = page(heading(d.hidT) + textBlk(d.hidX) + hidImgHtml + textBlk(d.hidC), true, 'Hidratación');
   const pgMate = page(subheading(d.matT) + textBlk(d.matX), true);
 
   // Suplementación (con imagen cafeína)
   const cafeImgHtml = imgs.cafeImg
     ? '<div style="margin:14px 0;text-align:center"><img src="' + imgs.cafeImg + '" style="max-width:100%;max-height:200px;border-radius:8px"></div>'
     : '';
-  const pgSup = page(heading(d.supT) + textBlk(d.supX) + itemsBlk(d.supI));
+  const pgSup = page(heading(d.supT) + textBlk(d.supX) + itemsBlk(d.supI), false, 'Suplementación y cafeína');
   const pgSupDosis = page(textBlk(d.supD) + cafeImgHtml + textBlk(d.supA));
 
   // Bebidas deportivas
   const pgBeb = page(heading(d.bebT) + textBlk(d.bebX) + itemsBlk(d.bebI) + textBlk(d.bebE) +
-    '<div class="run-inline-t">' + esc(d.buT) + '</div>' + itemsBlk(d.buI));
+    '<div class="run-inline-t">' + esc(d.buT) + '</div>' + itemsBlk(d.buI), false, 'Bebidas deportivas');
 
   // Ayunas → dividido
-  const pgAy1 = page(heading(d.ayT) + textBlk(d.ayX) + itemsBlk(d.ayI), true);
+  const pgAy1 = page(heading(d.ayT) + textBlk(d.ayX) + itemsBlk(d.ayI), true, 'Correr en ayunas');
   const pgAy2 = page(textBlk(d.ayM) + textBlk(d.ayC), true);
 
   // Cierre + contacto
@@ -222,7 +236,8 @@ function buildRunDoc(d, imgs, coverImg) {
     (d.ctIg ? '<div class="run-contact-row"><span class="rc-label">Instagram</span><span class="rc-val">@' + esc(d.ctIg) + '</span></div>' : '') +
     (d.ctCel ? '<div class="run-contact-row"><span class="rc-label">Celular</span><span class="rc-val">' + esc(d.ctCel) + '</span></div>' : '') +
     (d.ctMail ? '<div class="run-contact-row"><span class="rc-label">Email</span><span class="rc-val">' + esc(d.ctMail) + '</span></div>' : '') +
-    '</div>');
+    '</div>',
+    false, 'En resumen y contacto');
 
   return '<div class="ag-doc" id="doc-run">' +
     cover + pgPres +
@@ -239,6 +254,49 @@ function buildRunDoc(d, imgs, coverImg) {
 }
 
 let loadedProduct = null;
+
+// Inserta una .doc-page de índice después de la portada, con títulos y
+// números de página calculados a partir de la altura real de cada sección.
+function injectTOC() {
+  const docEl = document.getElementById('doc-run');
+  if (!docEl) return;
+  const PAGE_H = 842;
+  const allPages = Array.from(docEl.querySelectorAll('.doc-page'));
+  if (allPages.length < 2) return;
+
+  // Portada = página 1, índice será página 2, contenido empieza página 3
+  const entries = [];
+  let pdfPage = 3;
+  for (let i = 1; i < allPages.length; i++) {
+    const el = allPages[i];
+    const h = el.offsetHeight;
+    const pdfPagesThisSection = Math.max(1, Math.ceil(h / PAGE_H));
+    const label = el.getAttribute('data-toc');
+    if (label) entries.push({ title: label, page: pdfPage });
+    pdfPage += pdfPagesThisSection;
+  }
+
+  const rows = entries.map(e =>
+    '<div class="toc-row">' +
+      '<span class="toc-title">' + esc(e.title) + '</span>' +
+      '<span class="toc-dots"></span>' +
+      '<span class="toc-page-num">' + e.page + '</span>' +
+    '</div>'
+  ).join('');
+
+  const hdr = '<div class="pg-hdr"><span class="pg-hdr-doc">Guía Running</span><span class="pg-hdr-name"></span></div>';
+  const tocHtml =
+    '<div class="doc-page tinted" id="doc-toc">' +
+    hdr +
+    '<div class="sec-label first">Índice</div>' +
+    '<div class="toc-intro">Todo lo que vas a encontrar en esta guía.</div>' +
+    '<div class="toc-list">' + rows + '</div>' +
+    '</div>';
+
+  // Insertar después de la portada
+  const cover = allPages[0];
+  cover.insertAdjacentHTML('afterend', tocHtml);
+}
 
 async function loadGuide() {
   const params = new URLSearchParams(location.search);
@@ -263,6 +321,8 @@ async function loadGuide() {
     loadedProduct = d.product;
     document.getElementById('doc-wrapper').innerHTML = buildRunDoc(guia.data, guia.imgs || {}, (guia.imgs && guia.imgs.coverImg) || '');
     document.getElementById('doc-wrapper').style.display = 'block';
+    // Insertar página de índice después de la portada, con números calculados
+    injectTOC();
     statusEl.style.display = 'none';
     document.getElementById('btn-dl').disabled = false;
   } catch (err) {
