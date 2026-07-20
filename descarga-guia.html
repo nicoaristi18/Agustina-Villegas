@@ -82,10 +82,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 .overlay-loader-inner h4{font-size:14px;color:#2A2118;margin-bottom:5px;font-weight:500;}
 .overlay-loader-inner p{font-size:11px;color:#8C7E78;}
 
+/* En pantallas angostas, escalamos el doc entero con transform en vez de
+   cambiar padding/anchos — así el layout que se ve en pantalla es EL MISMO
+   que se exporta al PDF (595px fijo). Sin esto, el media query rompía el
+   ancho de la portada al capturar. */
+.doc-scaler{max-width:100%;overflow-x:auto;}
 @media(max-width:660px){
-  .ag-doc,.doc-page{width:100%;padding:32px 24px;}
-  .cover-body{padding:32px 24px;}
-  .cover-title{font-size:44px;}
+  .doc-container{padding:0 .5rem;}
 }
 </style>
 </head>
