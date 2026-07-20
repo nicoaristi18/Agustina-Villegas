@@ -92,7 +92,28 @@ export default async function handler(req, res) {
       if (!name || !email) return res.status(400).json({ error: 'Faltan name/email' });
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email inválido' });
 
-      const product = await getProductBySlug(slug);
+      let product = await getProductBySlug(slug);
+      // Auto-seed si no existe (para que el flujo funcione sin depender de
+      // que Agustina haya guardado desde el generador previamente).
+      if (!product && slug === 'runner-principiantes') {
+        const now = new Date().toISOString();
+        product = {
+          id: 'runner-principiantes',
+          slug: 'runner-principiantes',
+          category: 'runners',
+          title: 'Plan de Nutrición para Runners Principiantes',
+          tagline: 'Tu guía completa para comenzar a correr sin frustrarte por la comida.',
+          price: 1500,
+          currency: 'UYU',
+          active: true,
+          pdfData: {}, // sin guiaRunning aún — la página de descarga mostrará mensaje pidiendo que Agustina publique
+          createdAt: now,
+          updatedAt: now
+        };
+        const arr = await getProducts();
+        arr.push(product);
+        await saveProducts(arr);
+      }
       if (!product || !product.active) return res.status(404).json({ error: 'Producto no encontrado' });
 
       const now = new Date().toISOString();
