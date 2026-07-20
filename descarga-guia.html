@@ -239,7 +239,7 @@ async function loadGuide() {
       throw new Error('La guía aún no está publicada. Escribinos por WhatsApp y la mandamos manualmente.');
     }
     loadedProduct = d.product;
-    document.getElementById('doc-wrapper').innerHTML = buildRunDoc(guia.data, guia.imgs || {}, '');
+    document.getElementById('doc-wrapper').innerHTML = buildRunDoc(guia.data, guia.imgs || {}, (guia.imgs && guia.imgs.coverImg) || '');
     document.getElementById('doc-wrapper').style.display = 'block';
     statusEl.style.display = 'none';
     document.getElementById('btn-dl').disabled = false;
@@ -284,18 +284,27 @@ async function dlPDF() {
     pageEls.forEach(el => breaks.push(Math.round(el.getBoundingClientRect().top - docTop)));
     breaks.push(docEl.offsetHeight);
 
+    let isFirstPage = true;
     for (let i = 0; i < breaks.length - 1; i++) {
       const startY = breaks[i], endY = breaks[i + 1];
-      const sliceH = Math.min(endY - startY, PAGE_H);
-      if (sliceH <= 0) continue;
-      if (i > 0) pdf.addPage([PAGE_W, PAGE_H], 'portrait');
-      const sub = document.createElement('canvas');
-      sub.width = PAGE_W * SCALE; sub.height = PAGE_H * SCALE;
-      const ctx = sub.getContext('2d');
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, sub.width, sub.height);
-      ctx.drawImage(fullCanvas, 0, startY * SCALE, PAGE_W * SCALE, sliceH * SCALE, 0, 0, PAGE_W * SCALE, sliceH * SCALE);
-      pdf.addImage(sub.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, PAGE_W, PAGE_H);
+      const sectionH = endY - startY;
+      // Si la sección es más alta que una página, la partimos en tantas páginas
+      // como sea necesario (así no se pierde contenido cortado).
+      const pagesInSection = Math.max(1, Math.ceil(sectionH / PAGE_H));
+      for (let p = 0; p < pagesInSection; p++) {
+        const pageStartY = startY + p * PAGE_H;
+        const sliceH = Math.min(PAGE_H, endY - pageStartY);
+        if (sliceH <= 0) continue;
+        if (!isFirstPage) pdf.addPage([PAGE_W, PAGE_H], 'portrait');
+        isFirstPage = false;
+        const sub = document.createElement('canvas');
+        sub.width = PAGE_W * SCALE; sub.height = PAGE_H * SCALE;
+        const ctx = sub.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, sub.width, sub.height);
+        ctx.drawImage(fullCanvas, 0, pageStartY * SCALE, PAGE_W * SCALE, sliceH * SCALE, 0, 0, PAGE_W * SCALE, sliceH * SCALE);
+        pdf.addImage(sub.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, PAGE_W, PAGE_H);
+      }
     }
 
     pdf.save('Guia_Running_Principiantes.pdf');

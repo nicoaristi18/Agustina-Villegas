@@ -557,7 +557,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
       <div class="fg"><label>T&iacute;tulo principal</label><input id="run-p-titulo" type="text" oninput="upRun()"></div>
       <div class="fg"><label>Subt&iacute;tulo</label><input id="run-p-sub" type="text" oninput="upRun()"></div>
       <div class="fg"><label>Texto de portada</label><textarea id="run-p-texto" rows="3" oninput="upRun()"></textarea></div>
-      <div class="fg"><label>Imagen de portada</label><input id="run-p-img" type="file" accept="image/*" onchange="setCover(this,'gen_cv_run','upRun')"></div>
+      <div class="fg"><label>Imagen de portada</label><input id="run-p-img" type="file" accept="image/*" onchange="setRunImg(this,'coverImg')"></div>
     </div>
 
     <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-pres')"><span class="rcard-title">Presentaci&oacute;n</span><span class="rcard-badge">P&aacute;g. 2</span></div>
@@ -2916,7 +2916,7 @@ var RUN_FIELD_MAP = {
   'run-ct-ig':'ctIg', 'run-ct-cel':'ctCel', 'run-ct-mail':'ctMail'
 };
 
-var runImgs = { hidImg:'', cafeImg:'' };
+var runImgs = { hidImg:'', cafeImg:'', coverImg:'' };
 
 function loadRunData() {
   var data = {};
@@ -3017,7 +3017,7 @@ function resetRunToDefaults() {
   if (!confirm('¿Restaurar el contenido original del PDF? Se perderán los cambios que hayas hecho.')) return;
   localStorage.removeItem(RUN_STORAGE_KEY);
   localStorage.removeItem(RUN_IMG_KEY);
-  runImgs = { hidImg:'', cafeImg:'' };
+  runImgs = { hidImg:'', cafeImg:'', coverImg:'' };
   loadRunData();
   upRun();
 }
@@ -3034,7 +3034,8 @@ function setRunImg(inp, key) {
 
 function buildRunDoc() {
   var d = collectRunData();
-  var coverImg = localStorage.getItem('gen_cv_run') || '';
+  // Preferir la nueva key sincronizada; fallback al viejo storage por compat
+  var coverImg = runImgs.coverImg || localStorage.getItem('gen_cv_run') || '';
   var logo = getLogo();
 
   // Portada
