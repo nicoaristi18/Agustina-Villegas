@@ -13,7 +13,10 @@
 
 import {
   getProducts, saveProducts, getProductBySlug, scrubProductForPublic,
-  getAdminFromRequest, readJsonBody
+  getAdminFromRequest, readJsonBody,
+  getGuidePurchases, saveGuidePurchases,
+  generateGuideDownloadToken, verifyGuideDownloadToken,
+  sendGuideDeliveryEmail
 } from '../../lib/auth.js';
 
 export default async function handler(req, res) {
@@ -78,6 +81,65 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: 'seeded', product: scrubProductForPublic(seed) });
     }
 
+    // === PUBLIC PURCHASE (sin MercadoPago por ahora) ===
+    // POST /api/products/purchase  body { name, email, slug }
+    // Crea registro de compra, genera token JWT, manda email con link de descarga.
+    if (path === 'purchase' && method === 'POST') {
+      const body = await readJsonBody(req) || {};
+      const name = String(body.name || '').trim();
+      const email = String(body.email || '').trim().toLowerCase();
+      const slug = String(body.slug || 'runner-principiantes').trim();
+      if (!name || !email) return res.status(400).json({ error: 'Faltan name/email' });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email inválido' });
+
+      const product = await getProductBySlug(slug);
+      if (!product || !product.active) return res.status(404).json({ error: 'Producto no encontrado' });
+
+      const now = new Date().toISOString();
+      const purchaseId = 'pur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+      const token = generateGuideDownloadToken({ slug, email });
+
+      // Guardar registro (para que Agustina vea las compras)
+      const purchases = await getGuidePurchases();
+      purchases.unshift({ id: purchaseId, slug, name, email, ts: now, source: 'web' });
+      // Limitar a últimas 500 compras
+      if (purchases.length > 500) purchases.length = 500;
+      await saveGuidePurchases(purchases);
+
+      // Armar URL absoluta
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+      const proto = req.headers['x-forwarded-proto'] || 'https';
+      const downloadUrl = `${proto}://${host}/descarga-guia.html?token=${encodeURIComponent(token)}`;
+
+      // Enviar email (no bloquea si falla — dejamos el registro igual)
+      const emailResult = await sendGuideDeliveryEmail({
+        name, email, downloadUrl, productTitle: product.title
+      });
+      if (!emailResult.ok) {
+        console.error('[purchase] email fail', emailResult.error);
+        // Igual devolvemos ok=true porque la compra queda registrada.
+        // Agustina puede reenviar manualmente.
+      }
+
+      return res.status(200).json({
+        ok: true,
+        purchaseId,
+        emailSent: emailResult.ok,
+        downloadUrl // para debug/desarrollo, útil en tests
+      });
+    }
+
+    // GET /api/products/download?token=xxx
+    // Valida token JWT y devuelve el producto completo (con pdfData) para renderizar.
+    if (path === 'download' && method === 'GET') {
+      const token = String(req.query.token || '');
+      const payload = verifyGuideDownloadToken(token);
+      if (!payload) return res.status(401).json({ error: 'Token inválido o expirado' });
+      const product = await getProductBySlug(payload.slug);
+      if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+      return res.status(200).json({ product, email: payload.email });
+    }
+
     // === ADMIN ===
     if (path.startsWith('admin')) {
       const session = getAdminFromRequest(req);
@@ -118,6 +180,12 @@ export default async function handler(req, res) {
         }
         await saveProducts(products);
         return res.status(200).json({ product: products.find(p => p.slug === body.product.slug) });
+      }
+
+      // GET /api/products/admin/purchases → lista de compras de guías
+      if (path === 'admin/purchases' && method === 'GET') {
+        const purchases = await getGuidePurchases();
+        return res.status(200).json({ purchases });
       }
 
       // DELETE /api/products/admin?slug=...

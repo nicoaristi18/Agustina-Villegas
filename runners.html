@@ -255,24 +255,32 @@
   </div>
 </footer>
 
-<!-- ===== MODAL COMPRA (sin payment todavía, redirige a WhatsApp) ===== -->
+<!-- ===== MODAL COMPRA (beta: sin pago, envío directo por email) ===== -->
 <div class="purchase-modal" id="purchaseModal" onclick="if(event.target.id==='purchaseModal')closePurchaseModal()">
   <div class="purchase-modal-inner">
-    <h3>Comprar el plan</h3>
-    <p class="intro">Completá tus datos. Cuando tengamos el pago online te enviamos el PDF al instante. <strong>Por ahora coordinamos por WhatsApp.</strong></p>
-    <div class="purchase-field">
-      <label>Tu nombre</label>
-      <input id="buyer-name" type="text" placeholder="María García" autocomplete="name">
+    <div id="purchase-step-form">
+      <h3>Recibí el plan por email</h3>
+      <p class="intro">Completá tus datos y te llega la guía a tu correo al instante. <strong>Beta gratuita</strong> — próximamente con pago online.</p>
+      <div class="purchase-field">
+        <label>Tu nombre</label>
+        <input id="buyer-name" type="text" placeholder="María García" autocomplete="name">
+      </div>
+      <div class="purchase-field">
+        <label>Tu email</label>
+        <input id="buyer-email" type="email" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <div class="purchase-buttons">
+        <button class="cancel" onclick="closePurchaseModal()">Cancelar</button>
+        <button class="confirm" id="btn-submit-purchase" onclick="submitPurchase()">Recibir la guía →</button>
+      </div>
+      <div class="purchase-note">📧 Vamos a mandarte un email con un link para descargar la guía en PDF.</div>
     </div>
-    <div class="purchase-field">
-      <label>Tu email</label>
-      <input id="buyer-email" type="email" placeholder="tu@email.com" autocomplete="email">
+    <div id="purchase-step-success" style="display:none;text-align:center;padding:1rem 0;">
+      <div style="font-size:3rem;margin-bottom:.6rem;">✉️</div>
+      <h3 style="margin-bottom:.6rem;">¡Listo!</h3>
+      <p class="intro" style="margin-bottom:1.4rem;">Te enviamos un email a <strong id="success-email"></strong> con el link para descargar tu guía. Revisá también la carpeta de <em>Spam / Promociones</em> por las dudas.</p>
+      <button class="confirm" style="padding:.85rem 2rem;border-radius:50px;font-family:inherit;font-size:.9rem;font-weight:500;cursor:pointer;border:none;background:linear-gradient(135deg,#A8706A,#8B5550);color:white;" onclick="closePurchaseModal()">Cerrar</button>
     </div>
-    <div class="purchase-buttons">
-      <button class="cancel" onclick="closePurchaseModal()">Cancelar</button>
-      <button class="confirm" onclick="submitPurchase()">Continuar por WhatsApp →</button>
-    </div>
-    <div class="purchase-note">💳 Próximamente vas a poder pagar online con MercadoPago y recibir el PDF al instante. Por ahora coordinamos por WhatsApp.</div>
   </div>
 </div>
 
@@ -306,8 +314,13 @@ function openPurchaseModal() {
 }
 function closePurchaseModal() {
   document.getElementById('purchaseModal').classList.remove('open');
+  // Resetear al step del form para la próxima apertura
+  setTimeout(() => {
+    document.getElementById('purchase-step-form').style.display = 'block';
+    document.getElementById('purchase-step-success').style.display = 'none';
+  }, 300);
 }
-function submitPurchase() {
+async function submitPurchase() {
   const name = document.getElementById('buyer-name').value.trim();
   const email = document.getElementById('buyer-email').value.trim();
   if (!name || !email) {
@@ -318,18 +331,28 @@ function submitPurchase() {
     alert('Email inválido.');
     return;
   }
-  // Por ahora: armar mensaje de WhatsApp y redirigir
-  const productName = currentProduct?.title || 'Plan de Nutrición para Runners Principiantes';
-  const price = currentProduct?.price || 1500;
-  const msg = encodeURIComponent(
-    `Hola Agustina! Quiero comprar el "${productName}" ($${price.toLocaleString('es')} UYU).\n\n` +
-    `Mis datos:\n` +
-    `Nombre: ${name}\n` +
-    `Email: ${email}\n\n` +
-    `¿Cómo coordinamos el pago? Gracias!`
-  );
-  const phone = '59899712691';
-  window.location.href = `https://wa.me/${phone}?text=${msg}`;
+  const btn = document.getElementById('btn-submit-purchase');
+  const prev = btn.textContent;
+  btn.textContent = 'Enviando…';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/products/purchase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, slug: 'runner-principiantes' })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+    document.getElementById('success-email').textContent = email;
+    document.getElementById('purchase-step-form').style.display = 'none';
+    document.getElementById('purchase-step-success').style.display = 'block';
+  } catch (err) {
+    alert('No pudimos procesar tu pedido: ' + err.message + '\n\nEscribinos por WhatsApp y te lo mandamos manualmente.');
+    console.error('[purchase]', err);
+  } finally {
+    btn.textContent = prev;
+    btn.disabled = false;
+  }
 }
 </script>
 <script src="animations.js"></script>

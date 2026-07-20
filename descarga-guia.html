@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Descarga tu guía · Agustina Villegas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --cream:#FAF8F4;--cream2:#F5F0E8;--blush:#F0E6DF;
+  --rose:#C9958E;--rose-dark:#A8706A;--rose-deep:#8B5550;
+  --text:#2A2118;--text-muted:#8C7E78;
+  --border:rgba(169,138,130,.15);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text);min-height:100vh;line-height:1.5;}
+
+.top{background:var(--text);color:#fff;padding:1rem 1.5rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.15);}
+.top-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+.top-brand{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;flex:1;min-width:200px;}
+.top-brand em{color:var(--rose);font-style:italic;}
+.dl-btn{background:var(--rose-dark);color:#fff;border:none;padding:.65rem 1.3rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;transition:background .2s;display:flex;align-items:center;gap:.4rem;}
+.dl-btn:hover{background:var(--rose-deep);}
+.dl-btn:disabled{background:var(--text-muted);cursor:not-allowed;opacity:.7;}
+
+.hero-msg{background:#fff;padding:2.5rem 1.5rem 1.5rem;text-align:center;border-bottom:1px solid var(--border);}
+.hero-msg h1{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:400;color:var(--text);margin-bottom:.4rem;}
+.hero-msg h1 em{color:var(--rose-dark);font-style:italic;}
+.hero-msg p{color:var(--text-muted);font-size:.95rem;max-width:600px;margin:0 auto;}
+
+.doc-container{max-width:660px;margin:2rem auto;padding:0 1rem;}
+.status-box{padding:2rem;background:#fff;border-radius:12px;text-align:center;color:var(--text-muted);}
+.status-box.error{border-left:4px solid #a32d2d;color:#a32d2d;}
+
+/* === PDF DOC STYLES (mirror de generador.html) === */
+.ag-doc{width:595px;font-family:'DM Sans',sans-serif;color:#2A2118;background:#fff;max-width:100%;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,.08);}
+.ag-doc *{box-sizing:border-box;}
+.doc-page{width:595px;min-height:842px;padding:52px 58px;position:relative;background:#fff;break-before:page;page-break-before:always;max-width:100%;}
+.doc-page:first-child{break-before:auto;page-break-before:auto;}
+
+.page-cover{padding:0;background:#8B5550;height:842px;min-height:842px;overflow:hidden;}
+.cover-bg-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;}
+.cover-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(150deg,rgba(43,33,24,.52) 0%,rgba(139,85,80,.38) 100%);}
+.cover-body{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;padding:50px 58px;}
+.cover-sig{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:300;}
+.cover-space{flex:1;}
+.cover-line{width:32px;height:1px;background:rgba(255,255,255,.38);margin-bottom:16px;}
+.cover-title{font-family:'Cormorant Garamond',serif;font-size:68px;font-weight:300;line-height:1.05;color:#fff;letter-spacing:-.01em;margin-bottom:12px;white-space:pre-line;}
+.cover-sub{font-size:13px;font-weight:300;color:rgba(255,255,255,.7);letter-spacing:.02em;margin-bottom:3px;}
+.cover-sub2{font-size:11px;font-weight:300;color:rgba(255,255,255,.48);}
+.cover-foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:44px;}
+.cover-date{font-size:9px;color:rgba(255,255,255,.38);letter-spacing:.09em;text-transform:uppercase;}
+.cover-brand{font-family:'Cormorant Garamond',serif;font-size:12px;color:rgba(255,255,255,.32);font-style:italic;font-weight:300;}
+
+.pg-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;padding-bottom:14px;border-bottom:1px solid rgba(169,138,130,.18);}
+.pg-hdr-doc{font-family:'Cormorant Garamond',serif;font-size:10px;color:rgba(169,138,130,.55);letter-spacing:.1em;text-transform:uppercase;font-weight:400;}
+.pg-hdr-name{font-size:9px;color:rgba(169,138,130,.45);font-weight:300;}
+
+.sec-label{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:400;color:#A8706A;letter-spacing:.03em;display:flex;align-items:center;gap:11px;margin-bottom:18px;margin-top:26px;}
+.sec-label.first{margin-top:0;}
+.sec-label::after{content:'';flex:1;height:1px;background:rgba(169,138,130,.22);}
+
+.run-p{font-size:11px;font-weight:300;color:#2A2118;line-height:1.7;margin-bottom:10px;}
+.run-list{list-style:none;margin-bottom:14px;padding-left:0;}
+.run-list li{font-size:11px;font-weight:300;color:#2A2118;padding:3px 0 3px 16px;position:relative;line-height:1.55;}
+.run-list li::before{content:'●';position:absolute;left:0;top:3px;color:#A8706A;font-size:8px;}
+.run-sub{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:#2A2118;font-style:italic;margin:22px 0 10px;padding-bottom:5px;border-bottom:1px solid rgba(169,138,130,.2);}
+.run-inline-t{font-size:11px;font-weight:500;color:#A8706A;margin:12px 0 6px;letter-spacing:.02em;}
+.run-contact-box{background:#2A2118;color:#fff;padding:22px 28px;border-radius:12px;margin-top:20px;}
+.run-contact-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:#fff;margin-bottom:14px;letter-spacing:.03em;}
+.run-contact-row{display:flex;align-items:baseline;gap:14px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1);}
+.run-contact-row:last-child{border-bottom:none;}
+.rc-label{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.45);width:72px;flex-shrink:0;}
+.rc-val{font-size:12px;color:#fff;font-weight:300;}
+
+.overlay-loader{position:fixed;inset:0;background:rgba(43,33,24,.82);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.overlay-loader-inner{background:#fff;padding:24px 36px;border-radius:14px;font-family:'DM Sans',sans-serif;text-align:center;}
+.overlay-loader-inner h4{font-size:14px;color:#2A2118;margin-bottom:5px;font-weight:500;}
+.overlay-loader-inner p{font-size:11px;color:#8C7E78;}
+
+@media(max-width:660px){
+  .ag-doc,.doc-page{width:100%;padding:32px 24px;}
+  .cover-body{padding:32px 24px;}
+  .cover-title{font-size:44px;}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="top-brand">Lic. <em>Agustina Villegas</em> · Nutricionista</div>
+    <button class="dl-btn" id="btn-dl" onclick="dlPDF()" disabled>↓ Descargar PDF</button>
+  </div>
+</header>
+
+<section class="hero-msg">
+  <h1>Tu guía está <em>lista</em></h1>
+  <p>Podés leerla acá abajo o descargarla en PDF con el botón de arriba. El link es tuyo y no expira, guardalo bien.</p>
+</section>
+
+<div class="doc-container">
+  <div id="status" class="status-box">Cargando tu guía…</div>
+  <div id="doc-wrapper" style="display:none"></div>
+</div>
+
+<script>
+'use strict';
+
+const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function textBlk(txt) {
+  if (!txt) return '';
+  return '<div class="run-p">' + esc(txt).replace(/\n\n/g, '</div><div class="run-p">').replace(/\n/g, '<br>') + '</div>';
+}
+function itemsBlk(items) {
+  if (!items || !items.trim()) return '';
+  return '<ul class="run-list">' + items.split('\n').map(l => l.trim()).filter(Boolean).map(l => '<li>' + esc(l) + '</li>').join('') + '</ul>';
+}
+function heading(t) { return '<div class="sec-label first">' + esc(t) + '</div>'; }
+function subheading(t) { return '<div class="run-sub">' + esc(t) + '</div>'; }
+
+function pgHdr(label, name) {
+  return '<div class="pg-hdr"><span class="pg-hdr-doc">' + esc(label) + (name ? ' · ' + esc(name) : '') + '</span><span class="pg-hdr-name">' + esc(name) + '</span></div>';
+}
+
+function buildRunDoc(d, imgs, coverImg) {
+  imgs = imgs || {};
+  // Cover
+  const coverTop = '<div class="cover-sig">Lic. Agustina Villegas · Nutricionista</div>';
+  const cover = '<div class="doc-page page-cover">' +
+    (coverImg ? '<img class="cover-bg-img" src="' + coverImg + '" alt="">' : '') +
+    '<div class="cover-overlay"></div>' +
+    '<div class="cover-body">' +
+    coverTop +
+    '<div class="cover-space"></div>' +
+    '<div class="cover-line"></div>' +
+    '<div class="cover-title">' + esc(d.pTitulo) + '</div>' +
+    (d.pSub ? '<div class="cover-sub">' + esc(d.pSub) + '</div>' : '') +
+    (d.pTexto ? '<div class="cover-sub2" style="max-width:400px;line-height:1.55;margin-top:8px">' + esc(d.pTexto) + '</div>' : '') +
+    '<div class="cover-foot"><span class="cover-date">Guía para principiantes</span><span class="cover-brand">Agustina Villegas</span></div>' +
+    '</div></div>';
+
+  const hdr = pgHdr('Guía Running', '');
+
+  const pgPres = '<div class="doc-page">' + hdr + heading(d.presT) + textBlk(d.presX) + '</div>';
+
+  const pgImp = '<div class="doc-page">' + hdr +
+    heading(d.impT) + textBlk(d.impX) + itemsBlk(d.impI) + textBlk(d.impC) +
+    subheading(d.carT) + textBlk(d.carX) + itemsBlk(d.carI) +
+    subheading(d.proT) + textBlk(d.proX) + itemsBlk(d.proI) +
+    subheading(d.graT) + textBlk(d.graX) + itemsBlk(d.graI) +
+    textBlk(d.graC) + '</div>';
+
+  const pgAnt = '<div class="doc-page" style="background:#FAF8F4">' + hdr +
+    heading(d.antT) +
+    subheading(d.antSt) + textBlk(d.antX) +
+    '<div class="run-inline-t">' + esc(d.ccT) + '</div>' + itemsBlk(d.ccI) + textBlk(d.ccN) +
+    '<div class="run-inline-t">' + esc(d.csT) + '</div>' + itemsBlk(d.csI) + textBlk(d.csN) +
+    textBlk(d.tim) +
+    '<div class="run-inline-t">' + esc(d.e30T) + '</div>' + itemsBlk(d.e30I) +
+    '<div class="run-inline-t">' + esc(d.e12T) + '</div>' + itemsBlk(d.e12I) +
+    subheading(d.desSt) + textBlk(d.desX) +
+    '<div class="run-inline-t">' + esc(d.pfT) + '</div>' + itemsBlk(d.pfI) +
+    textBlk(d.recC) +
+    '<div class="run-inline-t">' + esc(d.epT) + '</div>' + itemsBlk(d.epI) +
+    '</div>';
+
+  const pgCom = '<div class="doc-page">' + hdr + heading(d.comT) + textBlk(d.comX) + '</div>';
+
+  const pgPau = '<div class="doc-page">' + hdr +
+    heading(d.pauT) + textBlk(d.pauX) +
+    subheading(d.dpT) + textBlk(d.dpX) + itemsBlk(d.dpI) + textBlk(d.dpC) +
+    subheading(d.limT) +
+    '<div class="run-inline-t">' + esc(d.lgT) + '</div>' + textBlk(d.lgX) +
+    '<div class="run-inline-t">' + esc(d.lfT) + '</div>' + textBlk(d.lfX) +
+    '<div class="run-inline-t">' + esc(d.evT) + '</div>' + textBlk(d.evX) +
+    '</div>';
+
+  const hidImgHtml = imgs.hidImg
+    ? '<div style="margin:18px 0;text-align:center"><img src="' + imgs.hidImg + '" style="max-width:100%;max-height:180px;border-radius:8px"></div>'
+    : '';
+  const pgHid = '<div class="doc-page" style="background:#FAF8F4">' + hdr +
+    heading(d.hidT) + textBlk(d.hidX) + hidImgHtml + textBlk(d.hidC) +
+    subheading(d.matT) + textBlk(d.matX) + '</div>';
+
+  const cafeImgHtml = imgs.cafeImg
+    ? '<div style="margin:14px 0;text-align:center"><img src="' + imgs.cafeImg + '" style="max-width:100%;max-height:200px;border-radius:8px"></div>'
+    : '';
+  const pgSup = '<div class="doc-page">' + hdr +
+    heading(d.supT) + textBlk(d.supX) + itemsBlk(d.supI) +
+    textBlk(d.supD) + cafeImgHtml + textBlk(d.supA) + '</div>';
+
+  const pgBeb = '<div class="doc-page">' + hdr +
+    heading(d.bebT) + textBlk(d.bebX) + itemsBlk(d.bebI) + textBlk(d.bebE) +
+    '<div class="run-inline-t">' + esc(d.buT) + '</div>' + itemsBlk(d.buI) + '</div>';
+
+  const pgAy = '<div class="doc-page" style="background:#FAF8F4">' + hdr +
+    heading(d.ayT) + textBlk(d.ayX) + itemsBlk(d.ayI) + textBlk(d.ayM) + textBlk(d.ayC) + '</div>';
+
+  const pgFin = '<div class="doc-page">' + hdr +
+    heading('En resumen') + textBlk(d.resX) +
+    '<div style="margin:26px 0 20px;font-family:\'Cormorant Garamond\',serif;font-size:20px;color:#A8706A;font-style:italic;text-align:center">' + esc(d.cierre) + '</div>' +
+    '<div class="run-contact-box">' +
+    '<div class="run-contact-title">Contacto</div>' +
+    (d.ctIg ? '<div class="run-contact-row"><span class="rc-label">Instagram</span><span class="rc-val">@' + esc(d.ctIg) + '</span></div>' : '') +
+    (d.ctCel ? '<div class="run-contact-row"><span class="rc-label">Celular</span><span class="rc-val">' + esc(d.ctCel) + '</span></div>' : '') +
+    (d.ctMail ? '<div class="run-contact-row"><span class="rc-label">Email</span><span class="rc-val">' + esc(d.ctMail) + '</span></div>' : '') +
+    '</div></div>';
+
+  return '<div class="ag-doc" id="doc-run">' +
+    cover + pgPres + pgImp + pgAnt + pgCom + pgPau + pgHid + pgSup + pgBeb + pgAy + pgFin +
+    '</div>';
+}
+
+let loadedProduct = null;
+
+async function loadGuide() {
+  const params = new URLSearchParams(location.search);
+  const token = params.get('token');
+  const statusEl = document.getElementById('status');
+
+  if (!token) {
+    statusEl.className = 'status-box error';
+    statusEl.textContent = 'Link inválido. Volvé al email que te enviamos y cliqueá el botón de descarga.';
+    return;
+  }
+
+  try {
+    const r = await fetch('/api/products/download?token=' + encodeURIComponent(token), { cache: 'no-store' });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+    if (!d.product) throw new Error('Producto no encontrado');
+    const guia = d.product.pdfData?.guiaRunning;
+    if (!guia?.data) {
+      throw new Error('La guía aún no está publicada. Escribinos por WhatsApp y la mandamos manualmente.');
+    }
+    loadedProduct = d.product;
+    document.getElementById('doc-wrapper').innerHTML = buildRunDoc(guia.data, guia.imgs || {}, '');
+    document.getElementById('doc-wrapper').style.display = 'block';
+    statusEl.style.display = 'none';
+    document.getElementById('btn-dl').disabled = false;
+  } catch (err) {
+    statusEl.className = 'status-box error';
+    statusEl.textContent = 'No pudimos cargar tu guía: ' + err.message;
+    console.error('[descarga-guia]', err);
+  }
+}
+
+async function dlPDF() {
+  const docEl = document.getElementById('doc-run');
+  if (!docEl) return;
+  const btn = document.getElementById('btn-dl');
+  const prev = btn.textContent;
+  btn.textContent = 'Generando…';
+  btn.disabled = true;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay-loader';
+  overlay.innerHTML = '<div class="overlay-loader-inner"><h4>Generando PDF…</h4><p>Esto puede tomar unos segundos</p></div>';
+  document.body.appendChild(overlay);
+
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+  try {
+    const h2c = window.html2canvas;
+    const JSPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    if (!h2c || !JSPDF) throw new Error('Faltan librerías');
+
+    const SCALE = 2, PAGE_W = 595, PAGE_H = 842;
+    const fullCanvas = await h2c(docEl, {
+      scale: SCALE, useCORS: true, allowTaint: true,
+      width: PAGE_W, windowWidth: PAGE_W,
+      logging: false, imageTimeout: 15000, backgroundColor: '#ffffff'
+    });
+
+    const pdf = new JSPDF({ orientation: 'portrait', unit: 'pt', format: [PAGE_W, PAGE_H] });
+    const pageEls = docEl.querySelectorAll('.doc-page');
+    const docTop = docEl.getBoundingClientRect().top;
+    const breaks = [];
+    pageEls.forEach(el => breaks.push(Math.round(el.getBoundingClientRect().top - docTop)));
+    breaks.push(docEl.offsetHeight);
+
+    for (let i = 0; i < breaks.length - 1; i++) {
+      const startY = breaks[i], endY = breaks[i + 1];
+      const sliceH = Math.min(endY - startY, PAGE_H);
+      if (sliceH <= 0) continue;
+      if (i > 0) pdf.addPage([PAGE_W, PAGE_H], 'portrait');
+      const sub = document.createElement('canvas');
+      sub.width = PAGE_W * SCALE; sub.height = PAGE_H * SCALE;
+      const ctx = sub.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, sub.width, sub.height);
+      ctx.drawImage(fullCanvas, 0, startY * SCALE, PAGE_W * SCALE, sliceH * SCALE, 0, 0, PAGE_W * SCALE, sliceH * SCALE);
+      pdf.addImage(sub.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, PAGE_W, PAGE_H);
+    }
+
+    pdf.save('Guia_Running_Principiantes.pdf');
+  } catch (err) {
+    alert('Error al generar el PDF: ' + err.message);
+    console.error(err);
+  } finally {
+    if (document.body.contains(overlay)) document.body.removeChild(overlay);
+    btn.textContent = prev;
+    btn.disabled = false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadGuide);
+</script>
+</body>
+</html>

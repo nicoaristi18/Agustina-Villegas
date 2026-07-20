@@ -2958,9 +2958,59 @@ function persistRun() {
   } catch(e) { console.warn('[run] persist error', e); }
 }
 
+// Debounced cloud-sync — sube el contenido de la guía al producto en KV
+// para que la página descarga-guia.html pueda renderizar la última versión.
+var _runCloudTimer = null;
+function scheduleRunCloudSync() {
+  if (_runCloudTimer) clearTimeout(_runCloudTimer);
+  _runCloudTimer = setTimeout(function() { syncRunToCloud(false); }, 2500);
+}
+
+async function syncRunToCloud(showAlert) {
+  var s = $('run-save-status');
+  if (s) { s.textContent = '☁ Subiendo…'; s.style.color = 'var(--text-muted)'; }
+  try {
+    // Traer el producto actual para no perder metadata (title, price, etc.)
+    var existing = null;
+    try {
+      var g = await fetch('/api/products/admin/runner-principiantes', { credentials:'include', cache:'no-store' });
+      if (g.ok) existing = (await g.json()).product;
+    } catch(e) {}
+    if (!existing) {
+      // Bootstrap del producto si no existe
+      existing = {
+        slug: 'runner-principiantes',
+        category: 'runners',
+        title: 'Plan de Nutrición para Runners Principiantes',
+        tagline: 'Tu guía completa para comenzar a correr sin frustrarte por la comida.',
+        price: 1500,
+        currency: 'UYU',
+        active: true,
+        pdfData: {}
+      };
+    }
+    // Guardar los campos + imágenes de la guía dentro de pdfData.guiaRunning
+    existing.pdfData = existing.pdfData || {};
+    existing.pdfData.guiaRunning = { data: collectRunData(), imgs: runImgs, updatedAt: new Date().toISOString() };
+    var r = await fetch('/api/products/admin', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ product: existing })
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    if (s) { s.textContent = '☁ Sincronizado ' + new Date().toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'}); s.style.color = 'var(--rose-dark)'; }
+    if (showAlert) alert('Guardado y sincronizado. Los próximos compradores verán esta versión.');
+  } catch(err) {
+    console.warn('[run] cloud sync error', err);
+    if (s) { s.textContent = '⚠ Guardado local solo (no se pudo sincronizar)'; s.style.color = '#a32d2d'; }
+    if (showAlert) alert('Guardado localmente, pero no se pudo sincronizar con el servidor. Volvé a intentar en unos segundos.');
+  }
+}
+
 function saveRunManual() {
   persistRun();
-  alert('Contenido guardado. La próxima persona que compre la guía recibirá esta versión.');
+  syncRunToCloud(true);
 }
 
 function resetRunToDefaults() {
@@ -3111,6 +3161,7 @@ var upRun = deb(function() {
   el.innerHTML = buildRunDoc();
   scaleDoc('pw-run', 'preview-run');
   persistRun();
+  scheduleRunCloudSync();
 }, 250);
 
 /* ============================================================
