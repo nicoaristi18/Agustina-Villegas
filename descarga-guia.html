@@ -290,40 +290,46 @@ async function dlPDF() {
     if (!h2c || !JSPDF) throw new Error('Faltan librerías');
 
     const SCALE = 2, PAGE_W = 595, PAGE_H = 842;
-    const fullCanvas = await h2c(docEl, {
-      scale: SCALE, useCORS: true, allowTaint: true,
-      width: PAGE_W, windowWidth: PAGE_W,
-      logging: false, imageTimeout: 15000, backgroundColor: '#ffffff'
-    });
-
     const pdf = new JSPDF({ orientation: 'portrait', unit: 'pt', format: [PAGE_W, PAGE_H] });
     const pageEls = docEl.querySelectorAll('.doc-page');
-    const docTop = docEl.getBoundingClientRect().top;
-    const breaks = [];
-    pageEls.forEach(el => breaks.push(Math.round(el.getBoundingClientRect().top - docTop)));
-    breaks.push(docEl.offsetHeight);
 
-    let isFirstPage = true;
     let pdfPageNum = 0; // 0 = cover (sin footer), 1+ = páginas de contenido
-    for (let i = 0; i < breaks.length - 1; i++) {
-      const startY = breaks[i], endY = breaks[i + 1];
-      const sectionH = endY - startY;
-      const pagesInSection = Math.max(1, Math.ceil(sectionH / PAGE_H));
-      for (let p = 0; p < pagesInSection; p++) {
-        const pageStartY = startY + p * PAGE_H;
-        const sliceH = Math.min(PAGE_H, endY - pageStartY);
-        if (sliceH <= 0) continue;
-        if (!isFirstPage) pdf.addPage([PAGE_W, PAGE_H], 'portrait');
-        isFirstPage = false;
-        const sub = document.createElement('canvas');
-        sub.width = PAGE_W * SCALE; sub.height = PAGE_H * SCALE;
-        const ctx = sub.getContext('2d');
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, sub.width, sub.height);
-        ctx.drawImage(fullCanvas, 0, pageStartY * SCALE, PAGE_W * SCALE, sliceH * SCALE, 0, 0, PAGE_W * SCALE, sliceH * SCALE);
-        pdf.addImage(sub.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, PAGE_W, PAGE_H);
+    let isFirst = true;
+    for (let i = 0; i < pageEls.length; i++) {
+      const pageEl = pageEls[i];
+      // Capturar SOLO este .doc-page (evita cualquier bleed entre secciones)
+      const pageCanvas = await h2c(pageEl, {
+        scale: SCALE, useCORS: true, allowTaint: true,
+        backgroundColor: '#ffffff', imageTimeout: 15000, logging: false,
+        width: PAGE_W, windowWidth: PAGE_W
+      });
+      const canvasW = pageCanvas.width;
+      const canvasH = pageCanvas.height;
+      const pageHpx = PAGE_H * SCALE;
+      const numSlices = Math.max(1, Math.ceil(canvasH / pageHpx));
 
-        // Overlay: pie de página con número (salta la portada)
+      for (let s = 0; s < numSlices; s++) {
+        if (!isFirst) pdf.addPage([PAGE_W, PAGE_H], 'portrait');
+        isFirst = false;
+        const srcY = s * pageHpx;
+        const sliceH = Math.min(pageHpx, canvasH - srcY);
+
+        if (numSlices === 1 && sliceH === canvasH && canvasH === pageHpx) {
+          // La sección entra exacta en una página del PDF
+          pdf.addImage(pageCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, PAGE_W, PAGE_H);
+        } else {
+          // Recortar un slice y pegarlo en un canvas 595×842 con fondo blanco
+          const sub = document.createElement('canvas');
+          sub.width = canvasW;
+          sub.height = pageHpx;
+          const ctx = sub.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, sub.width, sub.height);
+          ctx.drawImage(pageCanvas, 0, srcY, canvasW, sliceH, 0, 0, canvasW, sliceH);
+          pdf.addImage(sub.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, PAGE_W, PAGE_H);
+        }
+
+        // Pie de página con número (salta la portada)
         if (pdfPageNum > 0) {
           pdf.setFont('helvetica', 'normal');
           pdf.setFontSize(7.5);
