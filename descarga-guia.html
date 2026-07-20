@@ -187,9 +187,11 @@ function buildRunDoc(d, imgs, coverImg) {
   const pgEjemplosPre = page(
     '<div class="run-inline-t">' + esc(d.e30T) + '</div>' + itemsBlk(d.e30I) +
     '<div class="run-inline-t">' + esc(d.e12T) + '</div>' + itemsBlk(d.e12I), true);
+  // Después de entrenar → dividido en 2 para no cortarse a mitad de párrafo
   const pgDespues = page(
     subheading(d.desSt) + textBlk(d.desX) +
-    '<div class="run-inline-t">' + esc(d.pfT) + '</div>' + itemsBlk(d.pfI) +
+    '<div class="run-inline-t">' + esc(d.pfT) + '</div>' + itemsBlk(d.pfI), true);
+  const pgDespuesEjemplos = page(
     textBlk(d.recC) +
     '<div class="run-inline-t">' + esc(d.epT) + '</div>' + itemsBlk(d.epI), true);
 
@@ -242,7 +244,7 @@ function buildRunDoc(d, imgs, coverImg) {
   return '<div class="ag-doc" id="doc-run">' +
     cover + pgPres +
     pgImportancia + pgCarbs + pgProt + pgGras +
-    pgAntesIntro + pgAntesSimples + pgEjemplosPre + pgDespues +
+    pgAntesIntro + pgAntesSimples + pgEjemplosPre + pgDespues + pgDespuesEjemplos +
     pgCom +
     pgPautas + pgLimitarGrasas + pgLimitarFibra +
     pgHid + pgMate +
@@ -399,7 +401,9 @@ async function dlPDF() {
         sub.width = canvasW;
         sub.height = pageHpx;
         const ctx = sub.getContext('2d');
-        ctx.fillStyle = '#ffffff';
+        // Usar el color de fondo de la sección (tinted usa beige, resto blanco)
+        // para que el sobrante debajo del contenido matchee el resto de la página.
+        ctx.fillStyle = pageEl.classList.contains('tinted') ? '#FAF8F4' : '#ffffff';
         ctx.fillRect(0, 0, sub.width, sub.height);
         if (canvasH > pageHpx) {
           // Overflow leve: comprimir todo el contenido a pageHpx (leve
