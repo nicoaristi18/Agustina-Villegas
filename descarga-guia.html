@@ -369,7 +369,15 @@ async function dlPDF() {
       const canvasW = pageCanvas.width;
       const canvasH = pageCanvas.height;
       const pageHpx = PAGE_H * SCALE;
-      const numSlices = Math.max(1, Math.ceil(canvasH / pageHpx));
+      // Tolerancia: si la sección se pasa por hasta un 8%, la aplastamos en 1
+      // página en vez de generar una segunda página casi vacía. Esto pasa en
+      // móviles porque el font-rendering agrega sub-pixels y una sección de
+      // "830px" en desktop puede medir "850px" en el navegador del celular.
+      // El extra que se recorta es padding-bottom (72px), no contenido real.
+      const OVERFLOW_TOL = pageHpx * 0.08;
+      const numSlices = canvasH <= (pageHpx + OVERFLOW_TOL)
+        ? 1
+        : Math.max(1, Math.ceil(canvasH / pageHpx));
 
       for (let s = 0; s < numSlices; s++) {
         if (!isFirst) pdf.addPage([PAGE_W, PAGE_H], 'portrait');
