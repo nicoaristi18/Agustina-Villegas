@@ -290,6 +290,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 .meal-interc-col .col-title{font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:#A8706A;font-weight:500;margin-bottom:5px;padding-bottom:3px;border-bottom:1px solid rgba(169,138,130,.18);}
 .meal-interc-text{font-size:10px;font-weight:300;color:#2A2118;line-height:1.65;white-space:pre-line;}
 
+/* GUÍA RUNNING (PDF) */
+.run-p{font-size:11px;font-weight:300;color:#2A2118;line-height:1.7;margin-bottom:10px;}
+.run-list{list-style:none;margin-bottom:14px;padding-left:0;}
+.run-list li{font-size:11px;font-weight:300;color:#2A2118;padding:3px 0 3px 16px;position:relative;line-height:1.55;}
+.run-list li::before{content:'●';position:absolute;left:0;top:3px;color:#A8706A;font-size:8px;}
+.run-sub{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:#2A2118;font-style:italic;margin:22px 0 10px;padding-bottom:5px;border-bottom:1px solid rgba(169,138,130,.2);}
+.run-inline-t{font-size:11px;font-weight:500;color:#A8706A;margin:12px 0 6px;letter-spacing:.02em;}
+.run-contact-box{background:#2A2118;color:#fff;padding:22px 28px;border-radius:12px;margin-top:20px;}
+.run-contact-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:#fff;margin-bottom:14px;letter-spacing:.03em;}
+.run-contact-row{display:flex;align-items:baseline;gap:14px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1);}
+.run-contact-row:last-child{border-bottom:none;}
+.rc-label{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.45);width:72px;flex-shrink:0;}
+.rc-val{font-size:12px;color:#fff;font-weight:300;}
+
 /* IDEAS DE COMIDAS (PDF) */
 .ideas-block{margin-bottom:18px;break-inside:avoid;page-break-inside:avoid;}
 .ideas-cat-title{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:400;color:#2A2118;border-bottom:1px solid rgba(169,138,130,.2);padding-bottom:4px;margin-bottom:8px;}
@@ -320,6 +334,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
   <button class="tab-btn on" data-tab="rec" onclick="switchTab('rec')">Recetario</button>
   <button class="tab-btn" data-tab="sup" onclick="switchTab('sup')">Recomendados del s&uacute;per</button>
   <button class="tab-btn" data-tab="plan" onclick="switchTab('plan')">Plan de alimentaci&oacute;n</button>
+  <button class="tab-btn" data-tab="run" onclick="switchTab('run')">Gu&iacute;a Running</button>
 </div>
 
 <!-- TAB 1: RECETARIO -->
@@ -519,6 +534,195 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
     </div>
     <div class="prev-wrap" id="pw-plan">
       <div class="prev-inner" id="preview-plan"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: GUÍA RUNNING -->
+<div id="panel-run" class="tab-panel">
+  <div class="form-col">
+    <div class="save-bar">
+      <span id="run-save-status" style="flex:1;font-size:.7rem;color:var(--text-muted)">Cambios guardados autom&aacute;ticamente</span>
+      <button class="sb-btn" onclick="resetRunToDefaults()" title="Restaurar contenido original del PDF">Restaurar</button>
+      <button class="sb-btn primary" onclick="saveRunManual()">Guardar</button>
+    </div>
+    <p style="font-size:.7rem;color:var(--text-muted);margin-bottom:.8rem;line-height:1.5">
+      Editá cualquier bloque y quedar&aacute; guardado autom&aacute;ticamente. Este es el PDF que se env&iacute;a a quienes lo compran en la web.
+    </p>
+
+    <div class="fsec">
+      <div class="fsec-title">Portada</div>
+      <div class="fg"><label>T&iacute;tulo principal</label><input id="run-p-titulo" type="text" oninput="upRun()"></div>
+      <div class="fg"><label>Subt&iacute;tulo</label><input id="run-p-sub" type="text" oninput="upRun()"></div>
+      <div class="fg"><label>Texto de portada</label><textarea id="run-p-texto" rows="3" oninput="upRun()"></textarea></div>
+      <div class="fg"><label>Imagen de portada</label><input id="run-p-img" type="file" accept="image/*" onchange="setCover(this,'gen_cv_run','upRun')"></div>
+    </div>
+
+    <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-pres')"><span class="rcard-title">Presentaci&oacute;n</span><span class="rcard-badge">P&aacute;g. 2</span></div>
+      <div class="rcard-body" id="run-c-pres" style="display:none">
+        <div class="fg"><label>T&iacute;tulo</label><input id="run-pres-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto (p&aacute;rrafos separados por l&iacute;nea vac&iacute;a)</label><textarea id="run-pres-x" rows="10" oninput="upRun()"></textarea></div>
+      </div>
+    </div>
+
+    <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-imp')"><span class="rcard-title">&iquest;Por qu&eacute; es importante la nutrici&oacute;n?</span><span class="rcard-badge">Secci&oacute;n</span></div>
+      <div class="rcard-body" id="run-c-imp" style="display:none">
+        <div class="fg"><label>T&iacute;tulo</label><input id="run-imp-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto introductorio</label><textarea id="run-imp-x" rows="5" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Beneficios (uno por l&iacute;nea)</label><textarea id="run-imp-i" rows="6" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Texto de cierre</label><textarea id="run-imp-c" rows="3" oninput="upRun()"></textarea></div>
+      </div>
+    </div>
+
+    <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-car')"><span class="rcard-title">Carbohidratos</span></div>
+      <div class="rcard-body" id="run-c-car" style="display:none">
+        <div class="fg"><label>T&iacute;tulo</label><input id="run-car-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto</label><textarea id="run-car-x" rows="3" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Funciones (uno por l&iacute;nea)</label><textarea id="run-car-i" rows="6" oninput="upRun()"></textarea></div>
+      </div>
+    </div>
+
+    <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-pro')"><span class="rcard-title">Prote&iacute;nas</span></div>
+      <div class="rcard-body" id="run-c-pro" style="display:none">
+        <div class="fg"><label>T&iacute;tulo</label><input id="run-pro-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto</label><textarea id="run-pro-x" rows="3" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Funciones (uno por l&iacute;nea)</label><textarea id="run-pro-i" rows="6" oninput="upRun()"></textarea></div>
+      </div>
+    </div>
+
+    <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-gra')"><span class="rcard-title">Grasas</span></div>
+      <div class="rcard-body" id="run-c-gra" style="display:none">
+        <div class="fg"><label>T&iacute;tulo</label><input id="run-gra-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto</label><textarea id="run-gra-x" rows="3" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Funciones (uno por l&iacute;nea)</label><textarea id="run-gra-i" rows="6" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Cierre macronutrientes</label><textarea id="run-gra-c" rows="3" oninput="upRun()"></textarea></div>
+      </div>
+    </div>
+
+    <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-ant')"><span class="rcard-title">Qu&eacute; comer antes y despu&eacute;s</span><span class="rcard-badge">Secci&oacute;n</span></div>
+      <div class="rcard-body" id="run-c-ant" style="display:none">
+        <div class="fg"><label>T&iacute;tulo secci&oacute;n</label><input id="run-ant-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Subt&iacute;tulo &laquo;Antes&raquo;</label><input id="run-ant-st" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto intro antes</label><textarea id="run-ant-x" rows="4" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>T&iacute;tulo carbs complejos</label><input id="run-cc-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Carbs complejos (uno por l&iacute;nea)</label><textarea id="run-cc-i" rows="5" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Nota carbs complejos</label><textarea id="run-cc-n" rows="2" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>T&iacute;tulo carbs simples</label><input id="run-cs-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Carbs simples (uno por l&iacute;nea)</label><textarea id="run-cs-i" rows="5" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Nota carbs simples</label><textarea id="run-cs-n" rows="2" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Texto sobre timing</label><textarea id="run-tim" rows="4" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>T&iacute;tulo ejemplos 30-60 min</label><input id="run-e30-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Ejemplos 30-60 min (uno por l&iacute;nea)</label><textarea id="run-e30-i" rows="4" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>T&iacute;tulo ejemplos 1-2 h</label><input id="run-e12-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Ejemplos 1-2 h (uno por l&iacute;nea)</label><textarea id="run-e12-i" rows="4" oninput="upRun()"></textarea></div>
+        <hr style="border:none;border-top:1px dashed var(--border);margin:.8rem 0">
+        <div class="fg"><label>Subt&iacute;tulo &laquo;Despu&eacute;s&raquo;</label><input id="run-des-st" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto despu&eacute;s</label><textarea id="run-des-x" rows="5" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>T&iacute;tulo fuentes prote&iacute;na</label><input id="run-pf-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Fuentes prote&iacute;na (uno por l&iacute;nea)</label><textarea id="run-pf-i" rows="5" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Cierre recuperaci&oacute;n</label><textarea id="run-rec-c" rows="3" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>T&iacute;tulo ejemplos post</label><input id="run-ep-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Ejemplos post (uno por l&iacute;nea)</label><textarea id="run-ep-i" rows="5" oninput="upRun()"></textarea></div>
+      </div>
+    </div>
+
+    <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-com')"><span class="rcard-title">&iquest;C&oacute;mo saber qu&eacute; consumir?</span></div>
+      <div class="rcard-body" id="run-c-com" style="display:none">
+        <div class="fg"><label>T&iacute;tulo</label><input id="run-com-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto</label><textarea id="run-com-x" rows="8" oninput="upRun()"></textarea></div>
+      </div>
+    </div>
+
+    <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-pau')"><span class="rcard-title">Pautas d&iacute;a previo y carrera</span><span class="rcard-badge">Secci&oacute;n</span></div>
+      <div class="rcard-body" id="run-c-pau" style="display:none">
+        <div class="fg"><label>T&iacute;tulo</label><input id="run-pau-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto introductorio</label><textarea id="run-pau-x" rows="4" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Subt&iacute;tulo &laquo;El d&iacute;a previo&raquo;</label><input id="run-dp-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto d&iacute;a previo</label><textarea id="run-dp-x" rows="3" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Composici&oacute;n cena (uno por l&iacute;nea)</label><textarea id="run-dp-i" rows="4" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Cierre d&iacute;a previo</label><textarea id="run-dp-c" rows="3" oninput="upRun()"></textarea></div>
+      </div>
+    </div>
+
+    <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-lim')"><span class="rcard-title">Alimentos a limitar</span></div>
+      <div class="rcard-body" id="run-c-lim" style="display:none">
+        <div class="fg"><label>T&iacute;tulo secci&oacute;n</label><input id="run-lim-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Subt&iacute;tulo grasas</label><input id="run-lg-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto grasas</label><textarea id="run-lg-x" rows="5" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Subt&iacute;tulo fibra</label><input id="run-lf-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto fibra</label><textarea id="run-lf-x" rows="6" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Subt&iacute;tulo &laquo;Evit&aacute; pruebas nuevas&raquo;</label><input id="run-ev-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto pruebas nuevas</label><textarea id="run-ev-x" rows="3" oninput="upRun()"></textarea></div>
+      </div>
+    </div>
+
+    <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-hid')"><span class="rcard-title">Hidrataci&oacute;n</span></div>
+      <div class="rcard-body" id="run-c-hid" style="display:none">
+        <div class="fg"><label>T&iacute;tulo</label><input id="run-hid-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto introductorio</label><textarea id="run-hid-x" rows="4" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Imagen (escala color de orina)</label><input type="file" accept="image/*" onchange="setRunImg(this,'hidImg')"></div>
+        <div class="fg"><label>Texto tras la imagen</label><textarea id="run-hid-c" rows="5" oninput="upRun()"></textarea></div>
+      </div>
+    </div>
+
+    <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-mat')"><span class="rcard-title">&iquest;El mate hidrata?</span></div>
+      <div class="rcard-body" id="run-c-mat" style="display:none">
+        <div class="fg"><label>T&iacute;tulo</label><input id="run-mat-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto</label><textarea id="run-mat-x" rows="6" oninput="upRun()"></textarea></div>
+      </div>
+    </div>
+
+    <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-sup')"><span class="rcard-title">Suplementaci&oacute;n / cafe&iacute;na</span></div>
+      <div class="rcard-body" id="run-c-sup" style="display:none">
+        <div class="fg"><label>T&iacute;tulo</label><input id="run-sup-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto introductorio</label><textarea id="run-sup-x" rows="6" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Efectos (uno por l&iacute;nea)</label><textarea id="run-sup-i" rows="5" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Dosis</label><textarea id="run-sup-d" rows="2" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Advertencia</label><textarea id="run-sup-a" rows="4" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Imagen &laquo;Cantidad de cafe&iacute;na por porci&oacute;n&raquo;</label><input type="file" accept="image/*" onchange="setRunImg(this,'cafeImg')"></div>
+      </div>
+    </div>
+
+    <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-beb')"><span class="rcard-title">Bebidas deportivas</span></div>
+      <div class="rcard-body" id="run-c-beb" style="display:none">
+        <div class="fg"><label>T&iacute;tulo</label><input id="run-beb-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto introductorio</label><textarea id="run-beb-x" rows="3" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Componentes (uno por l&iacute;nea)</label><textarea id="run-beb-i" rows="4" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Texto ejemplos y contexto</label><textarea id="run-beb-e" rows="5" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>T&iacute;tulo &laquo;&Uacute;tiles cuando&raquo;</label><input id="run-bu-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Casos &uacute;tiles (uno por l&iacute;nea)</label><textarea id="run-bu-i" rows="4" oninput="upRun()"></textarea></div>
+      </div>
+    </div>
+
+    <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-ay')"><span class="rcard-title">Correr en ayunas</span></div>
+      <div class="rcard-body" id="run-c-ay" style="display:none">
+        <div class="fg"><label>T&iacute;tulo</label><input id="run-ay-t" type="text" oninput="upRun()"></div>
+        <div class="fg"><label>Texto introductorio</label><textarea id="run-ay-x" rows="7" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Consecuencias (uno por l&iacute;nea)</label><textarea id="run-ay-i" rows="6" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Texto sobre mujeres</label><textarea id="run-ay-m" rows="5" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Cierre</label><textarea id="run-ay-c" rows="3" oninput="upRun()"></textarea></div>
+      </div>
+    </div>
+
+    <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-fin')"><span class="rcard-title">Cierre y contacto</span></div>
+      <div class="rcard-body" id="run-c-fin" style="display:none">
+        <div class="fg"><label>Texto de resumen</label><textarea id="run-res-x" rows="6" oninput="upRun()"></textarea></div>
+        <div class="fg"><label>Frase de cierre</label><input id="run-cierre" type="text" oninput="upRun()"></div>
+        <div class="fg-row">
+          <div class="fg"><label>Instagram</label><input id="run-ct-ig" type="text" oninput="upRun()"></div>
+          <div class="fg"><label>Celular</label><input id="run-ct-cel" type="text" oninput="upRun()"></div>
+        </div>
+        <div class="fg"><label>Email</label><input id="run-ct-mail" type="text" oninput="upRun()"></div>
+      </div>
+    </div>
+  </div>
+  <div class="prev-col">
+    <div class="prev-toolbar">
+      <span class="prev-info" id="run-info">Gu&iacute;a de Running</span>
+      <button class="dl-btn" id="btn-dl-run" onclick="dlPDF('doc-run','Guia_Running_Principiantes.pdf','btn-dl-run')">&#8595; Descargar PDF</button>
+    </div>
+    <div class="prev-wrap" id="pw-run">
+      <div class="prev-inner" id="preview-run"></div>
     </div>
   </div>
 </div>
@@ -1925,6 +2129,337 @@ document.addEventListener('click', function(e) {
 });
 
 /* ============================================================
+   GUÍA RUNNING (PDF fijo — Agustina edita, queda guardado)
+   ============================================================ */
+var RUN_STORAGE_KEY = 'gen_running_guide_v1';
+var RUN_IMG_KEY = 'gen_running_imgs_v1';
+
+var RUN_DEFAULTS = {
+  pTitulo: 'Nutrición en corredores\nprincipiantes',
+  pSub: 'Guía práctica para dar tus primeros pasos',
+  pTexto: 'Una guía basada en evidencia científica para comenzar a correr con energía, disfrutar del proceso y cuidar tu salud.',
+
+  presT: 'Presentación',
+  presX: '¡Hola! Soy Agustina Villegas, Licenciada en Nutrición y una apasionada del running.\n\nComo corredora, sé que dar los primeros pasos en este deporte puede generar muchas dudas: ¿qué comer antes de entrenar?, ¿cómo recuperarme mejor?, ¿es necesario cambiar mi alimentación?, ¿por qué algunos días siento que no tengo energía?\n\nPor eso decidí crear esta guía. En ella reuní la información que me hubiera gustado conocer cuando empecé a correr, los errores que podría haber evitado y las estrategias nutricionales que me ayudaron a disfrutar más de cada entrenamiento y mejorar mi rendimiento.\n\nMi objetivo es brindarte herramientas simples, prácticas y basadas en evidencia científica para que puedas adaptar tu alimentación a esta nueva etapa, sin complicaciones y sin necesidad de hacer cambios extremos.\n\nEsta guía está dirigida especialmente a personas que recién comienzan a correr o que llevan poco tiempo entrenando. Espero que te acompañe en este proceso y te ayude a construir hábitos que te permitan disfrutar del camino, rendir mejor y cuidar tu salud.\n\n¡Bienvenido/a al mundo del running!',
+
+  impT: '¿Por qué es importante la nutrición en los corredores?',
+  impX: 'Cuando comenzamos a correr solemos enfocarnos en los kilómetros, el ritmo o el plan de entrenamiento. Sin embargo, existe un factor igual de importante: la alimentación.\n\nLa nutrición deportiva tiene como objetivo aportar al organismo la energía y los nutrientes necesarios para entrenar, recuperarse y adaptarse al ejercicio. Una alimentación adecuada puede ayudarte a:',
+  impI: 'Tener más energía durante los entrenamientos.\nRetrasar la aparición de la fatiga.\nMejorar el rendimiento.\nFavorecer la recuperación muscular.\nDisminuir el riesgo de lesiones y enfermedades.\nLlegar en mejores condiciones a cada entrenamiento o competencia.',
+  impC: 'Para entender cómo funciona la alimentación, primero debemos conocer los tres macronutrientes principales: carbohidratos, proteínas y grasas. Cada uno cumple funciones diferentes y todos son importantes para un corredor.',
+
+  carT: 'Carbohidratos',
+  carX: 'Los carbohidratos son la principal fuente de energía durante el ejercicio, especialmente cuando corremos a intensidades moderadas o altas.\n\nSus principales funciones son:',
+  carI: 'Aportar energía para los músculos y el cerebro.\nMantener las reservas de glucógeno en músculos e hígado.\nRetrasar la fatiga durante el ejercicio.\nEvitar que las proteínas se utilicen como fuente de energía.\nFavorecer la utilización de las grasas durante el ejercicio.\nCuando se consumen en forma de fibra, contribuyen a la salud intestinal y al buen funcionamiento de la microbiota.',
+
+  proT: 'Proteínas',
+  proX: 'Las proteínas son fundamentales para la recuperación y adaptación al entrenamiento.\n\nSus principales funciones son:',
+  proI: 'Formar y reparar músculos y otros tejidos.\nFavorecer la recuperación después del ejercicio.\nParticipar en la producción de enzimas, hormonas y anticuerpos.\nTransportar oxígeno y otros nutrientes.\nContribuir al mantenimiento del equilibrio de líquidos y del pH.\nEn situaciones específicas, también pueden utilizarse como fuente de energía.',
+
+  graT: 'Grasas',
+  graX: 'Las grasas también son un nutriente esencial y cumplen un papel importante, especialmente en actividades de larga duración y baja intensidad.\n\nSus principales funciones son:',
+  graI: 'Aportar y almacenar energía.\nFormar parte de las membranas de las células.\nFavorecer la absorción de las vitaminas A, D, E y K.\nAportar ácidos grasos esenciales (omega-3 y omega-6).\nParticipar en la regulación de procesos como la inflamación y la respuesta inmunitaria.\nProteger los órganos internos y colaborar en el aislamiento térmico del cuerpo.',
+  graC: 'Como verás, ningún macronutriente es "bueno" o "malo". Cada uno cumple funciones específicas y será más importante en determinados momentos del entrenamiento. Aprender a utilizarlos estratégicamente te permitirá entrenar con más energía, recuperarte mejor y disfrutar más del running.',
+
+  antT: 'Qué comer antes y después',
+  antSt: 'Antes de entrenar',
+  antX: 'Antes de correr, el principal protagonista son los hidratos de carbono, ya que representan la principal fuente de energía para los músculos durante el ejercicio.\n\nConocer los distintos tipos de carbohidratos te ayudará a elegir cuál conviene consumir según el momento.',
+  ccT: 'Carbohidratos complejos (ricos en fibra y/o almidón)',
+  ccI: 'Verduras\nCereales integrales\nAvena\nLegumbres\nPapa y boniato\nMaíz',
+  ccN: 'Estos alimentos aportan energía de forma más sostenida y suelen formar parte de las comidas principales.',
+  csT: 'Carbohidratos simples o con menor contenido de fibra',
+  csI: 'Pan, galletas o cereales no integrales\nCopos de maíz\nFrutas\nFrutas deshidratadas (pasas de uva, dátiles, orejones)\nMermelada, miel o azúcar\nGolosinas (solo en situaciones puntuales)',
+  csN: 'Cuando disponemos de poco tiempo antes de entrenar, suelen ser la mejor opción porque se digieren más fácilmente y permiten contar con energía disponible para el ejercicio.',
+  tim: 'Como orientación general, se recomienda consumir el pre entrenamiento entre 1 y 1 hora y media antes de correr. Sin embargo, no existe un horario único: dependerá de la cantidad de comida ingerida, tu digestión y tu tolerancia individual. Lo importante es que llegues al entrenamiento con energía y sin molestias gastrointestinales.',
+  e30T: 'Ejemplos 30 a 60 minutos antes',
+  e30I: 'Pan con mermelada o membrillo\nBanana con miel\nCereales con fruta\nDátiles o pasas de uva',
+  e12T: 'Ejemplos 1 a 2 horas antes',
+  e12I: 'Pancake de avena con miel\nYogur con cereales y fruta\nPan con queso magro',
+
+  desSt: 'Después de entrenar',
+  desX: 'Al finalizar el entrenamiento, el objetivo es comenzar la recuperación. Para ello, es importante reponer parte de la energía utilizada y aportar proteínas que favorezcan la reparación y adaptación muscular.\n\nEn la mayoría de los casos, una comida completa que incluya carbohidratos complejos y una fuente de proteína de calidad será suficiente. No es imprescindible comer inmediatamente después de entrenar; el momento dependerá de la intensidad del ejercicio y de cuándo hayas realizado tu última comida. Tras entrenamientos muy exigentes, de larga duración o competencias, sí es recomendable procurar comer dentro de las primeras horas posteriores.',
+  pfT: 'Alimentos fuente de proteína',
+  pfI: 'Huevos\nCarnes magras\nPescado\nLácteos descremados (leche, yogur y quesos)\nSoja y sus derivados (tofu, bebida de soja, soja texturizada)\nLegumbres (especialmente cuando se combinan con cereales)',
+  recC: 'Una buena recuperación te permitirá llegar en mejores condiciones al próximo entrenamiento y favorecerá las adaptaciones que tu cuerpo necesita para seguir progresando.',
+  epT: 'Ejemplos',
+  epI: 'Arroz + pollo + verduras.\nYogur con avena y fruta.\nSándwich con huevo y verduras.\nLeche o yogur + fruta + avena.\nPapa o boniato + carne o pescado.',
+
+  comT: '¿Cómo puedo saber qué debo consumir y con cuánta anticipación?',
+  comX: 'Una respuesta rápida sería que lo ideal es ir probando los alimentos. Pero te explicaré según intensidad y duración para que tú mismo lo puedas adaptar.\n\nEn entrenamientos suaves (correr a un ritmo cómodo) y de corta duración (30 a 45 minutos), no es necesario cargar con carbohidratos si la comida principal anterior ya lo tuvo. Por ejemplo: si mi almuerzo incluye arroz integral y mi entrenamiento es suave a media tarde, no es necesario consumir algo previo.\n\nEn entrenamientos más intensos (a un ritmo que me exige rendir más) o de larga duración (de 1 hora a más), lo ideal sería sumar un pre entreno de digestión más rápida, que me sirva de energía para ese entrenamiento.\n\nEl tiempo de anticipación sería el que tu toleres, prueba con 30 min a 1 hora antes de salir o puede ser incluso más tiempo, si recién estás comenzando.',
+
+  pauT: 'Pautas para el día previo y el día de la carrera',
+  pauX: 'Si querés disfrutar la carrera y rendir al máximo de tus posibilidades, la alimentación comienza mucho antes de la largada. No solo es importante qué comés el día de la carrera, sino también cómo te alimentas el día anterior.\n\nEstas recomendaciones están pensadas para carreras de 5 km y 10 km.',
+  dpT: 'El día previo',
+  dpX: 'Si la carrera es por la mañana, la cena del día anterior será una de las comidas más importantes.\n\nLo ideal es que esté compuesta por:',
+  dpI: 'Una buena porción de alimentos ricos en carbohidratos (arroz, pasta, papa, boniato o pan).\nUna fuente de proteína magra (pollo, pescado, huevo).\nUna pequeña cantidad de grasas saludables (aceite de oliva, palta o frutos secos).',
+  dpC: 'No es necesario comer grandes cantidades ni hacer una "carga de carbohidratos" para este tipo de distancias. Lo más importante es llegar con las reservas de energía completas y sin molestias digestivas.',
+
+  limT: 'Alimentos que conviene limitar',
+  lgT: 'Alimentos ricos en grasas',
+  lgX: 'Las grasas cumplen funciones muy importantes en el organismo y forman parte de una alimentación saludable. Sin embargo, enlentecen el vaciamiento gástrico y su digestión suele ser más lenta.\n\nPor este motivo, se recomienda evitar comidas muy grasas en las horas previas a la carrera, ya que pueden aumentar la sensación de pesadez o favorecer molestias gastrointestinales.\n\nSi vas a consumir alimentos ricos en grasa, es preferible hacerlo al menos 3 o 4 horas antes de la largada y siempre habiéndolo probado previamente en entrenamientos.',
+  lfT: 'Alimentos ricos en fibra',
+  lfX: 'La fibra es fundamental para la salud intestinal y debería formar parte de la alimentación habitual. Sin embargo, en las horas previas a una carrera puede no ser la mejor elección.\n\nLos alimentos con alto contenido de fibra enlentecen la digestión y aumentan el volumen del contenido intestinal. En algunas personas esto puede generar distensión abdominal, gases, sensación de pesadez o incluso aumentar la necesidad de ir al baño durante la carrera.\n\nPor eso, el día previo a la carrera (especialmente en la cena) y en el desayuno, suele ser conveniente disminuir el consumo de alimentos ricos en fibra, priorizando opciones más fáciles de digerir.\n\nLa tolerancia digestiva es individual, por lo que la mejor estrategia siempre será practicar durante los entrenamientos lo que vas a hacer el día de la competencia.',
+  evT: 'Evitá hacer pruebas nuevas',
+  evX: 'El día previo y el día de la carrera no es el momento para experimentar con alimentos, suplementos o bebidas que nunca probaste. Todo lo que vayas a consumir debería haber sido probado previamente durante los entrenamientos.',
+
+  hidT: 'Hidratación',
+  hidX: 'La hidratación también se prepara previo a la largada. Llegar deshidratado a una carrera puede disminuir el rendimiento, aumentar la sensación de fatiga y dificultar la regulación de la temperatura corporal.\n\nDurante el día previo y las horas anteriores a la carrera es fundamental consumir agua de forma regular. Una forma sencilla de asegurarte que estas bien hidratado es beber cuando tengas sed y ajustar las cantidades observando el color de la orina: un color amarillo claro suele indicar un buen estado de hidratación.',
+  hidC: 'Si tu orina está entre los niveles 1-3 significa que estás bien hidratado. Pero si estás en el 7-8 estás deshidratado y deberías consumir líquidos. Sin embargo, ten en cuenta que los efectos que tienen algunos multivitamínicos o vitaminas en el color de la orina pueden alterar el color.\n\nUna recomendación bastante sencilla sería la de consumir 1 litro de líquidos por cada 23 kg de peso corporal en adultos.',
+
+  matT: '¿El mate hidrata o deshidrata?',
+  matX: 'Es una de las preguntas más frecuentes entre los corredores.\n\nLa respuesta es que el mate sí hidrata. Aunque contiene cafeína, en personas que lo consumen habitualmente no produce una deshidratación significativa y contribuye a la ingesta diaria de líquidos.\n\nSin embargo, el mate no debería reemplazar al agua, especialmente antes de entrenamientos o competencias. Lo ideal es utilizar el agua como principal fuente de hidratación y disfrutar del mate como parte de la rutina habitual.',
+
+  supT: '¿Es necesaria la suplementación?',
+  supX: 'Para la mayoría de las personas que recién comienzan a participar en carreras de 5 o 10 km, no es necesario consumir suplementos. Una alimentación adecuada, una buena hidratación y un correcto descanso son las estrategias más importantes para rendir bien.\n\nSin embargo, existe un suplemento con sólida evidencia científica que puede mejorar el rendimiento en algunas personas: la cafeína.\n\nLa cafeína es uno de los suplementos ergogénicos más estudiados y con mayor respaldo científico. Consumida antes de una carrera, puede:',
+  supI: 'Disminuir la percepción del esfuerzo, haciendo que el ejercicio se sienta menos exigente.\nMejorar el estado de alerta, la concentración y el tiempo de reacción.\nFavorecer el rendimiento en ejercicios de resistencia y de alta intensidad, incluyendo carreras de 5 y 10 km.\nEn algunos corredores, permite mantener un ritmo más alto durante más tiempo.',
+  supD: 'Generalmente, cuando se decide utilizarla, se recomienda consumirla entre 30 y 60 minutos antes de la largada. La dosis con mayor evidencia es de 3 a 6 mg/kg de peso corporal.',
+  supA: 'Es importante recordar que cada persona responde de manera diferente a la cafeína, por lo que nunca se recomienda probarla por primera vez el día de la carrera. Siempre debe ensayarse previamente durante los entrenamientos para evaluar la tolerancia y evitar efectos como nerviosismo, molestias gastrointestinales o dificultad para dormir.',
+
+  bebT: 'Bebidas deportivas, ¿son indispensables?',
+  bebX: 'Son bebidas diseñadas para ayudar a reponer parte de lo que perdemos al transpirar durante el ejercicio.\n\nA diferencia del agua, no solo aportan líquido, sino también:',
+  bebI: 'Agua, para ayudar a mantener una buena hidratación.\nSodio, el principal electrolito que perdemos con el sudor y que favorece la reposición de líquidos.\nCarbohidratos (azúcares), que aportan energía cuando el ejercicio es prolongado o de alta intensidad.',
+  bebE: 'Algunos ejemplos son Gatorade y Powerade, aunque también existen tabletas o polvos que se disuelven en agua para preparar una bebida deportiva.\n\nPero hay algo importante: no todos los corredores las necesitan.\n\nSi vas a correr un entrenamiento o una carrera de 5 o 10 km que dura menos de una hora y las condiciones climáticas son normales, en la mayoría de los casos el agua es suficiente.',
+  buT: 'Las bebidas deportivas pueden ser útiles cuando',
+  buI: 'El ejercicio dura más de 60–90 minutos.\nHace mucho calor o hay mucha humedad.\nTranspirás en gran cantidad o perdés mucho sodio con el sudor.',
+
+  ayT: 'Correr en ayunas, ¿es bueno o perjudica mi rendimiento?',
+  ayX: 'Cada vez veo más personas que salen a correr en ayunas pensando que es una práctica saludable o que las va a ayudar a rendir mejor. Pero, ¿realmente es una buena idea?\n\nCuando salimos a correr en ayunas, nuestro cuerpo tiene menos disponibilidad de carbohidratos, que son el principal combustible para el ejercicio, especialmente cuando queremos mantener un ritmo moderado o intenso. Esto puede hacer que el entrenamiento se sienta más difícil, que aparezca la fatiga antes y que no puedas entrenar a la intensidad que realmente necesitabas.\n\nAdemás, entrenar repetidamente en ayunas, sin cubrir después las necesidades energéticas del día, puede favorecer un estado conocido como baja disponibilidad energética. Esto significa que al organismo no le queda suficiente energía para mantener correctamente funciones esenciales, porque gran parte se destina al ejercicio.\n\nEsto puede generar:',
+  ayI: 'Recuperación más lenta.\nDisminución del rendimiento.\nMayor sensación de fatiga durante el día.\nMayor riesgo de lesiones, especialmente lesiones óseas por estrés.\nAlteraciones hormonales y del ciclo menstrual en mujeres.\nDisminución de la función inmunológica, con mayor susceptibilidad a enfermarse.',
+  ayM: 'En mujeres esto cobra todavía más importancia. La evidencia muestra que somos más susceptibles a las consecuencias de una baja disponibilidad energética. No es que correr un día en ayunas vaya a generar un problema, sino que cuando esta práctica se vuelve habitual y además no se acompaña de una alimentación suficiente, pueden aparecer alteraciones del ciclo menstrual, pérdida de masa ósea y una disminución del rendimiento deportivo.\n\nLa alimentación no solo aporta combustible para correr, sino que también es la señal que le permite al cuerpo recuperarse, adaptarse y mejorar. Si entrenás con un déficit energético de forma crónica, estas adaptaciones pueden verse comprometidas, incluso aunque completes todos los entrenamientos.',
+  ayC: 'No necesariamente correr en ayuna está mal. Un trote suave de 30-45 minutos puede ser bien tolerado por algunas personas si se sienten cómodas haciéndolo. Pero si el entrenamiento es intenso, incluye series, cambios de ritmo o dura más de 60-90 minutos, entrenar en ayunas no sería mi recomendación como nutricionista.',
+
+  resX: 'En resumen, una nutrición bien planificada no solo puede ayudarte a mejorar tu rendimiento, sino también a recuperarte mejor, disfrutar más de tus entrenamientos y cuidar tu salud a largo plazo.\n\nEspero que esta guía te haya brindado herramientas útiles para dar tus primeros pasos. Si tienes un objetivo específico, estás preparando una carrera o simplemente quieres aprender a alimentarte de acuerdo con tus entrenamientos, una planificación personalizada puede marcar la diferencia.',
+  cierre: 'Será un gusto acompañarte en ese proceso.',
+  ctIg: 'lic.agustinavillegas',
+  ctCel: '099712691',
+  ctMail: 'lic.agustinavillegas@gmail.com'
+};
+
+var RUN_FIELD_MAP = {
+  'run-p-titulo':'pTitulo', 'run-p-sub':'pSub', 'run-p-texto':'pTexto',
+  'run-pres-t':'presT', 'run-pres-x':'presX',
+  'run-imp-t':'impT', 'run-imp-x':'impX', 'run-imp-i':'impI', 'run-imp-c':'impC',
+  'run-car-t':'carT', 'run-car-x':'carX', 'run-car-i':'carI',
+  'run-pro-t':'proT', 'run-pro-x':'proX', 'run-pro-i':'proI',
+  'run-gra-t':'graT', 'run-gra-x':'graX', 'run-gra-i':'graI', 'run-gra-c':'graC',
+  'run-ant-t':'antT', 'run-ant-st':'antSt', 'run-ant-x':'antX',
+  'run-cc-t':'ccT', 'run-cc-i':'ccI', 'run-cc-n':'ccN',
+  'run-cs-t':'csT', 'run-cs-i':'csI', 'run-cs-n':'csN',
+  'run-tim':'tim', 'run-e30-t':'e30T', 'run-e30-i':'e30I', 'run-e12-t':'e12T', 'run-e12-i':'e12I',
+  'run-des-st':'desSt', 'run-des-x':'desX',
+  'run-pf-t':'pfT', 'run-pf-i':'pfI', 'run-rec-c':'recC', 'run-ep-t':'epT', 'run-ep-i':'epI',
+  'run-com-t':'comT', 'run-com-x':'comX',
+  'run-pau-t':'pauT', 'run-pau-x':'pauX',
+  'run-dp-t':'dpT', 'run-dp-x':'dpX', 'run-dp-i':'dpI', 'run-dp-c':'dpC',
+  'run-lim-t':'limT', 'run-lg-t':'lgT', 'run-lg-x':'lgX', 'run-lf-t':'lfT', 'run-lf-x':'lfX',
+  'run-ev-t':'evT', 'run-ev-x':'evX',
+  'run-hid-t':'hidT', 'run-hid-x':'hidX', 'run-hid-c':'hidC',
+  'run-mat-t':'matT', 'run-mat-x':'matX',
+  'run-sup-t':'supT', 'run-sup-x':'supX', 'run-sup-i':'supI', 'run-sup-d':'supD', 'run-sup-a':'supA',
+  'run-beb-t':'bebT', 'run-beb-x':'bebX', 'run-beb-i':'bebI', 'run-beb-e':'bebE',
+  'run-bu-t':'buT', 'run-bu-i':'buI',
+  'run-ay-t':'ayT', 'run-ay-x':'ayX', 'run-ay-i':'ayI', 'run-ay-m':'ayM', 'run-ay-c':'ayC',
+  'run-res-x':'resX', 'run-cierre':'cierre',
+  'run-ct-ig':'ctIg', 'run-ct-cel':'ctCel', 'run-ct-mail':'ctMail'
+};
+
+var runImgs = { hidImg:'', cafeImg:'' };
+
+function loadRunData() {
+  var data = {};
+  try {
+    var raw = localStorage.getItem(RUN_STORAGE_KEY);
+    if (raw) data = JSON.parse(raw);
+  } catch(e) {}
+  Object.keys(RUN_DEFAULTS).forEach(function(k) {
+    if (data[k] === undefined) data[k] = RUN_DEFAULTS[k];
+  });
+  try {
+    var rawI = localStorage.getItem(RUN_IMG_KEY);
+    if (rawI) runImgs = JSON.parse(rawI);
+  } catch(e) {}
+  Object.keys(RUN_FIELD_MAP).forEach(function(id) {
+    var el = $(id);
+    if (el) el.value = data[RUN_FIELD_MAP[id]] || '';
+  });
+}
+
+function collectRunData() {
+  var d = {};
+  Object.keys(RUN_FIELD_MAP).forEach(function(id) {
+    var el = $(id);
+    d[RUN_FIELD_MAP[id]] = el ? el.value : RUN_DEFAULTS[RUN_FIELD_MAP[id]];
+  });
+  return d;
+}
+
+function persistRun() {
+  try {
+    localStorage.setItem(RUN_STORAGE_KEY, JSON.stringify(collectRunData()));
+    localStorage.setItem(RUN_IMG_KEY, JSON.stringify(runImgs));
+    var s = $('run-save-status');
+    if (s) {
+      s.textContent = '✓ Guardado ' + new Date().toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'});
+      s.style.color = 'var(--rose-dark)';
+    }
+  } catch(e) { console.warn('[run] persist error', e); }
+}
+
+function saveRunManual() {
+  persistRun();
+  alert('Contenido guardado. La próxima persona que compre la guía recibirá esta versión.');
+}
+
+function resetRunToDefaults() {
+  if (!confirm('¿Restaurar el contenido original del PDF? Se perderán los cambios que hayas hecho.')) return;
+  localStorage.removeItem(RUN_STORAGE_KEY);
+  localStorage.removeItem(RUN_IMG_KEY);
+  runImgs = { hidImg:'', cafeImg:'' };
+  loadRunData();
+  upRun();
+}
+
+function setRunImg(inp, key) {
+  var f = inp.files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function(e) {
+    runImgs[key] = e.target.result;
+    upRun();
+  };
+  r.readAsDataURL(f);
+}
+
+function buildRunDoc() {
+  var d = collectRunData();
+  var coverImg = localStorage.getItem('gen_cv_run') || '';
+  var logo = getLogo();
+
+  // Portada
+  var coverTop = logo
+    ? '<img class="cover-logo-img" src="'+logo+'" alt="Agustina Villegas">'
+    : '<div class="cover-sig">Lic. Agustina Villegas &middot; Nutricionista</div>';
+  var cover = '<div class="doc-page page-cover">' +
+    (coverImg ? '<img class="cover-bg-img" src="'+coverImg+'" alt="">' : '') +
+    '<div class="cover-overlay"></div>' +
+    '<div class="cover-body">' +
+    coverTop +
+    '<div class="cover-space"></div>' +
+    '<div class="cover-line"></div>' +
+    '<div class="cover-title">' + esc(d.pTitulo) + '</div>' +
+    (d.pSub ? '<div class="cover-sub">' + esc(d.pSub) + '</div>' : '') +
+    (d.pTexto ? '<div class="cover-sub2" style="max-width:400px;line-height:1.55;margin-top:8px">' + esc(d.pTexto) + '</div>' : '') +
+    '<div class="cover-foot"><span class="cover-date">Guía para principiantes</span><span class="cover-brand">Agustina Villegas</span></div>' +
+    '</div></div>';
+
+  var hdr = pgHdr('Guía Running', '');
+
+  function textBlk(txt) {
+    if (!txt) return '';
+    return '<div class="run-p">' + esc(txt).replace(/\n\n/g, '</div><div class="run-p">').replace(/\n/g, '<br>') + '</div>';
+  }
+  function itemsBlk(items) {
+    if (!items || !items.trim()) return '';
+    return '<ul class="run-list">' + items.split('\n').map(function(l){return l.trim();}).filter(Boolean).map(function(l){return '<li>'+esc(l)+'</li>';}).join('') + '</ul>';
+  }
+  function heading(t) { return '<div class="sec-label first">'+esc(t)+'</div>'; }
+  function subheading(t) { return '<div class="run-sub">'+esc(t)+'</div>'; }
+
+  // Página presentación
+  var pgPres = '<div class="doc-page">' + hdr +
+    heading(d.presT) + textBlk(d.presX) + '</div>';
+
+  // Importancia + macros (fluye)
+  var pgImp = '<div class="doc-page">' + hdr +
+    heading(d.impT) + textBlk(d.impX) + itemsBlk(d.impI) + textBlk(d.impC) +
+    subheading(d.carT) + textBlk(d.carX) + itemsBlk(d.carI) +
+    subheading(d.proT) + textBlk(d.proX) + itemsBlk(d.proI) +
+    subheading(d.graT) + textBlk(d.graX) + itemsBlk(d.graI) +
+    textBlk(d.graC) +
+    '</div>';
+
+  // Antes y después
+  var pgAnt = '<div class="doc-page" style="background:#FAF8F4">' + hdr +
+    heading(d.antT) +
+    subheading(d.antSt) + textBlk(d.antX) +
+    '<div class="run-inline-t">'+esc(d.ccT)+'</div>' + itemsBlk(d.ccI) + textBlk(d.ccN) +
+    '<div class="run-inline-t">'+esc(d.csT)+'</div>' + itemsBlk(d.csI) + textBlk(d.csN) +
+    textBlk(d.tim) +
+    '<div class="run-inline-t">'+esc(d.e30T)+'</div>' + itemsBlk(d.e30I) +
+    '<div class="run-inline-t">'+esc(d.e12T)+'</div>' + itemsBlk(d.e12I) +
+    subheading(d.desSt) + textBlk(d.desX) +
+    '<div class="run-inline-t">'+esc(d.pfT)+'</div>' + itemsBlk(d.pfI) +
+    textBlk(d.recC) +
+    '<div class="run-inline-t">'+esc(d.epT)+'</div>' + itemsBlk(d.epI) +
+    '</div>';
+
+  // ¿Cómo saber?
+  var pgCom = '<div class="doc-page">' + hdr +
+    heading(d.comT) + textBlk(d.comX) + '</div>';
+
+  // Pautas
+  var pgPau = '<div class="doc-page">' + hdr +
+    heading(d.pauT) + textBlk(d.pauX) +
+    subheading(d.dpT) + textBlk(d.dpX) + itemsBlk(d.dpI) + textBlk(d.dpC) +
+    subheading(d.limT) +
+    '<div class="run-inline-t">'+esc(d.lgT)+'</div>' + textBlk(d.lgX) +
+    '<div class="run-inline-t">'+esc(d.lfT)+'</div>' + textBlk(d.lfX) +
+    '<div class="run-inline-t">'+esc(d.evT)+'</div>' + textBlk(d.evX) +
+    '</div>';
+
+  // Hidratación (con imagen)
+  var hidImgHtml = runImgs.hidImg
+    ? '<div style="margin:18px 0;text-align:center"><img src="'+runImgs.hidImg+'" style="max-width:100%;max-height:180px;border-radius:8px"></div>'
+    : '<div style="margin:18px 0;padding:20px;border:1px dashed rgba(169,138,130,.35);border-radius:8px;text-align:center;color:#8C7E78;font-size:10px;font-style:italic">Cargá una imagen (escala de color de orina)</div>';
+  var pgHid = '<div class="doc-page" style="background:#FAF8F4">' + hdr +
+    heading(d.hidT) + textBlk(d.hidX) + hidImgHtml + textBlk(d.hidC) +
+    subheading(d.matT) + textBlk(d.matX) +
+    '</div>';
+
+  // Suplementación
+  var cafeImgHtml = runImgs.cafeImg
+    ? '<div style="margin:14px 0;text-align:center"><img src="'+runImgs.cafeImg+'" style="max-width:100%;max-height:200px;border-radius:8px"></div>'
+    : '<div style="margin:14px 0;padding:16px;border:1px dashed rgba(169,138,130,.35);border-radius:8px;text-align:center;color:#8C7E78;font-size:10px;font-style:italic">Cargá la imagen «Cantidad de cafeína por porción»</div>';
+  var pgSup = '<div class="doc-page">' + hdr +
+    heading(d.supT) + textBlk(d.supX) + itemsBlk(d.supI) +
+    textBlk(d.supD) + cafeImgHtml + textBlk(d.supA) +
+    '</div>';
+
+  // Bebidas deportivas
+  var pgBeb = '<div class="doc-page">' + hdr +
+    heading(d.bebT) + textBlk(d.bebX) + itemsBlk(d.bebI) + textBlk(d.bebE) +
+    '<div class="run-inline-t">'+esc(d.buT)+'</div>' + itemsBlk(d.buI) +
+    '</div>';
+
+  // Ayunas
+  var pgAy = '<div class="doc-page" style="background:#FAF8F4">' + hdr +
+    heading(d.ayT) + textBlk(d.ayX) + itemsBlk(d.ayI) + textBlk(d.ayM) + textBlk(d.ayC) +
+    '</div>';
+
+  // Cierre + contacto
+  var pgFin = '<div class="doc-page">' + hdr +
+    heading('En resumen') + textBlk(d.resX) +
+    '<div style="margin:26px 0 20px;font-family:\'Cormorant Garamond\',serif;font-size:20px;color:#A8706A;font-style:italic;text-align:center">'+esc(d.cierre)+'</div>' +
+    '<div class="run-contact-box">' +
+    '<div class="run-contact-title">Contacto</div>' +
+    (d.ctIg ? '<div class="run-contact-row"><span class="rc-label">Instagram</span><span class="rc-val">@'+esc(d.ctIg)+'</span></div>' : '') +
+    (d.ctCel ? '<div class="run-contact-row"><span class="rc-label">Celular</span><span class="rc-val">'+esc(d.ctCel)+'</span></div>' : '') +
+    (d.ctMail ? '<div class="run-contact-row"><span class="rc-label">Email</span><span class="rc-val">'+esc(d.ctMail)+'</span></div>' : '') +
+    '</div>' +
+    '</div>';
+
+  return '<div class="ag-doc" id="doc-run">' +
+    cover + pgPres + pgImp + pgAnt + pgCom + pgPau + pgHid + pgSup + pgBeb + pgAy + pgFin +
+    '</div>';
+}
+
+var upRun = deb(function() {
+  var el = $('preview-run');
+  if (!el) return;
+  el.innerHTML = buildRunDoc();
+  scaleDoc('pw-run', 'preview-run');
+  persistRun();
+}, 250);
+
+/* ============================================================
    INIT
    ============================================================ */
 /* TABLA SEMANAL */
@@ -1980,15 +2515,18 @@ document.addEventListener('DOMContentLoaded', function() {
   renderIdeasForm();
   initTabla();
   initSavesUI();
+  loadRunData();
   upRec();
   upSup();
   upPlan();
+  upRun();
 });
 
 window.addEventListener('resize', function() {
   scaleDoc('pw-rec', 'preview-rec');
   scaleDoc('pw-sup', 'preview-sup');
   scaleDoc('pw-plan', 'preview-plan');
+  scaleDoc('pw-run', 'preview-run');
 });
 </script>
 </body>
