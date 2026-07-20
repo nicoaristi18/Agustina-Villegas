@@ -38,8 +38,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 /* === PDF DOC STYLES (mirror de generador.html) === */
 .ag-doc{width:595px;font-family:'DM Sans',sans-serif;color:#2A2118;background:#fff;max-width:100%;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,.08);}
 .ag-doc *{box-sizing:border-box;}
-.doc-page{width:595px;min-height:842px;padding:52px 58px;position:relative;background:#fff;break-before:page;page-break-before:always;max-width:100%;}
+.doc-page{width:595px;padding:52px 58px 72px;position:relative;background:#fff;break-before:page;page-break-before:always;max-width:100%;min-height:auto;}
 .doc-page:first-child{break-before:auto;page-break-before:auto;}
+.doc-page.tinted{background:#FAF8F4;}
 
 .page-cover{padding:0;background:#8B5550;height:842px;min-height:842px;overflow:hidden;}
 .cover-bg-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;}
@@ -146,62 +147,71 @@ function buildRunDoc(d, imgs, coverImg) {
 
   const hdr = pgHdr('Guía Running', '');
 
-  const pgPres = '<div class="doc-page">' + hdr + heading(d.presT) + textBlk(d.presX) + '</div>';
+  // Helper: envuelve contenido en una .doc-page con header estándar
+  const page = (bodyHtml, tinted) => '<div class="doc-page' + (tinted ? ' tinted' : '') + '">' + hdr + bodyHtml + '</div>';
 
-  const pgImp = '<div class="doc-page">' + hdr +
-    heading(d.impT) + textBlk(d.impX) + itemsBlk(d.impI) + textBlk(d.impC) +
-    subheading(d.carT) + textBlk(d.carX) + itemsBlk(d.carI) +
-    subheading(d.proT) + textBlk(d.proX) + itemsBlk(d.proI) +
-    subheading(d.graT) + textBlk(d.graX) + itemsBlk(d.graI) +
-    textBlk(d.graC) + '</div>';
+  // Presentación
+  const pgPres = page(heading(d.presT) + textBlk(d.presX));
 
-  const pgAnt = '<div class="doc-page" style="background:#FAF8F4">' + hdr +
+  // Importancia → 4 páginas (intro / carbs / proteínas / grasas+cierre)
+  const pgImportancia = page(heading(d.impT) + textBlk(d.impX) + itemsBlk(d.impI) + textBlk(d.impC), true);
+  const pgCarbs = page(heading(d.carT) + textBlk(d.carX) + itemsBlk(d.carI));
+  const pgProt = page(heading(d.proT) + textBlk(d.proX) + itemsBlk(d.proI));
+  const pgGras = page(heading(d.graT) + textBlk(d.graX) + itemsBlk(d.graI) + textBlk(d.graC));
+
+  // Antes/después → dividido para que no se corte
+  const pgAntesIntro = page(
     heading(d.antT) +
     subheading(d.antSt) + textBlk(d.antX) +
-    '<div class="run-inline-t">' + esc(d.ccT) + '</div>' + itemsBlk(d.ccI) + textBlk(d.ccN) +
+    '<div class="run-inline-t">' + esc(d.ccT) + '</div>' + itemsBlk(d.ccI) + textBlk(d.ccN), true);
+  const pgAntesSimples = page(
     '<div class="run-inline-t">' + esc(d.csT) + '</div>' + itemsBlk(d.csI) + textBlk(d.csN) +
-    textBlk(d.tim) +
+    textBlk(d.tim), true);
+  const pgEjemplosPre = page(
     '<div class="run-inline-t">' + esc(d.e30T) + '</div>' + itemsBlk(d.e30I) +
-    '<div class="run-inline-t">' + esc(d.e12T) + '</div>' + itemsBlk(d.e12I) +
+    '<div class="run-inline-t">' + esc(d.e12T) + '</div>' + itemsBlk(d.e12I), true);
+  const pgDespues = page(
     subheading(d.desSt) + textBlk(d.desX) +
     '<div class="run-inline-t">' + esc(d.pfT) + '</div>' + itemsBlk(d.pfI) +
     textBlk(d.recC) +
-    '<div class="run-inline-t">' + esc(d.epT) + '</div>' + itemsBlk(d.epI) +
-    '</div>';
+    '<div class="run-inline-t">' + esc(d.epT) + '</div>' + itemsBlk(d.epI), true);
 
-  const pgCom = '<div class="doc-page">' + hdr + heading(d.comT) + textBlk(d.comX) + '</div>';
+  // Cómo saber
+  const pgCom = page(heading(d.comT) + textBlk(d.comX));
 
-  const pgPau = '<div class="doc-page">' + hdr +
-    heading(d.pauT) + textBlk(d.pauX) +
-    subheading(d.dpT) + textBlk(d.dpX) + itemsBlk(d.dpI) + textBlk(d.dpC) +
-    subheading(d.limT) +
-    '<div class="run-inline-t">' + esc(d.lgT) + '</div>' + textBlk(d.lgX) +
+  // Pautas día previo y carrera → dividido
+  const pgPautas = page(heading(d.pauT) + textBlk(d.pauX) +
+    subheading(d.dpT) + textBlk(d.dpX) + itemsBlk(d.dpI) + textBlk(d.dpC));
+  const pgLimitarGrasas = page(subheading(d.limT) +
+    '<div class="run-inline-t">' + esc(d.lgT) + '</div>' + textBlk(d.lgX));
+  const pgLimitarFibra = page(
     '<div class="run-inline-t">' + esc(d.lfT) + '</div>' + textBlk(d.lfX) +
-    '<div class="run-inline-t">' + esc(d.evT) + '</div>' + textBlk(d.evX) +
-    '</div>';
+    '<div class="run-inline-t">' + esc(d.evT) + '</div>' + textBlk(d.evX));
 
+  // Hidratación (con imagen)
   const hidImgHtml = imgs.hidImg
     ? '<div style="margin:18px 0;text-align:center"><img src="' + imgs.hidImg + '" style="max-width:100%;max-height:180px;border-radius:8px"></div>'
     : '';
-  const pgHid = '<div class="doc-page" style="background:#FAF8F4">' + hdr +
-    heading(d.hidT) + textBlk(d.hidX) + hidImgHtml + textBlk(d.hidC) +
-    subheading(d.matT) + textBlk(d.matX) + '</div>';
+  const pgHid = page(heading(d.hidT) + textBlk(d.hidX) + hidImgHtml + textBlk(d.hidC), true);
+  const pgMate = page(subheading(d.matT) + textBlk(d.matX), true);
 
+  // Suplementación (con imagen cafeína)
   const cafeImgHtml = imgs.cafeImg
     ? '<div style="margin:14px 0;text-align:center"><img src="' + imgs.cafeImg + '" style="max-width:100%;max-height:200px;border-radius:8px"></div>'
     : '';
-  const pgSup = '<div class="doc-page">' + hdr +
-    heading(d.supT) + textBlk(d.supX) + itemsBlk(d.supI) +
-    textBlk(d.supD) + cafeImgHtml + textBlk(d.supA) + '</div>';
+  const pgSup = page(heading(d.supT) + textBlk(d.supX) + itemsBlk(d.supI));
+  const pgSupDosis = page(textBlk(d.supD) + cafeImgHtml + textBlk(d.supA));
 
-  const pgBeb = '<div class="doc-page">' + hdr +
-    heading(d.bebT) + textBlk(d.bebX) + itemsBlk(d.bebI) + textBlk(d.bebE) +
-    '<div class="run-inline-t">' + esc(d.buT) + '</div>' + itemsBlk(d.buI) + '</div>';
+  // Bebidas deportivas
+  const pgBeb = page(heading(d.bebT) + textBlk(d.bebX) + itemsBlk(d.bebI) + textBlk(d.bebE) +
+    '<div class="run-inline-t">' + esc(d.buT) + '</div>' + itemsBlk(d.buI));
 
-  const pgAy = '<div class="doc-page" style="background:#FAF8F4">' + hdr +
-    heading(d.ayT) + textBlk(d.ayX) + itemsBlk(d.ayI) + textBlk(d.ayM) + textBlk(d.ayC) + '</div>';
+  // Ayunas → dividido
+  const pgAy1 = page(heading(d.ayT) + textBlk(d.ayX) + itemsBlk(d.ayI), true);
+  const pgAy2 = page(textBlk(d.ayM) + textBlk(d.ayC), true);
 
-  const pgFin = '<div class="doc-page">' + hdr +
+  // Cierre + contacto
+  const pgFin = page(
     heading('En resumen') + textBlk(d.resX) +
     '<div style="margin:26px 0 20px;font-family:\'Cormorant Garamond\',serif;font-size:20px;color:#A8706A;font-style:italic;text-align:center">' + esc(d.cierre) + '</div>' +
     '<div class="run-contact-box">' +
@@ -209,10 +219,19 @@ function buildRunDoc(d, imgs, coverImg) {
     (d.ctIg ? '<div class="run-contact-row"><span class="rc-label">Instagram</span><span class="rc-val">@' + esc(d.ctIg) + '</span></div>' : '') +
     (d.ctCel ? '<div class="run-contact-row"><span class="rc-label">Celular</span><span class="rc-val">' + esc(d.ctCel) + '</span></div>' : '') +
     (d.ctMail ? '<div class="run-contact-row"><span class="rc-label">Email</span><span class="rc-val">' + esc(d.ctMail) + '</span></div>' : '') +
-    '</div></div>';
+    '</div>');
 
   return '<div class="ag-doc" id="doc-run">' +
-    cover + pgPres + pgImp + pgAnt + pgCom + pgPau + pgHid + pgSup + pgBeb + pgAy + pgFin +
+    cover + pgPres +
+    pgImportancia + pgCarbs + pgProt + pgGras +
+    pgAntesIntro + pgAntesSimples + pgEjemplosPre + pgDespues +
+    pgCom +
+    pgPautas + pgLimitarGrasas + pgLimitarFibra +
+    pgHid + pgMate +
+    pgSup + pgSupDosis +
+    pgBeb +
+    pgAy1 + pgAy2 +
+    pgFin +
     '</div>';
 }
 
@@ -285,11 +304,10 @@ async function dlPDF() {
     breaks.push(docEl.offsetHeight);
 
     let isFirstPage = true;
+    let pdfPageNum = 0; // 0 = cover (sin footer), 1+ = páginas de contenido
     for (let i = 0; i < breaks.length - 1; i++) {
       const startY = breaks[i], endY = breaks[i + 1];
       const sectionH = endY - startY;
-      // Si la sección es más alta que una página, la partimos en tantas páginas
-      // como sea necesario (así no se pierde contenido cortado).
       const pagesInSection = Math.max(1, Math.ceil(sectionH / PAGE_H));
       for (let p = 0; p < pagesInSection; p++) {
         const pageStartY = startY + p * PAGE_H;
@@ -304,6 +322,18 @@ async function dlPDF() {
         ctx.fillRect(0, 0, sub.width, sub.height);
         ctx.drawImage(fullCanvas, 0, pageStartY * SCALE, PAGE_W * SCALE, sliceH * SCALE, 0, 0, PAGE_W * SCALE, sliceH * SCALE);
         pdf.addImage(sub.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, PAGE_W, PAGE_H);
+
+        // Overlay: pie de página con número (salta la portada)
+        if (pdfPageNum > 0) {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(7.5);
+          pdf.setTextColor(140, 126, 120); // #8C7E78
+          pdf.text('Guía de Nutrición para Runners Principiantes · Lic. Agustina Villegas', PAGE_W / 2, PAGE_H - 28, { align: 'center' });
+          pdf.setFontSize(8);
+          pdf.setTextColor(168, 112, 106); // #A8706A
+          pdf.text(String(pdfPageNum), PAGE_W / 2, PAGE_H - 16, { align: 'center' });
+        }
+        pdfPageNum++;
       }
     }
 
