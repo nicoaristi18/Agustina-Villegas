@@ -255,32 +255,24 @@
   </div>
 </footer>
 
-<!-- ===== MODAL COMPRA (beta: sin pago, envío directo por email) ===== -->
+<!-- ===== MODAL COMPRA (con MercadoPago) ===== -->
 <div class="purchase-modal" id="purchaseModal" onclick="if(event.target.id==='purchaseModal')closePurchaseModal()">
   <div class="purchase-modal-inner">
-    <div id="purchase-step-form">
-      <h3>Recibí el plan por email</h3>
-      <p class="intro">Completá tus datos y te llega la guía a tu correo al instante. <strong>Beta gratuita</strong> — próximamente con pago online.</p>
-      <div class="purchase-field">
-        <label>Tu nombre</label>
-        <input id="buyer-name" type="text" placeholder="María García" autocomplete="name">
-      </div>
-      <div class="purchase-field">
-        <label>Tu email</label>
-        <input id="buyer-email" type="email" placeholder="tu@email.com" autocomplete="email">
-      </div>
-      <div class="purchase-buttons">
-        <button class="cancel" onclick="closePurchaseModal()">Cancelar</button>
-        <button class="confirm" id="btn-submit-purchase" onclick="submitPurchase()">Recibir la guía →</button>
-      </div>
-      <div class="purchase-note">📧 Vamos a mandarte un email con un link para descargar la guía en PDF.</div>
+    <h3>Comprar el plan</h3>
+    <p class="intro">Completá tus datos y te llevamos a MercadoPago para pagar. Al confirmarse el pago te llega la guía en PDF a tu correo al instante.</p>
+    <div class="purchase-field">
+      <label>Tu nombre</label>
+      <input id="buyer-name" type="text" placeholder="María García" autocomplete="name">
     </div>
-    <div id="purchase-step-success" style="display:none;text-align:center;padding:1rem 0;">
-      <div style="font-size:3rem;margin-bottom:.6rem;">✉️</div>
-      <h3 style="margin-bottom:.6rem;">¡Listo!</h3>
-      <p class="intro" style="margin-bottom:1.4rem;">Te enviamos un email a <strong id="success-email"></strong> con el link para descargar tu guía. Revisá también la carpeta de <em>Spam / Promociones</em> por las dudas.</p>
-      <button class="confirm" style="padding:.85rem 2rem;border-radius:50px;font-family:inherit;font-size:.9rem;font-weight:500;cursor:pointer;border:none;background:linear-gradient(135deg,#A8706A,#8B5550);color:white;" onclick="closePurchaseModal()">Cerrar</button>
+    <div class="purchase-field">
+      <label>Tu email</label>
+      <input id="buyer-email" type="email" placeholder="tu@email.com" autocomplete="email">
     </div>
+    <div class="purchase-buttons">
+      <button class="cancel" onclick="closePurchaseModal()">Cancelar</button>
+      <button class="confirm" id="btn-submit-purchase" onclick="submitPurchase()">Ir a pagar →</button>
+    </div>
+    <div class="purchase-note">💳 Pago 100% seguro con MercadoPago. Aceptamos tarjeta de crédito y débito.</div>
   </div>
 </div>
 
@@ -314,11 +306,6 @@ function openPurchaseModal() {
 }
 function closePurchaseModal() {
   document.getElementById('purchaseModal').classList.remove('open');
-  // Resetear al step del form para la próxima apertura
-  setTimeout(() => {
-    document.getElementById('purchase-step-form').style.display = 'block';
-    document.getElementById('purchase-step-success').style.display = 'none';
-  }, 300);
 }
 async function submitPurchase() {
   const name = document.getElementById('buyer-name').value.trim();
@@ -333,23 +320,21 @@ async function submitPurchase() {
   }
   const btn = document.getElementById('btn-submit-purchase');
   const prev = btn.textContent;
-  btn.textContent = 'Enviando…';
+  btn.textContent = 'Conectando con MercadoPago…';
   btn.disabled = true;
   try {
-    const r = await fetch('/api/products/purchase', {
+    const r = await fetch('/api/products/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, slug: 'runner-principiantes' })
     });
     const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
-    document.getElementById('success-email').textContent = email;
-    document.getElementById('purchase-step-form').style.display = 'none';
-    document.getElementById('purchase-step-success').style.display = 'block';
+    if (!r.ok || !d.init_point) throw new Error(d.error || `HTTP ${r.status}`);
+    // Redirect a MercadoPago
+    window.location.href = d.init_point;
   } catch (err) {
-    alert('No pudimos procesar tu pedido: ' + err.message + '\n\nEscribinos por WhatsApp y te lo mandamos manualmente.');
-    console.error('[purchase]', err);
-  } finally {
+    alert('No pudimos iniciar el pago: ' + err.message + '\n\nSi el problema persiste, escribinos por WhatsApp.');
+    console.error('[checkout]', err);
     btn.textContent = prev;
     btn.disabled = false;
   }

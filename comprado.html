@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Gracias por tu compra · Agustina Villegas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --cream:#FAF8F4;--cream2:#F5F0E8;--blush:#F0E6DF;
+  --rose:#C9958E;--rose-dark:#A8706A;--rose-deep:#8B5550;
+  --text:#2A2118;--text-muted:#8C7E78;
+  --border:rgba(169,138,130,.15);
+  --green:#5C8A5F;
+  --yellow:#B98D2F;
+  --red:#A34747;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem;line-height:1.55;}
+.card{background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(42,33,24,.08);max-width:520px;width:100%;padding:2.5rem 2rem;text-align:center;}
+.icon{font-size:3.5rem;margin-bottom:.8rem;line-height:1;}
+h1{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:400;color:var(--text);margin-bottom:.6rem;}
+h1 em{color:var(--rose-dark);font-style:italic;}
+.subtitle{color:var(--text-muted);font-size:.95rem;margin-bottom:1.6rem;}
+.email-box{background:var(--cream);border-radius:10px;padding:1rem 1.2rem;margin:1.4rem 0;font-size:.9rem;color:var(--text);}
+.email-box strong{color:var(--rose-dark);word-break:break-all;}
+.note{font-size:.78rem;color:var(--text-muted);margin-top:1.2rem;line-height:1.6;}
+.btn-row{display:flex;gap:.6rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap;}
+.btn{padding:.75rem 1.5rem;border-radius:50px;font-family:inherit;font-size:.87rem;font-weight:500;cursor:pointer;border:none;text-decoration:none;display:inline-block;transition:transform .15s;}
+.btn:active{transform:scale(0.97);}
+.btn-primary{background:linear-gradient(135deg,var(--rose-dark),var(--rose-deep));color:#fff;}
+.btn-secondary{background:transparent;border:1.5px solid rgba(168,112,106,.25);color:var(--text);}
+.status-loading{color:var(--text-muted);font-size:.9rem;padding:2rem 0;}
+.spinner{display:inline-block;width:20px;height:20px;border:2.5px solid rgba(168,112,106,.2);border-top-color:var(--rose-dark);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:.5rem;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.state-error .icon{color:var(--red);}
+.state-pending .icon{color:var(--yellow);}
+.state-approved .icon{color:var(--green);}
+</style>
+</head>
+<body>
+
+<div class="card" id="card">
+  <div class="status-loading" id="loading">
+    <span class="spinner"></span>Verificando tu pago…
+  </div>
+
+  <div id="content-approved" style="display:none">
+    <div class="icon">✅</div>
+    <h1>¡Compra <em>confirmada</em>!</h1>
+    <p class="subtitle">Gracias por tu compra. Tu guía ya está en camino.</p>
+    <div class="email-box">
+      📧 Te enviamos un email a <strong id="email-approved"></strong> con el link para descargar la guía en PDF.
+    </div>
+    <p class="note">Si no lo ves en tu bandeja de entrada, revisá <em>Spam</em> o <em>Promociones</em>. El link no expira, guardalo bien.</p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="runners.html">Volver al inicio</a>
+    </div>
+  </div>
+
+  <div id="content-pending" style="display:none">
+    <div class="icon">⏳</div>
+    <h1>Pago <em>pendiente</em></h1>
+    <p class="subtitle">Tu pago aún se está procesando. En cuanto se confirme te enviamos la guía por email.</p>
+    <p class="note">Esto suele resolverse en pocos minutos. Si pasa mucho tiempo, escribinos por WhatsApp.</p>
+    <div class="btn-row">
+      <a class="btn btn-secondary" href="runners.html">Volver al inicio</a>
+      <a class="btn btn-primary" href="https://wa.me/59899712691" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+    </div>
+  </div>
+
+  <div id="content-failed" style="display:none">
+    <div class="icon">✕</div>
+    <h1>Pago <em>no procesado</em></h1>
+    <p class="subtitle" id="failed-subtitle">El pago no se pudo completar.</p>
+    <p class="note">Podés intentar de nuevo desde la landing, o contactarnos por WhatsApp si querés coordinar de otra forma.</p>
+    <div class="btn-row">
+      <a class="btn btn-secondary" href="runners.html">Intentar de nuevo</a>
+      <a class="btn btn-primary" href="https://wa.me/59899712691" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+    </div>
+  </div>
+
+  <div id="content-error" style="display:none">
+    <div class="icon">⚠️</div>
+    <h1>Verificación <em>incompleta</em></h1>
+    <p class="subtitle" id="error-subtitle">No pudimos confirmar el estado del pago automáticamente.</p>
+    <p class="note">Si ya pagaste, escribinos por WhatsApp con el número de operación de MercadoPago y te mandamos la guía manualmente.</p>
+    <div class="btn-row">
+      <a class="btn btn-secondary" href="runners.html">Volver al inicio</a>
+      <a class="btn btn-primary" href="https://wa.me/59899712691" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+(async function() {
+  const params = new URLSearchParams(location.search);
+  const paymentId = params.get('payment_id') || params.get('collection_id');
+  const status = (params.get('status') || params.get('collection_status') || '').toLowerCase();
+  const loadingEl = document.getElementById('loading');
+  const cardEl = document.getElementById('card');
+  const show = (id, extraClass) => {
+    loadingEl.style.display = 'none';
+    document.getElementById(id).style.display = 'block';
+    if (extraClass) cardEl.classList.add(extraClass);
+  };
+
+  // Si MP nos dice directamente que no fue aprobado, mostramos ese estado
+  if (status === 'rejected' || status === 'cancelled') {
+    document.getElementById('failed-subtitle').textContent =
+      status === 'cancelled' ? 'Cancelaste el pago antes de completarlo.' : 'El pago fue rechazado por el banco o la tarjeta.';
+    show('content-failed', 'state-error');
+    return;
+  }
+
+  if (!paymentId) {
+    document.getElementById('error-subtitle').textContent = 'No recibimos el identificador del pago desde MercadoPago.';
+    show('content-error', 'state-error');
+    return;
+  }
+
+  try {
+    const r = await fetch('/api/products/confirm?payment_id=' + encodeURIComponent(paymentId), { cache: 'no-store' });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+
+    if (d.status === 'approved') {
+      // Mostramos el email al que se envió (si venía en la URL) o un texto genérico
+      const email = params.get('payer_email') || '';
+      document.getElementById('email-approved').textContent = email || 'tu correo registrado';
+      show('content-approved', 'state-approved');
+    } else if (d.status === 'in_process' || d.status === 'pending') {
+      show('content-pending', 'state-pending');
+    } else {
+      // rejected u otro
+      document.getElementById('failed-subtitle').textContent = 'Estado del pago: ' + (d.status || 'desconocido') + '.';
+      show('content-failed', 'state-error');
+    }
+  } catch (err) {
+    console.error('[comprado]', err);
+    document.getElementById('error-subtitle').textContent = 'Error al verificar: ' + err.message;
+    show('content-error', 'state-error');
+  }
+})();
+</script>
+</body>
+</html>
