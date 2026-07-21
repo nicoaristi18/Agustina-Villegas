@@ -557,7 +557,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
       <div class="fg"><label>T&iacute;tulo principal</label><input id="run-p-titulo" type="text" oninput="upRun()"></div>
       <div class="fg"><label>Subt&iacute;tulo</label><input id="run-p-sub" type="text" oninput="upRun()"></div>
       <div class="fg"><label>Texto de portada</label><textarea id="run-p-texto" rows="3" oninput="upRun()"></textarea></div>
-      <div class="fg"><label>Imagen de portada</label><input id="run-p-img" type="file" accept="image/*" onchange="setRunImg(this,'coverImg')"></div>
+      <div class="fg"><label>Imagen de portada</label>
+        <div style="display:flex;gap:.4rem;align-items:center">
+          <input id="run-p-img" type="file" accept="image/*" onchange="setRunImg(this,'coverImg')" style="flex:1;min-width:0">
+          <button id="btn-clear-run-cover" class="sb-btn danger" onclick="clearRunCover()" style="white-space:nowrap;font-size:.65rem">&#x2715; Quitar</button>
+        </div>
+        <p style="font-size:.62rem;color:var(--text-muted);margin-top:.3rem;line-height:1.4">Recomendado: foto vertical (retrato), aspecto ~3:4. Fotos horizontales o panor&aacute;micas quedan cortadas o estiradas.</p>
+      </div>
     </div>
 
     <div class="rcard"><div class="rcard-head" onclick="toggleCard('run-c-pres')"><span class="rcard-title">Presentaci&oacute;n</span><span class="rcard-badge">P&aacute;g. 2</span></div>
@@ -3030,6 +3036,18 @@ function setRunImg(inp, key) {
     upRun();
   };
   r.readAsDataURL(f);
+}
+
+function clearRunCover() {
+  if (!runImgs.coverImg && !localStorage.getItem('gen_cv_run')) {
+    alert('No hay imagen de portada cargada.');
+    return;
+  }
+  if (!confirm('¿Quitar la imagen de portada? Va a quedar solo el color de fondo (rojizo).')) return;
+  runImgs.coverImg = '';
+  localStorage.removeItem('gen_cv_run'); // por si quedó de la versión vieja
+  var inp = $('run-p-img'); if (inp) inp.value = '';
+  upRun();
 }
 
 function buildRunDoc() {

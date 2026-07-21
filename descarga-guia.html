@@ -362,12 +362,21 @@ async function dlPDF() {
     let isFirst = true;
     for (let i = 0; i < pageEls.length; i++) {
       const pageEl = pageEls[i];
-      // Capturar SOLO este .doc-page (evita cualquier bleed entre secciones)
-      const pageCanvas = await h2c(pageEl, {
+      // Para la portada, forzamos también la altura para que el aspect ratio
+      // sea exacto 595:842 y la imagen no se estire (bug en móvil).
+      const isCover = pageEl.classList.contains('page-cover');
+      const h2cOpts = {
         scale: SCALE, useCORS: true, allowTaint: true,
-        backgroundColor: '#ffffff', imageTimeout: 15000, logging: false,
+        backgroundColor: isCover ? '#8B5550' : '#ffffff',
+        imageTimeout: 15000, logging: false,
         width: PAGE_W, windowWidth: PAGE_W
-      });
+      };
+      if (isCover) {
+        h2cOpts.height = PAGE_H;
+        h2cOpts.windowHeight = PAGE_H;
+      }
+      // Capturar SOLO este .doc-page (evita cualquier bleed entre secciones)
+      const pageCanvas = await h2c(pageEl, h2cOpts);
       const canvasW = pageCanvas.width;
       const canvasH = pageCanvas.height;
       const pageHpx = PAGE_H * SCALE;
