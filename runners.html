@@ -268,6 +268,19 @@
       <label>Tu email</label>
       <input id="buyer-email" type="email" placeholder="tu@email.com" autocomplete="email">
     </div>
+    <div class="purchase-field">
+      <label>Código de descuento (opcional)</label>
+      <div style="display:flex;gap:.4rem;align-items:stretch">
+        <input id="coupon-code" type="text" placeholder="Ej: BIENVENIDA20" style="flex:1;text-transform:uppercase" autocomplete="off">
+        <button type="button" id="btn-apply-coupon" onclick="applyCouponCode()" style="padding:.55rem .9rem;border-radius:8px;border:1.5px solid rgba(168,112,106,.35);background:transparent;color:var(--rose-dark,#A8706A);font-family:inherit;font-size:.78rem;font-weight:500;cursor:pointer;white-space:nowrap">Aplicar</button>
+      </div>
+      <div id="coupon-status" style="margin-top:.4rem;font-size:.75rem;line-height:1.4;display:none"></div>
+    </div>
+    <div id="price-summary" style="margin:1rem 0;padding:.7rem .9rem;background:rgba(168,112,106,.08);border-radius:8px;font-size:.85rem;display:none">
+      <div style="display:flex;justify-content:space-between;color:var(--text-muted,#8C7E78)"><span>Precio</span><span id="ps-base">—</span></div>
+      <div style="display:flex;justify-content:space-between;color:#7A9E7E;margin-top:.2rem" id="ps-discount-row"><span>Descuento</span><span id="ps-discount">—</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:500;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(168,112,106,.2)"><span>Total a pagar</span><span id="ps-final" style="color:var(--rose-dark,#A8706A)">—</span></div>
+    </div>
     <div class="purchase-buttons">
       <button class="cancel" onclick="closePurchaseModal()">Cancelar</button>
       <button class="confirm" id="btn-submit-purchase" onclick="submitPurchase()">Ir a pagar →</button>
@@ -307,6 +320,81 @@ function openPurchaseModal() {
 function closePurchaseModal() {
   document.getElementById('purchaseModal').classList.remove('open');
 }
+
+// Estado del cupón validado (si hay uno aplicado)
+let validCoupon = null;
+
+function fmtPrice(v) {
+  return '$' + Number(v || 0).toLocaleString('es-UY');
+}
+
+function updatePriceSummary(base, discount, final) {
+  const box = document.getElementById('price-summary');
+  document.getElementById('ps-base').textContent = fmtPrice(base);
+  document.getElementById('ps-discount').textContent = '-' + fmtPrice(discount);
+  document.getElementById('ps-final').textContent = fmtPrice(final);
+  document.getElementById('ps-discount-row').style.display = discount > 0 ? 'flex' : 'none';
+  box.style.display = 'block';
+}
+
+function clearCouponState() {
+  validCoupon = null;
+  document.getElementById('price-summary').style.display = 'none';
+  const s = document.getElementById('coupon-status');
+  s.style.display = 'none';
+  s.textContent = '';
+}
+
+async function applyCouponCode() {
+  const codeInput = document.getElementById('coupon-code');
+  const code = codeInput.value.trim().toUpperCase();
+  const statusEl = document.getElementById('coupon-status');
+  if (!code) {
+    clearCouponState();
+    return;
+  }
+  const btn = document.getElementById('btn-apply-coupon');
+  const prev = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/products/validate-coupon', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, slug: 'runner-principiantes' })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+    if (!d.valid) {
+      validCoupon = null;
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#A34747';
+      statusEl.textContent = '✕ ' + (d.error || 'Cupón inválido');
+      document.getElementById('price-summary').style.display = 'none';
+      return;
+    }
+    validCoupon = { code, ...d };
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#5C8A5F';
+    statusEl.textContent = d.isFree
+      ? '✓ Cupón aplicado: la guía es gratis con este código'
+      : '✓ Cupón aplicado: ' + fmtPrice(d.discountAmount) + ' de descuento';
+    updatePriceSummary(d.basePrice, d.discountAmount, d.finalPrice);
+    // Cambiar texto del botón de submit si es free
+    const submitBtn = document.getElementById('btn-submit-purchase');
+    submitBtn.textContent = d.isFree ? 'Recibir la guía →' : 'Ir a pagar →';
+  } catch (err) {
+    validCoupon = null;
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#A34747';
+    statusEl.textContent = '✕ ' + err.message;
+    document.getElementById('price-summary').style.display = 'none';
+  } finally {
+    btn.textContent = prev;
+    btn.disabled = false;
+  }
+}
+
 async function submitPurchase() {
   const name = document.getElementById('buyer-name').value.trim();
   const email = document.getElementById('buyer-email').value.trim();
@@ -320,20 +408,33 @@ async function submitPurchase() {
   }
   const btn = document.getElementById('btn-submit-purchase');
   const prev = btn.textContent;
-  btn.textContent = 'Conectando con MercadoPago…';
+  const isFree = validCoupon && validCoupon.isFree;
+  btn.textContent = isFree ? 'Enviando…' : 'Conectando con MercadoPago…';
   btn.disabled = true;
   try {
+    const payload = { name, email, slug: 'runner-principiantes' };
+    if (validCoupon && validCoupon.code) payload.couponCode = validCoupon.code;
     const r = await fetch('/api/products/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, slug: 'runner-principiantes' })
+      body: JSON.stringify(payload)
     });
     const d = await r.json().catch(() => ({}));
-    if (!r.ok || !d.init_point) throw new Error(d.error || `HTTP ${r.status}`);
-    // Redirect a MercadoPago
+    if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+
+    // Si el cupón cubre el 100%, el backend entrega directo por email
+    if (d.freeCoupon) {
+      alert('¡Listo! Te enviamos un email a ' + email + ' con el link para descargar la guía. Revisá también Spam o Promociones.');
+      closePurchaseModal();
+      btn.textContent = prev;
+      btn.disabled = false;
+      return;
+    }
+
+    if (!d.init_point) throw new Error('No pudimos iniciar el pago (falta init_point).');
     window.location.href = d.init_point;
   } catch (err) {
-    alert('No pudimos iniciar el pago: ' + err.message + '\n\nSi el problema persiste, escribinos por WhatsApp.');
+    alert('No pudimos procesar tu compra: ' + err.message + '\n\nSi el problema persiste, escribinos por WhatsApp.');
     console.error('[checkout]', err);
     btn.textContent = prev;
     btn.disabled = false;

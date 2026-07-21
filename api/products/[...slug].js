@@ -16,7 +16,8 @@ import {
   getAdminFromRequest, readJsonBody,
   getGuidePurchases, saveGuidePurchases,
   generateGuideDownloadToken, verifyGuideDownloadToken,
-  sendGuideDeliveryEmail
+  sendGuideDeliveryEmail,
+  getCoupons, applyCoupon, incrementCouponUse
 } from '../../lib/auth.js';
 
 export default async function handler(req, res) {
@@ -127,37 +128,88 @@ export default async function handler(req, res) {
       return { ok: true, purchaseId, emailSent: emailResult.ok, downloadUrl };
     }
 
+    // === VALIDAR CUPÓN ===
+    // POST /api/products/validate-coupon  body { code, slug }
+    if (path === 'validate-coupon' && method === 'POST') {
+      const body = await readJsonBody(req) || {};
+      const code = String(body.code || '').trim().toUpperCase();
+      const slug = String(body.slug || 'runner-principiantes').trim();
+      if (!code) return res.status(400).json({ error: 'Falta code' });
+      const product = await ensureProduct(slug);
+      if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+      const basePrice = Number(product.price) || 0;
+      const all = await getCoupons();
+      const coupon = all[code];
+      const result = applyCoupon(coupon, basePrice);
+      if (!result.ok) return res.status(200).json({ valid: false, error: result.error });
+      return res.status(200).json({
+        valid: true,
+        code,
+        type: coupon.type,
+        basePrice,
+        finalPrice: result.finalPrice,
+        discountAmount: result.discountAmount,
+        isFree: result.finalPrice === 0
+      });
+    }
+
     // === MERCADOPAGO CHECKOUT ===
-    // POST /api/products/checkout  body { name, email, slug }
-    // Crea preferencia MP y devuelve init_point para redirect.
+    // POST /api/products/checkout  body { name, email, slug, couponCode? }
+    // Crea preferencia MP y devuelve init_point. Si el cupón es 'free' (100% off),
+    // salta MP y entrega el producto directo por email.
     if (path === 'checkout' && method === 'POST') {
       const body = await readJsonBody(req) || {};
       const name = String(body.name || '').trim();
       const email = String(body.email || '').trim().toLowerCase();
       const slug = String(body.slug || 'runner-principiantes').trim();
+      const couponCode = body.couponCode ? String(body.couponCode).trim().toUpperCase() : '';
       if (!name || !email) return res.status(400).json({ error: 'Faltan name/email' });
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email inválido' });
 
       const product = await ensureProduct(slug);
       if (!product || !product.active) return res.status(404).json({ error: 'Producto no encontrado' });
 
+      const basePrice = Number(product.price) || 0;
+      if (basePrice <= 0) return res.status(400).json({ error: 'Precio del producto inválido' });
+
+      // Validar cupón si se envió
+      let finalPrice = basePrice;
+      let appliedCoupon = null;
+      if (couponCode) {
+        const all = await getCoupons();
+        const coupon = all[couponCode];
+        const cResult = applyCoupon(coupon, basePrice);
+        if (!cResult.ok) return res.status(400).json({ error: 'Cupón inválido: ' + cResult.error });
+        finalPrice = cResult.finalPrice;
+        appliedCoupon = couponCode;
+      }
+
+      // Cupón 100% descuento → entregar directamente sin pasar por MP
+      if (finalPrice === 0) {
+        const result = await finalizePurchase({
+          product, name, email, source: 'coupon:' + couponCode, paymentId: null
+        });
+        if (appliedCoupon) { try { await incrementCouponUse(appliedCoupon); } catch(e) {} }
+        return res.status(200).json({ freeCoupon: true, ...result });
+      }
+
       const MP_TOKEN = process.env.MP_ACCESS_TOKEN;
       const IS_TEST = process.env.MP_TEST === 'true';
       const SITE_URL = (process.env.SITE_URL || 'https://nutricionistaagustinavillegas.com').replace(/\/$/, '');
       if (!MP_TOKEN) return res.status(500).json({ error: 'MercadoPago no configurado' });
 
-      const price = Number(product.price) || 0;
-      if (price <= 0) return res.status(400).json({ error: 'Precio del producto inválido' });
-
-      const externalRef = JSON.stringify({ type: 'guide', slug: product.slug, email, name });
+      const externalRef = JSON.stringify({
+        type: 'guide', slug: product.slug, email, name,
+        coupon: appliedCoupon
+      });
 
       const preference = {
         items: [{
           id: 'guide_' + product.slug,
-          title: product.title,
+          title: product.title + (appliedCoupon ? ' (cupón ' + appliedCoupon + ')' : ''),
           description: product.tagline || 'Guía digital descargable en PDF',
           quantity: 1,
-          unit_price: price,
+          unit_price: finalPrice,
           currency_id: product.currency || 'UYU'
         }],
         payer: { name, email },
@@ -185,7 +237,7 @@ export default async function handler(req, res) {
         return res.status(mpRes.status).json({ error: data.message || 'Error en MercadoPago', detail: data });
       }
       const initPoint = IS_TEST ? data.sandbox_init_point : data.init_point;
-      return res.status(200).json({ id: data.id, init_point: initPoint });
+      return res.status(200).json({ id: data.id, init_point: initPoint, finalPrice, basePrice, discount: basePrice - finalPrice });
     }
 
     // GET /api/products/confirm?payment_id=xxx
@@ -220,6 +272,12 @@ export default async function handler(req, res) {
         product, name: ref.name || 'Runner', email: ref.email,
         source: 'mercadopago', paymentId: String(paymentId)
       });
+
+      // Contabilizar uso del cupón (solo si es la primera vez que se procesa)
+      if (ref.coupon && !result.alreadyProcessed) {
+        try { await incrementCouponUse(ref.coupon); }
+        catch(e) { console.warn('[confirm] increment coupon fail', e); }
+      }
 
       return res.status(200).json({
         status: 'approved',
