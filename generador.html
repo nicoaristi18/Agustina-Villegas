@@ -566,9 +566,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
       <div class="fsec-title">Personalizaci&oacute;n</div>
       <div class="fg"><label>Encabezado de cada p&aacute;gina <span style="color:var(--text-muted);font-weight:400">(vac&iacute;o = "Gu&iacute;a Runner")</span></label><input id="run-header-name" type="text" placeholder="Nombre del paciente o del documento" oninput="upRun()"></div>
       <div class="fg"><label>Bajada de portada <span style="color:var(--text-muted);font-weight:400">(vac&iacute;o = "Gu&iacute;a para principiantes")</span></label><input id="run-cover-tagline" type="text" placeholder="Ej: Plan personalizado para Mar&iacute;a" oninput="upRun()"></div>
-      <div class="fg"><label>Secciones a incluir <span style="color:var(--text-muted);font-weight:400">(destildar para ocultar del PDF)</span></label>
-        <div id="run-hidden-checks" style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem .8rem;padding:.55rem .7rem;background:var(--cream);border-radius:8px;border:1px solid var(--border);"></div>
-      </div>
+      <p style="font-size:.65rem;color:var(--text-muted);line-height:1.5;margin-top:.3rem">
+        &#128161; Tip: cada tarjeta debajo tiene una <strong>&#10005;</strong> arriba a la derecha para ocultar esa secci&oacute;n del PDF sin borrarla.
+      </p>
     </div>
 
     <div class="fsec">
@@ -2819,20 +2819,8 @@ Object.defineProperty(window, 'RUN_IMG_KEY', {
   get: function(){ return RUN_MODE === 'personal' ? 'gen_running_imgs_personal' : 'gen_running_imgs_v1'; }
 });
 
-// Secciones que se pueden mostrar/ocultar desde el form
-var RUN_SECTIONS = [
-  { key: 'pres', label: 'Presentación' },
-  { key: 'imp',  label: 'Importancia + Macros' },
-  { key: 'ant',  label: 'Qué comer antes/después' },
-  { key: 'com',  label: '¿Cómo saber qué consumir?' },
-  { key: 'pau',  label: 'Pautas día previo + carrera' },
-  { key: 'hid',  label: 'Hidratación + mate' },
-  { key: 'sup',  label: 'Suplementación (cafeína)' },
-  { key: 'beb',  label: 'Bebidas deportivas' },
-  { key: 'ay',   label: 'Correr en ayunas' },
-  { key: 'fin',  label: 'Cierre + contacto' }
-];
-// Estado de secciones ocultas (por modo, persistido)
+// Estado de secciones ocultas (por modo, persistido).
+// Keys posibles: pres, imp, car, pro, gra, ant, com, pau, lim, hid, mat, sup, beb, ay, fin
 var runHidden = {};
 
 var RUN_DEFAULTS = {
@@ -2994,23 +2982,65 @@ function loadRunData() {
   renderRunHidden();
 }
 
-// Dibuja los checkboxes de secciones a incluir según el estado runHidden
+// Inyecta un botón ✕/↺ en cada .rcard-head del panel-run, y sincroniza el
+// estado visual de cada card con runHidden. Solo hace el injection una vez;
+// cada llamada posterior actualiza estilos y el label del botón.
 function renderRunHidden() {
-  var el = $('run-hidden-checks');
-  if (!el) return;
-  el.innerHTML = RUN_SECTIONS.map(function(s) {
-    var checked = !runHidden[s.key];
-    return '<label style="display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--text);cursor:pointer">' +
-      '<input type="checkbox"' + (checked ? ' checked' : '') + ' onchange="toggleRunHidden(\'' + s.key + '\', this.checked)" style="cursor:pointer">' +
-      esc(s.label) +
-    '</label>';
-  }).join('');
+  var panel = document.getElementById('panel-run');
+  if (!panel) return;
+  var cards = panel.querySelectorAll('.rcard');
+  cards.forEach(function(card) {
+    var head = card.querySelector('.rcard-head');
+    if (!head) return;
+    // Extraer la key del body id (formato run-c-XXX -> XXX)
+    var body = card.querySelector('.rcard-body');
+    if (!body) return;
+    var m = body.id.match(/^run-c-(.+)$/);
+    if (!m) return;
+    var key = m[1];
+    var hidden = !!runHidden[key];
+    // Insertar/actualizar el botón toggle
+    var btn = head.querySelector('.run-hide-btn');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.className = 'run-hide-btn';
+      btn.style.cssText = 'background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:.85rem;padding:.2rem .45rem;border-radius:5px;line-height:1;margin-left:.35rem;transition:all .18s';
+      btn.dataset.key = key;
+      btn.addEventListener('mouseenter', function(){ btn.style.background = 'rgba(168,112,106,.12)'; btn.style.color = 'var(--rose-dark)'; });
+      btn.addEventListener('mouseleave', function(){ btn.style.background = 'transparent'; btn.style.color = runHidden[btn.dataset.key] ? 'var(--rose-dark)' : 'var(--text-muted)'; });
+      btn.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        toggleRunHidden(btn.dataset.key);
+      });
+      head.appendChild(btn);
+    }
+    btn.innerHTML = hidden ? '&#8634; Restaurar' : '&#10005;';
+    btn.title = hidden ? 'Restaurar esta sección en el PDF' : 'Ocultar esta sección del PDF';
+    btn.style.color = hidden ? 'var(--rose-dark)' : 'var(--text-muted)';
+    btn.style.fontWeight = hidden ? '500' : '400';
+    btn.style.fontSize = hidden ? '.66rem' : '.85rem';
+    // Estado visual del card
+    card.style.opacity = hidden ? '.55' : '1';
+    // Badge "Oculto" adicional en el header
+    var badge = head.querySelector('.run-hidden-badge');
+    if (hidden && !badge) {
+      badge = document.createElement('span');
+      badge.className = 'run-hidden-badge rcard-badge';
+      badge.style.cssText = 'background:#FFF0EF;color:var(--rose-dark);border:1px solid rgba(168,112,106,.35);font-weight:500;';
+      badge.textContent = 'Oculto';
+      // Insertar antes del botón para que quede al lado de la badge existente
+      head.insertBefore(badge, btn);
+    } else if (!hidden && badge) {
+      badge.remove();
+    }
+  });
 }
 
-function toggleRunHidden(key, isChecked) {
-  if (isChecked) delete runHidden[key];
+function toggleRunHidden(key) {
+  if (runHidden[key]) delete runHidden[key];
   else runHidden[key] = true;
   try { localStorage.setItem(_runHiddenKey(), JSON.stringify(runHidden)); } catch(e) {}
+  renderRunHidden();
   upRun();
 }
 
@@ -3217,21 +3247,27 @@ function buildRunDoc() {
   function heading(t) { return '<div class="sec-label first">'+esc(t)+'</div>'; }
   function subheading(t) { return '<div class="run-sub">'+esc(t)+'</div>'; }
 
-  // Página presentación
-  var pgPres = '<div class="doc-page">' + hdr +
-    heading(d.presT) + textBlk(d.presX) + '</div>';
+  // Helpers para armar bloques respetando runHidden (cada card puede ocultarse
+  // por separado; las páginas que agrupan varios bloques se saltan si están todos
+  // ocultos).
+  var H = runHidden;
+  function wrapPage(bodyHtml, extraStyle) {
+    if (!bodyHtml) return '';
+    return '<div class="doc-page"' + (extraStyle ? ' style="'+extraStyle+'"' : '') + '>' + hdr + bodyHtml + '</div>';
+  }
 
-  // Importancia + macros (fluye)
-  var pgImp = '<div class="doc-page">' + hdr +
-    heading(d.impT) + textBlk(d.impX) + itemsBlk(d.impI) + textBlk(d.impC) +
-    subheading(d.carT) + textBlk(d.carX) + itemsBlk(d.carI) +
-    subheading(d.proT) + textBlk(d.proX) + itemsBlk(d.proI) +
-    subheading(d.graT) + textBlk(d.graX) + itemsBlk(d.graI) +
-    textBlk(d.graC) +
-    '</div>';
+  // === Presentación ===
+  var pgPres = wrapPage(H.pres ? '' : (heading(d.presT) + textBlk(d.presX)));
 
-  // Antes y después
-  var pgAnt = '<div class="doc-page" style="background:#FAF8F4">' + hdr +
+  // === Importancia + macros ===
+  var b_imp = H.imp ? '' : (heading(d.impT) + textBlk(d.impX) + itemsBlk(d.impI) + textBlk(d.impC));
+  var b_car = H.car ? '' : (subheading(d.carT) + textBlk(d.carX) + itemsBlk(d.carI));
+  var b_pro = H.pro ? '' : (subheading(d.proT) + textBlk(d.proX) + itemsBlk(d.proI));
+  var b_gra = H.gra ? '' : (subheading(d.graT) + textBlk(d.graX) + itemsBlk(d.graI) + textBlk(d.graC));
+  var pgImp = wrapPage(b_imp + b_car + b_pro + b_gra);
+
+  // === Qué comer antes y después ===
+  var b_ant = H.ant ? '' : (
     heading(d.antT) +
     subheading(d.antSt) + textBlk(d.antX) +
     '<div class="run-inline-t">'+esc(d.ccT)+'</div>' + itemsBlk(d.ccI) + textBlk(d.ccN) +
@@ -3242,54 +3278,57 @@ function buildRunDoc() {
     subheading(d.desSt) + textBlk(d.desX) +
     '<div class="run-inline-t">'+esc(d.pfT)+'</div>' + itemsBlk(d.pfI) +
     textBlk(d.recC) +
-    '<div class="run-inline-t">'+esc(d.epT)+'</div>' + itemsBlk(d.epI) +
-    '</div>';
+    '<div class="run-inline-t">'+esc(d.epT)+'</div>' + itemsBlk(d.epI)
+  );
+  var pgAnt = wrapPage(b_ant, 'background:#FAF8F4');
 
-  // ¿Cómo saber?
-  var pgCom = '<div class="doc-page">' + hdr +
-    heading(d.comT) + textBlk(d.comX) + '</div>';
+  // === ¿Cómo saber? ===
+  var pgCom = wrapPage(H.com ? '' : (heading(d.comT) + textBlk(d.comX)));
 
-  // Pautas
-  var pgPau = '<div class="doc-page">' + hdr +
+  // === Pautas día previo + Alimentos a limitar ===
+  var b_pau = H.pau ? '' : (
     heading(d.pauT) + textBlk(d.pauX) +
-    subheading(d.dpT) + textBlk(d.dpX) + itemsBlk(d.dpI) + textBlk(d.dpC) +
+    subheading(d.dpT) + textBlk(d.dpX) + itemsBlk(d.dpI) + textBlk(d.dpC)
+  );
+  var b_lim = H.lim ? '' : (
     subheading(d.limT) +
     '<div class="run-inline-t">'+esc(d.lgT)+'</div>' + textBlk(d.lgX) +
     '<div class="run-inline-t">'+esc(d.lfT)+'</div>' + textBlk(d.lfX) +
-    '<div class="run-inline-t">'+esc(d.evT)+'</div>' + textBlk(d.evX) +
-    '</div>';
+    '<div class="run-inline-t">'+esc(d.evT)+'</div>' + textBlk(d.evX)
+  );
+  var pgPau = wrapPage(b_pau + b_lim);
 
-  // Hidratación (con imagen)
+  // === Hidratación + mate ===
   var hidImgHtml = runImgs.hidImg
     ? '<div style="margin:18px 0;text-align:center"><img src="'+runImgs.hidImg+'" style="max-width:100%;max-height:180px;border-radius:8px"></div>'
     : '<div style="margin:18px 0;padding:20px;border:1px dashed rgba(169,138,130,.35);border-radius:8px;text-align:center;color:#8C7E78;font-size:10px;font-style:italic">Cargá una imagen (escala de color de orina)</div>';
-  var pgHid = '<div class="doc-page" style="background:#FAF8F4">' + hdr +
-    heading(d.hidT) + textBlk(d.hidX) + hidImgHtml + textBlk(d.hidC) +
-    subheading(d.matT) + textBlk(d.matX) +
-    '</div>';
+  var b_hid = H.hid ? '' : (heading(d.hidT) + textBlk(d.hidX) + hidImgHtml + textBlk(d.hidC));
+  var b_mat = H.mat ? '' : (subheading(d.matT) + textBlk(d.matX));
+  var pgHid = wrapPage(b_hid + b_mat, 'background:#FAF8F4');
 
-  // Suplementación
+  // === Suplementación (cafeína) ===
   var cafeImgHtml = runImgs.cafeImg
     ? '<div style="margin:14px 0;text-align:center"><img src="'+runImgs.cafeImg+'" style="max-width:100%;max-height:200px;border-radius:8px"></div>'
     : '<div style="margin:14px 0;padding:16px;border:1px dashed rgba(169,138,130,.35);border-radius:8px;text-align:center;color:#8C7E78;font-size:10px;font-style:italic">Cargá la imagen «Cantidad de cafeína por porción»</div>';
-  var pgSup = '<div class="doc-page">' + hdr +
+  var b_sup = H.sup ? '' : (
     heading(d.supT) + textBlk(d.supX) + itemsBlk(d.supI) +
-    textBlk(d.supD) + cafeImgHtml + textBlk(d.supA) +
-    '</div>';
+    textBlk(d.supD) + cafeImgHtml + textBlk(d.supA)
+  );
+  var pgSup = wrapPage(b_sup);
 
-  // Bebidas deportivas
-  var pgBeb = '<div class="doc-page">' + hdr +
+  // === Bebidas deportivas ===
+  var b_beb = H.beb ? '' : (
     heading(d.bebT) + textBlk(d.bebX) + itemsBlk(d.bebI) + textBlk(d.bebE) +
-    '<div class="run-inline-t">'+esc(d.buT)+'</div>' + itemsBlk(d.buI) +
-    '</div>';
+    '<div class="run-inline-t">'+esc(d.buT)+'</div>' + itemsBlk(d.buI)
+  );
+  var pgBeb = wrapPage(b_beb);
 
-  // Ayunas
-  var pgAy = '<div class="doc-page" style="background:#FAF8F4">' + hdr +
-    heading(d.ayT) + textBlk(d.ayX) + itemsBlk(d.ayI) + textBlk(d.ayM) + textBlk(d.ayC) +
-    '</div>';
+  // === Ayunas ===
+  var b_ay = H.ay ? '' : (heading(d.ayT) + textBlk(d.ayX) + itemsBlk(d.ayI) + textBlk(d.ayM) + textBlk(d.ayC));
+  var pgAy = wrapPage(b_ay, 'background:#FAF8F4');
 
-  // Cierre + contacto
-  var pgFin = '<div class="doc-page">' + hdr +
+  // === Cierre + contacto ===
+  var b_fin = H.fin ? '' : (
     heading('En resumen') + textBlk(d.resX) +
     '<div style="margin:26px 0 20px;font-family:\'Cormorant Garamond\',serif;font-size:20px;color:#A8706A;font-style:italic;text-align:center">'+esc(d.cierre)+'</div>' +
     '<div class="run-contact-box">' +
@@ -3297,14 +3336,13 @@ function buildRunDoc() {
     (d.ctIg ? '<div class="run-contact-row"><span class="rc-label">Instagram</span><span class="rc-val">@'+esc(d.ctIg)+'</span></div>' : '') +
     (d.ctCel ? '<div class="run-contact-row"><span class="rc-label">Celular</span><span class="rc-val">'+esc(d.ctCel)+'</span></div>' : '') +
     (d.ctMail ? '<div class="run-contact-row"><span class="rc-label">Email</span><span class="rc-val">'+esc(d.ctMail)+'</span></div>' : '') +
-    '</div>' +
-    '</div>';
+    '</div>'
+  );
+  var pgFin = wrapPage(b_fin);
 
-  // Ensamblado respetando runHidden — cada sección puede ocultarse desde el form
-  var sectionMap = { pres:pgPres, imp:pgImp, ant:pgAnt, com:pgCom, pau:pgPau, hid:pgHid, sup:pgSup, beb:pgBeb, ay:pgAy, fin:pgFin };
-  var order = ['pres','imp','ant','com','pau','hid','sup','beb','ay','fin'];
-  var sectionsHtml = order.filter(function(k){ return !runHidden[k]; }).map(function(k){ return sectionMap[k]; }).join('');
-  return '<div class="ag-doc" id="doc-run">' + cover + sectionsHtml + '</div>';
+  return '<div class="ag-doc" id="doc-run">' +
+    cover + pgPres + pgImp + pgAnt + pgCom + pgPau + pgHid + pgSup + pgBeb + pgAy + pgFin +
+    '</div>';
 }
 
 var upRun = deb(function() {
