@@ -543,14 +543,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 <!-- TAB 4: GUÍA RUNNING -->
 <div id="panel-run" class="tab-panel">
   <div class="form-col">
+    <!-- Selector de modo -->
+    <div style="display:flex;gap:.4rem;margin-bottom:.7rem;padding:.35rem;background:var(--cream);border-radius:9px;">
+      <button type="button" id="run-mode-pub" onclick="switchRunMode('pub')" style="flex:1;padding:.55rem;border:none;border-radius:6px;background:var(--rose-dark);color:#fff;font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;cursor:pointer;transition:all .18s">&#128228; Publicada (compradores)</button>
+      <button type="button" id="run-mode-personal" onclick="switchRunMode('personal')" style="flex:1;padding:.55rem;border:none;border-radius:6px;background:transparent;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;cursor:pointer;transition:all .18s">&#9999;&#65039; Personal (borrador)</button>
+    </div>
+    <div id="run-mode-banner-pub" style="padding:.55rem .75rem;background:#FFF0EF;border-left:3px solid #A8706A;border-radius:6px;margin-bottom:.9rem;font-size:.7rem;color:var(--text);line-height:1.45;">
+      <strong>&#9888;&#65039; Modo PUBLICADA:</strong> lo que edit&aacute;s ac&aacute; es lo que reciben las personas que compran la gu&iacute;a en la web. Cada cambio se sube al servidor.
+    </div>
+    <div id="run-mode-banner-personal" style="display:none;padding:.55rem .75rem;background:#E8F2E8;border-left:3px solid #5C8A5F;border-radius:6px;margin-bottom:.9rem;font-size:.7rem;color:var(--text);line-height:1.45;">
+      <strong>&#9989; Modo PERSONAL:</strong> esta es tu copia de trabajo. Ed&iacute;tala libremente y descarg&aacute; el PDF. <strong>No afecta lo que reciben los compradores.</strong>
+    </div>
+
     <div class="save-bar">
       <span id="run-save-status" style="flex:1;font-size:.7rem;color:var(--text-muted)">Cambios guardados autom&aacute;ticamente</span>
       <button class="sb-btn" onclick="resetRunToDefaults()" title="Restaurar contenido original del PDF">Restaurar</button>
       <button class="sb-btn primary" onclick="saveRunManual()">Guardar</button>
     </div>
-    <p style="font-size:.7rem;color:var(--text-muted);margin-bottom:.8rem;line-height:1.5">
-      Editá cualquier bloque y quedar&aacute; guardado autom&aacute;ticamente. Este es el PDF que se env&iacute;a a quienes lo compran en la web.
-    </p>
 
     <div class="fsec">
       <div class="fsec-title">Portada</div>
@@ -2791,8 +2800,14 @@ document.addEventListener('click', function(e) {
 /* ============================================================
    GUÍA RUNNING (PDF fijo — Agustina edita, queda guardado)
    ============================================================ */
-var RUN_STORAGE_KEY = 'gen_running_guide_v1';
-var RUN_IMG_KEY = 'gen_running_imgs_v1';
+// Modo: 'pub' (publicada, syncs to KV) o 'personal' (borrador local, sin cloud)
+var RUN_MODE = localStorage.getItem('gen_running_mode') || 'pub';
+Object.defineProperty(window, 'RUN_STORAGE_KEY', {
+  get: function(){ return RUN_MODE === 'personal' ? 'gen_running_guide_personal' : 'gen_running_guide_v1'; }
+});
+Object.defineProperty(window, 'RUN_IMG_KEY', {
+  get: function(){ return RUN_MODE === 'personal' ? 'gen_running_imgs_personal' : 'gen_running_imgs_v1'; }
+});
 
 var RUN_DEFAULTS = {
   pTitulo: 'Nutrición en corredores\nprincipiantes',
@@ -2958,21 +2973,28 @@ function persistRun() {
     localStorage.setItem(RUN_IMG_KEY, JSON.stringify(runImgs));
     var s = $('run-save-status');
     if (s) {
-      s.textContent = '✓ Guardado ' + new Date().toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'});
-      s.style.color = 'var(--rose-dark)';
+      s.textContent = (RUN_MODE === 'personal' ? '💾 Personal · guardado local ' : '✓ Guardado ') +
+        new Date().toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'});
+      s.style.color = RUN_MODE === 'personal' ? '#5C8A5F' : 'var(--rose-dark)';
     }
   } catch(e) { console.warn('[run] persist error', e); }
 }
 
 // Debounced cloud-sync — sube el contenido de la guía al producto en KV
 // para que la página descarga-guia.html pueda renderizar la última versión.
+// Solo se ejecuta en modo publicada.
 var _runCloudTimer = null;
 function scheduleRunCloudSync() {
+  if (RUN_MODE !== 'pub') return;
   if (_runCloudTimer) clearTimeout(_runCloudTimer);
   _runCloudTimer = setTimeout(function() { syncRunToCloud(false); }, 2500);
 }
 
 async function syncRunToCloud(showAlert) {
+  if (RUN_MODE !== 'pub') {
+    if (showAlert) alert('Estás en modo Personal — no se sincroniza con el servidor. Cambiá a modo Publicada para que los compradores reciban esta versión.');
+    return;
+  }
   var s = $('run-save-status');
   if (s) { s.textContent = '☁ Subiendo…'; s.style.color = 'var(--text-muted)'; }
   try {
@@ -3016,16 +3038,63 @@ async function syncRunToCloud(showAlert) {
 
 function saveRunManual() {
   persistRun();
-  syncRunToCloud(true);
+  if (RUN_MODE === 'pub') {
+    syncRunToCloud(true);
+  } else {
+    alert('Guardado local en tu copia Personal. No afecta a los compradores.');
+  }
 }
 
 function resetRunToDefaults() {
-  if (!confirm('¿Restaurar el contenido original del PDF? Se perderán los cambios que hayas hecho.')) return;
+  var scope = RUN_MODE === 'personal' ? 'tu copia PERSONAL' : 'la versión PUBLICADA (la que ven los compradores)';
+  if (!confirm('¿Restaurar el contenido original del PDF en ' + scope + '? Se perderán los cambios que hayas hecho en este modo.')) return;
   localStorage.removeItem(RUN_STORAGE_KEY);
   localStorage.removeItem(RUN_IMG_KEY);
   runImgs = { hidImg:'', cafeImg:'', coverImg:'' };
   loadRunData();
   upRun();
+}
+
+// Cambia entre modo publicada y personal.
+function switchRunMode(newMode) {
+  if (newMode !== 'pub' && newMode !== 'personal') return;
+  if (newMode === RUN_MODE) return;
+  // Guardar el estado actual antes de cambiar
+  persistRun();
+  RUN_MODE = newMode;
+  localStorage.setItem('gen_running_mode', RUN_MODE);
+  updateRunModeUI();
+  // Si es la primera vez en Personal, sembramos con el contenido de Publicada
+  if (RUN_MODE === 'personal' && !localStorage.getItem('gen_running_guide_personal')) {
+    var pubData = localStorage.getItem('gen_running_guide_v1');
+    var pubImgs = localStorage.getItem('gen_running_imgs_v1');
+    if (pubData) localStorage.setItem('gen_running_guide_personal', pubData);
+    if (pubImgs) localStorage.setItem('gen_running_imgs_personal', pubImgs);
+  }
+  runImgs = { hidImg:'', cafeImg:'', coverImg:'' };
+  loadRunData();
+  upRun();
+}
+
+function updateRunModeUI() {
+  var btnPub = $('run-mode-pub'), btnPer = $('run-mode-personal');
+  var bnrPub = $('run-mode-banner-pub'), bnrPer = $('run-mode-banner-personal');
+  if (!btnPub || !btnPer) return;
+  if (RUN_MODE === 'pub') {
+    btnPub.style.background = 'var(--rose-dark)';
+    btnPub.style.color = '#fff';
+    btnPer.style.background = 'transparent';
+    btnPer.style.color = 'var(--text-muted)';
+    if (bnrPub) bnrPub.style.display = 'block';
+    if (bnrPer) bnrPer.style.display = 'none';
+  } else {
+    btnPub.style.background = 'transparent';
+    btnPub.style.color = 'var(--text-muted)';
+    btnPer.style.background = '#5C8A5F';
+    btnPer.style.color = '#fff';
+    if (bnrPub) bnrPub.style.display = 'none';
+    if (bnrPer) bnrPer.style.display = 'block';
+  }
 }
 
 function setRunImg(inp, key) {
@@ -3315,6 +3384,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initTabla();
   initSavesUI();
   loadRunData();
+  updateRunModeUI();
   upRec();
   upSup();
   upPlan();
