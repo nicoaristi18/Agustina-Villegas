@@ -561,6 +561,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
       <button class="sb-btn primary" onclick="saveRunManual()">Guardar</button>
     </div>
 
+    <!-- Personalización (útil sobre todo en modo Personal para PDFs a medida) -->
+    <div class="fsec" id="fsec-run-perso">
+      <div class="fsec-title">Personalizaci&oacute;n</div>
+      <div class="fg"><label>Encabezado de cada p&aacute;gina <span style="color:var(--text-muted);font-weight:400">(vac&iacute;o = "Gu&iacute;a Runner")</span></label><input id="run-header-name" type="text" placeholder="Nombre del paciente o del documento" oninput="upRun()"></div>
+      <div class="fg"><label>Bajada de portada <span style="color:var(--text-muted);font-weight:400">(vac&iacute;o = "Gu&iacute;a para principiantes")</span></label><input id="run-cover-tagline" type="text" placeholder="Ej: Plan personalizado para Mar&iacute;a" oninput="upRun()"></div>
+      <div class="fg"><label>Secciones a incluir <span style="color:var(--text-muted);font-weight:400">(destildar para ocultar del PDF)</span></label>
+        <div id="run-hidden-checks" style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem .8rem;padding:.55rem .7rem;background:var(--cream);border-radius:8px;border:1px solid var(--border);"></div>
+      </div>
+    </div>
+
     <div class="fsec">
       <div class="fsec-title">Portada</div>
       <div class="fg"><label>T&iacute;tulo principal</label><input id="run-p-titulo" type="text" oninput="upRun()"></div>
@@ -2809,7 +2819,25 @@ Object.defineProperty(window, 'RUN_IMG_KEY', {
   get: function(){ return RUN_MODE === 'personal' ? 'gen_running_imgs_personal' : 'gen_running_imgs_v1'; }
 });
 
+// Secciones que se pueden mostrar/ocultar desde el form
+var RUN_SECTIONS = [
+  { key: 'pres', label: 'Presentación' },
+  { key: 'imp',  label: 'Importancia + Macros' },
+  { key: 'ant',  label: 'Qué comer antes/después' },
+  { key: 'com',  label: '¿Cómo saber qué consumir?' },
+  { key: 'pau',  label: 'Pautas día previo + carrera' },
+  { key: 'hid',  label: 'Hidratación + mate' },
+  { key: 'sup',  label: 'Suplementación (cafeína)' },
+  { key: 'beb',  label: 'Bebidas deportivas' },
+  { key: 'ay',   label: 'Correr en ayunas' },
+  { key: 'fin',  label: 'Cierre + contacto' }
+];
+// Estado de secciones ocultas (por modo, persistido)
+var runHidden = {};
+
 var RUN_DEFAULTS = {
+  headerName: '',   // vacío => usa "Guía Runner"
+  coverTagline: '', // vacío => usa "Guía para principiantes"
   pTitulo: 'Nutrición en corredores\nprincipiantes',
   pSub: 'Guía práctica para dar tus primeros pasos',
   pTexto: 'Una guía basada en evidencia científica para comenzar a correr con energía, disfrutar del proceso y cuidar tu salud.',
@@ -2910,6 +2938,7 @@ var RUN_DEFAULTS = {
 };
 
 var RUN_FIELD_MAP = {
+  'run-header-name':'headerName', 'run-cover-tagline':'coverTagline',
   'run-p-titulo':'pTitulo', 'run-p-sub':'pSub', 'run-p-texto':'pTexto',
   'run-pres-t':'presT', 'run-pres-x':'presX',
   'run-imp-t':'impT', 'run-imp-x':'impX', 'run-imp-i':'impI', 'run-imp-c':'impC',
@@ -2939,6 +2968,8 @@ var RUN_FIELD_MAP = {
 
 var runImgs = { hidImg:'', cafeImg:'', coverImg:'' };
 
+function _runHiddenKey() { return RUN_MODE === 'personal' ? 'gen_running_hidden_personal' : 'gen_running_hidden_v1'; }
+
 function loadRunData() {
   var data = {};
   try {
@@ -2952,10 +2983,35 @@ function loadRunData() {
     var rawI = localStorage.getItem(RUN_IMG_KEY);
     if (rawI) runImgs = JSON.parse(rawI);
   } catch(e) {}
+  try {
+    var rawH = localStorage.getItem(_runHiddenKey());
+    runHidden = rawH ? JSON.parse(rawH) : {};
+  } catch(e) { runHidden = {}; }
   Object.keys(RUN_FIELD_MAP).forEach(function(id) {
     var el = $(id);
     if (el) el.value = data[RUN_FIELD_MAP[id]] || '';
   });
+  renderRunHidden();
+}
+
+// Dibuja los checkboxes de secciones a incluir según el estado runHidden
+function renderRunHidden() {
+  var el = $('run-hidden-checks');
+  if (!el) return;
+  el.innerHTML = RUN_SECTIONS.map(function(s) {
+    var checked = !runHidden[s.key];
+    return '<label style="display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--text);cursor:pointer">' +
+      '<input type="checkbox"' + (checked ? ' checked' : '') + ' onchange="toggleRunHidden(\'' + s.key + '\', this.checked)" style="cursor:pointer">' +
+      esc(s.label) +
+    '</label>';
+  }).join('');
+}
+
+function toggleRunHidden(key, isChecked) {
+  if (isChecked) delete runHidden[key];
+  else runHidden[key] = true;
+  try { localStorage.setItem(_runHiddenKey(), JSON.stringify(runHidden)); } catch(e) {}
+  upRun();
 }
 
 function collectRunData() {
@@ -3047,10 +3103,12 @@ function saveRunManual() {
 
 function resetRunToDefaults() {
   var scope = RUN_MODE === 'personal' ? 'tu copia PERSONAL' : 'la versión PUBLICADA (la que ven los compradores)';
-  if (!confirm('¿Restaurar el contenido original del PDF en ' + scope + '? Se perderán los cambios que hayas hecho en este modo.')) return;
+  if (!confirm('¿Restaurar el contenido original del PDF en ' + scope + '? Se perderán los cambios que hayas hecho en este modo, incluyendo secciones ocultas y personalización.')) return;
   localStorage.removeItem(RUN_STORAGE_KEY);
   localStorage.removeItem(RUN_IMG_KEY);
+  localStorage.removeItem(_runHiddenKey());
   runImgs = { hidImg:'', cafeImg:'', coverImg:'' };
+  runHidden = {};
   loadRunData();
   upRun();
 }
@@ -3125,6 +3183,10 @@ function buildRunDoc() {
   var coverImg = runImgs.coverImg || localStorage.getItem('gen_cv_run') || '';
   var logo = getLogo();
 
+  // Texto de encabezado y bajada de portada (personalizable por modo)
+  var headerText = (d.headerName && d.headerName.trim()) || 'Guía Runner';
+  var coverTaglineText = (d.coverTagline && d.coverTagline.trim()) || 'Guía para principiantes';
+
   // Portada
   var coverTop = logo
     ? '<img class="cover-logo-img" src="'+logo+'" alt="Agustina Villegas">'
@@ -3139,10 +3201,10 @@ function buildRunDoc() {
     '<div class="cover-title">' + esc(d.pTitulo) + '</div>' +
     (d.pSub ? '<div class="cover-sub">' + esc(d.pSub) + '</div>' : '') +
     (d.pTexto ? '<div class="cover-sub2" style="max-width:400px;line-height:1.55;margin-top:8px">' + esc(d.pTexto) + '</div>' : '') +
-    '<div class="cover-foot"><span class="cover-date">Guía para principiantes</span><span class="cover-brand">Agustina Villegas</span></div>' +
+    '<div class="cover-foot"><span class="cover-date">' + esc(coverTaglineText) + '</span><span class="cover-brand">Agustina Villegas</span></div>' +
     '</div></div>';
 
-  var hdr = pgHdr('Guía Runner', '');
+  var hdr = pgHdr(headerText, '');
 
   function textBlk(txt) {
     if (!txt) return '';
@@ -3238,9 +3300,11 @@ function buildRunDoc() {
     '</div>' +
     '</div>';
 
-  return '<div class="ag-doc" id="doc-run">' +
-    cover + pgPres + pgImp + pgAnt + pgCom + pgPau + pgHid + pgSup + pgBeb + pgAy + pgFin +
-    '</div>';
+  // Ensamblado respetando runHidden — cada sección puede ocultarse desde el form
+  var sectionMap = { pres:pgPres, imp:pgImp, ant:pgAnt, com:pgCom, pau:pgPau, hid:pgHid, sup:pgSup, beb:pgBeb, ay:pgAy, fin:pgFin };
+  var order = ['pres','imp','ant','com','pau','hid','sup','beb','ay','fin'];
+  var sectionsHtml = order.filter(function(k){ return !runHidden[k]; }).map(function(k){ return sectionMap[k]; }).join('');
+  return '<div class="ag-doc" id="doc-run">' + cover + sectionsHtml + '</div>';
 }
 
 var upRun = deb(function() {
