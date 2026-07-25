@@ -2525,10 +2525,16 @@ async function dlPDF(docId, filename, btnId) {
     })();
 
     var pdfPageCount = 0;
+    var isRunDoc = (docId === 'doc-run');
     for (var i = 0; i < pageEls.length; i++) {
       var pageEl = pageEls[i];
       var isMacroPg = pageEl.classList.contains('macro-pg');
       var macroKey = isMacroPg ? pageEl.getAttribute('data-macro-key') : null;
+      // Solo aplicamos las mejoras específicas de la Guía Runner cuando estamos
+      // exportando doc-run (evita cambiar el comportamiento del recetario/plan).
+      var isCoverPg = isRunDoc && pageEl.classList.contains('page-cover');
+      var isTintedPg = isRunDoc && /background\s*:\s*#FAF8F4/i.test(pageEl.getAttribute('style') || '');
+      var bgColor = isCoverPg ? '#8B5550' : (isTintedPg ? '#FAF8F4' : '#ffffff');
 
       // Si es página de macro, ocultar el grid de imágenes ANTES de renderizar
       // → así el canvas no tiene las fotos pixeladas, y después las pegamos nativas
@@ -2543,17 +2549,22 @@ async function dlPDF(docId, filename, btnId) {
       }
 
       // Capturar solo este elemento (sin las fotos de macros si es macro page)
-      var pageCanvas = await h2c(pageEl, {
+      var h2cOpts = {
         scale: SCALE,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: bgColor,
         imageTimeout: 30000,
         logging: false,
         letterRendering: true,
         width: PAGE_W,
         windowWidth: PAGE_W
-      });
+      };
+      // Forzar aspect ratio exacto para la portada (evita el estirado horizontal
+      // que aparecía en móvil cuando el h2c producía un canvas de proporciones
+      // distintas y después pdf.addImage lo estiraba).
+      if (isCoverPg) { h2cOpts.height = PAGE_H; h2cOpts.windowHeight = PAGE_H; }
+      var pageCanvas = await h2c(pageEl, h2cOpts);
 
       // Restaurar el grid en la preview (no afecta el PDF ya capturado)
       if (imgGridEl) imgGridEl.style.display = prevGridDisplay;
@@ -2561,7 +2572,16 @@ async function dlPDF(docId, filename, btnId) {
       var canvasW = pageCanvas.width;
       var canvasH = pageCanvas.height;
       var pageHpx = PAGE_H * SCALE;
-      var numSlices = Math.ceil(canvasH / pageHpx);
+      // Tolerancia de compresión SOLO en doc-run: si el canvas se pasa hasta
+      // 35% de la altura de página, lo aplastamos en 1 página en vez de dividir
+      // (evita páginas casi vacías por diferencias de font-rendering en móvil).
+      var COMPRESS_MAX = 1.35;
+      var numSlices;
+      if (isRunDoc && canvasH <= pageHpx * COMPRESS_MAX) {
+        numSlices = 1;
+      } else {
+        numSlices = Math.ceil(canvasH / pageHpx);
+      }
 
       for (var s = 0; s < numSlices; s++) {
         if (pdfPageCount > 0) pdf.addPage([PAGE_W, PAGE_H], 'portrait');
@@ -2570,7 +2590,19 @@ async function dlPDF(docId, filename, btnId) {
         var srcY = s * pageHpx;
         var sliceH = Math.min(pageHpx, canvasH - srcY);
 
-        if (numSlices === 1 && sliceH === canvasH) {
+        if (isRunDoc && numSlices === 1) {
+          // Path especial: comprimimos verticalmente si hace falta
+          var sub0 = document.createElement('canvas');
+          sub0.width = canvasW; sub0.height = pageHpx;
+          var ctx0 = sub0.getContext('2d');
+          ctx0.imageSmoothingEnabled = true;
+          ctx0.imageSmoothingQuality = 'high';
+          ctx0.fillStyle = bgColor;
+          ctx0.fillRect(0, 0, sub0.width, sub0.height);
+          if (canvasH > pageHpx) ctx0.drawImage(pageCanvas, 0, 0, canvasW, canvasH, 0, 0, canvasW, pageHpx);
+          else ctx0.drawImage(pageCanvas, 0, 0, canvasW, canvasH, 0, 0, canvasW, canvasH);
+          pdf.addImage(sub0.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, PAGE_W, PAGE_H, undefined, 'SLOW');
+        } else if (numSlices === 1 && sliceH === canvasH) {
           var imgData = pageCanvas.toDataURL('image/jpeg', 0.95);
           pdf.addImage(imgData, 'JPEG', 0, 0, PAGE_W, PAGE_H, undefined, 'SLOW');
         } else {
@@ -2580,7 +2612,7 @@ async function dlPDF(docId, filename, btnId) {
           var ctx = sub.getContext('2d');
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
-          ctx.fillStyle = '#ffffff';
+          ctx.fillStyle = bgColor;
           ctx.fillRect(0, 0, sub.width, sub.height);
           ctx.drawImage(pageCanvas, 0, srcY, canvasW, sliceH, 0, 0, canvasW, sliceH);
           var imgDataS = sub.toDataURL('image/jpeg', 0.95);
