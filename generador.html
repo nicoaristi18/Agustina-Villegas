@@ -3297,25 +3297,23 @@ function buildRunDoc() {
   var pgProt = wrapPage(H.pro ? '' : (heading(d.proT) + textBlk(d.proX) + itemsBlk(d.proI)));
   var pgGras = wrapPage(H.gra ? '' : (heading(d.graT) + textBlk(d.graX) + itemsBlk(d.graI) + textBlk(d.graC)));
 
-  // === QUÉ COMER ANTES Y DESPUÉS (dividido en 5 sub-páginas) ===
+  // === QUÉ COMER ANTES Y DESPUÉS (3 sub-páginas equilibradas) ===
   var pgAntesIntro = wrapPage(H.ant ? '' : (
     heading(d.antT) +
     subheading(d.antSt) + textBlk(d.antX) +
     '<div class="run-inline-t">'+esc(d.ccT)+'</div>' + itemsBlk(d.ccI) + textBlk(d.ccN)
   ), 'background:#FAF8F4');
+  // Combina carbs simples + timing + 2 sets de ejemplos (antes eran 2 páginas cortas)
   var pgAntesSimples = wrapPage(H.ant ? '' : (
     '<div class="run-inline-t">'+esc(d.csT)+'</div>' + itemsBlk(d.csI) + textBlk(d.csN) +
-    textBlk(d.tim)
-  ), 'background:#FAF8F4');
-  var pgEjemplosPre = wrapPage(H.ant ? '' : (
+    textBlk(d.tim) +
     '<div class="run-inline-t">'+esc(d.e30T)+'</div>' + itemsBlk(d.e30I) +
     '<div class="run-inline-t">'+esc(d.e12T)+'</div>' + itemsBlk(d.e12I)
   ), 'background:#FAF8F4');
+  // Después completo en una sola página (intro + fuentes + cierre + ejemplos)
   var pgDespues = wrapPage(H.ant ? '' : (
     subheading(d.desSt) + textBlk(d.desX) +
-    '<div class="run-inline-t">'+esc(d.pfT)+'</div>' + itemsBlk(d.pfI)
-  ), 'background:#FAF8F4');
-  var pgDespuesEjemplos = wrapPage(H.ant ? '' : (
+    '<div class="run-inline-t">'+esc(d.pfT)+'</div>' + itemsBlk(d.pfI) +
     textBlk(d.recC) +
     '<div class="run-inline-t">'+esc(d.epT)+'</div>' + itemsBlk(d.epI)
   ), 'background:#FAF8F4');
@@ -3323,33 +3321,34 @@ function buildRunDoc() {
   // === ¿CÓMO SABER? ===
   var pgCom = wrapPage(H.com ? '' : (heading(d.comT) + textBlk(d.comX)));
 
-  // === PAUTAS DÍA PREVIO + ALIMENTOS A LIMITAR (dividido) ===
+  // === PAUTAS DÍA PREVIO ===
   var pgPautas = wrapPage(H.pau ? '' : (
     heading(d.pauT) + textBlk(d.pauX) +
     subheading(d.dpT) + textBlk(d.dpX) + itemsBlk(d.dpI) + textBlk(d.dpC)
   ));
-  var pgLimitarGrasas = wrapPage(H.lim ? '' : (
+  // === ALIMENTOS A LIMITAR (grasas + fibra + pruebas nuevas juntas) ===
+  var pgLimitar = wrapPage(H.lim ? '' : (
     subheading(d.limT) +
-    '<div class="run-inline-t">'+esc(d.lgT)+'</div>' + textBlk(d.lgX)
-  ));
-  var pgLimitarFibra = wrapPage(H.lim ? '' : (
+    '<div class="run-inline-t">'+esc(d.lgT)+'</div>' + textBlk(d.lgX) +
     '<div class="run-inline-t">'+esc(d.lfT)+'</div>' + textBlk(d.lfX) +
     '<div class="run-inline-t">'+esc(d.evT)+'</div>' + textBlk(d.evX)
   ));
 
-  // === HIDRATACIÓN + MATE (páginas separadas) ===
+  // === HIDRATACIÓN + MATE (páginas separadas — hid tiene la imagen) ===
   var hidImgHtml = runImgs.hidImg
     ? '<div style="margin:18px 0;text-align:center"><img src="'+runImgs.hidImg+'" style="max-width:100%;max-height:180px;border-radius:8px"></div>'
     : '<div style="margin:18px 0;padding:20px;border:1px dashed rgba(169,138,130,.35);border-radius:8px;text-align:center;color:#8C7E78;font-size:10px;font-style:italic">Cargá una imagen (escala de color de orina)</div>';
   var pgHid = wrapPage(H.hid ? '' : (heading(d.hidT) + textBlk(d.hidX) + hidImgHtml + textBlk(d.hidC)), 'background:#FAF8F4');
   var pgMate = wrapPage(H.mat ? '' : (subheading(d.matT) + textBlk(d.matX)), 'background:#FAF8F4');
 
-  // === SUPLEMENTACIÓN (dividido para dejar espacio a la imagen de cafeína) ===
+  // === SUPLEMENTACIÓN (todo junto: intro + items + dosis + imagen cafeína + advertencia) ===
   var cafeImgHtml = runImgs.cafeImg
     ? '<div style="margin:14px 0;text-align:center"><img src="'+runImgs.cafeImg+'" style="max-width:100%;max-height:200px;border-radius:8px"></div>'
     : '<div style="margin:14px 0;padding:16px;border:1px dashed rgba(169,138,130,.35);border-radius:8px;text-align:center;color:#8C7E78;font-size:10px;font-style:italic">Cargá la imagen «Cantidad de cafeína por porción»</div>';
-  var pgSup = wrapPage(H.sup ? '' : (heading(d.supT) + textBlk(d.supX) + itemsBlk(d.supI)));
-  var pgSupDosis = wrapPage(H.sup ? '' : (textBlk(d.supD) + cafeImgHtml + textBlk(d.supA)));
+  var pgSup = wrapPage(H.sup ? '' : (
+    heading(d.supT) + textBlk(d.supX) + itemsBlk(d.supI) +
+    textBlk(d.supD) + cafeImgHtml + textBlk(d.supA)
+  ));
 
   // === BEBIDAS DEPORTIVAS ===
   var pgBeb = wrapPage(H.beb ? '' : (
@@ -3376,11 +3375,11 @@ function buildRunDoc() {
   return '<div class="ag-doc" id="doc-run">' +
     cover + pgPres +
     pgImportancia + pgCarbs + pgProt + pgGras +
-    pgAntesIntro + pgAntesSimples + pgEjemplosPre + pgDespues + pgDespuesEjemplos +
+    pgAntesIntro + pgAntesSimples + pgDespues +
     pgCom +
-    pgPautas + pgLimitarGrasas + pgLimitarFibra +
+    pgPautas + pgLimitar +
     pgHid + pgMate +
-    pgSup + pgSupDosis +
+    pgSup +
     pgBeb +
     pgAy1 + pgAy2 +
     pgFin +

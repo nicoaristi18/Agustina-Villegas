@@ -176,36 +176,35 @@ function buildRunDoc(d, imgs, coverImg) {
   const pgProt = page(heading(d.proT) + textBlk(d.proX) + itemsBlk(d.proI));
   const pgGras = page(heading(d.graT) + textBlk(d.graX) + itemsBlk(d.graI) + textBlk(d.graC));
 
-  // Antes/después → dividido para que no se corte
+  // Antes/después → 3 sub-páginas equilibradas
   const pgAntesIntro = page(
     heading(d.antT) +
     subheading(d.antSt) + textBlk(d.antX) +
     '<div class="run-inline-t">' + esc(d.ccT) + '</div>' + itemsBlk(d.ccI) + textBlk(d.ccN), true, 'Qué comer antes y después');
+  // Simples + timing + 2 sets de ejemplos juntos (antes eran 2 páginas cortas)
   const pgAntesSimples = page(
     '<div class="run-inline-t">' + esc(d.csT) + '</div>' + itemsBlk(d.csI) + textBlk(d.csN) +
-    textBlk(d.tim), true);
-  const pgEjemplosPre = page(
+    textBlk(d.tim) +
     '<div class="run-inline-t">' + esc(d.e30T) + '</div>' + itemsBlk(d.e30I) +
     '<div class="run-inline-t">' + esc(d.e12T) + '</div>' + itemsBlk(d.e12I), true);
-  // Después de entrenar → dividido en 2 para no cortarse a mitad de párrafo
+  // Después completo en una sola página (intro + fuentes + cierre + ejemplos)
   const pgDespues = page(
     subheading(d.desSt) + textBlk(d.desX) +
-    '<div class="run-inline-t">' + esc(d.pfT) + '</div>' + itemsBlk(d.pfI), true);
-  const pgDespuesEjemplos = page(
+    '<div class="run-inline-t">' + esc(d.pfT) + '</div>' + itemsBlk(d.pfI) +
     textBlk(d.recC) +
     '<div class="run-inline-t">' + esc(d.epT) + '</div>' + itemsBlk(d.epI), true);
 
   // Cómo saber
   const pgCom = page(heading(d.comT) + textBlk(d.comX), false, '¿Cómo saber qué consumir?');
 
-  // Pautas día previo y carrera → dividido
+  // Pautas día previo (una página)
   const pgPautas = page(heading(d.pauT) + textBlk(d.pauX) +
     subheading(d.dpT) + textBlk(d.dpX) + itemsBlk(d.dpI) + textBlk(d.dpC), false, 'Pautas día previo y carrera');
-  const pgLimitarGrasas = page(subheading(d.limT) +
-    '<div class="run-inline-t">' + esc(d.lgT) + '</div>' + textBlk(d.lgX), false, 'Alimentos a limitar');
-  const pgLimitarFibra = page(
+  // Alimentos a limitar en una página (grasas + fibra + pruebas nuevas)
+  const pgLimitar = page(subheading(d.limT) +
+    '<div class="run-inline-t">' + esc(d.lgT) + '</div>' + textBlk(d.lgX) +
     '<div class="run-inline-t">' + esc(d.lfT) + '</div>' + textBlk(d.lfX) +
-    '<div class="run-inline-t">' + esc(d.evT) + '</div>' + textBlk(d.evX));
+    '<div class="run-inline-t">' + esc(d.evT) + '</div>' + textBlk(d.evX), false, 'Alimentos a limitar');
 
   // Hidratación (con imagen)
   const hidImgHtml = imgs.hidImg
@@ -214,12 +213,12 @@ function buildRunDoc(d, imgs, coverImg) {
   const pgHid = page(heading(d.hidT) + textBlk(d.hidX) + hidImgHtml + textBlk(d.hidC), true, 'Hidratación');
   const pgMate = page(subheading(d.matT) + textBlk(d.matX), true);
 
-  // Suplementación (con imagen cafeína)
+  // Suplementación (todo junto: intro + efectos + dosis + imagen cafeína + advertencia)
   const cafeImgHtml = imgs.cafeImg
     ? '<div style="margin:14px 0;text-align:center"><img src="' + imgs.cafeImg + '" style="max-width:100%;max-height:200px;border-radius:8px"></div>'
     : '';
-  const pgSup = page(heading(d.supT) + textBlk(d.supX) + itemsBlk(d.supI), false, 'Suplementación y cafeína');
-  const pgSupDosis = page(textBlk(d.supD) + cafeImgHtml + textBlk(d.supA));
+  const pgSup = page(heading(d.supT) + textBlk(d.supX) + itemsBlk(d.supI) +
+    textBlk(d.supD) + cafeImgHtml + textBlk(d.supA), false, 'Suplementación y cafeína');
 
   // Bebidas deportivas
   const pgBeb = page(heading(d.bebT) + textBlk(d.bebX) + itemsBlk(d.bebI) + textBlk(d.bebE) +
@@ -244,11 +243,11 @@ function buildRunDoc(d, imgs, coverImg) {
   return '<div class="ag-doc" id="doc-run">' +
     cover + pgPres +
     pgImportancia + pgCarbs + pgProt + pgGras +
-    pgAntesIntro + pgAntesSimples + pgEjemplosPre + pgDespues + pgDespuesEjemplos +
+    pgAntesIntro + pgAntesSimples + pgDespues +
     pgCom +
-    pgPautas + pgLimitarGrasas + pgLimitarFibra +
+    pgPautas + pgLimitar +
     pgHid + pgMate +
-    pgSup + pgSupDosis +
+    pgSup +
     pgBeb +
     pgAy1 + pgAy2 +
     pgFin +
