@@ -3334,17 +3334,19 @@ function buildRunDoc() {
     '<div class="run-inline-t">'+esc(d.evT)+'</div>' + textBlk(d.evX)
   ));
 
-  // === HIDRATACIÓN + MATE (páginas separadas — hid tiene la imagen) ===
+  // === HIDRATACIÓN + MATE (una sola página) ===
+  // Si no se subió imagen, no mostramos placeholder (solo hueco visual).
   var hidImgHtml = runImgs.hidImg
     ? '<div style="margin:18px 0;text-align:center"><img src="'+runImgs.hidImg+'" style="max-width:100%;max-height:180px;border-radius:8px"></div>'
-    : '<div style="margin:18px 0;padding:20px;border:1px dashed rgba(169,138,130,.35);border-radius:8px;text-align:center;color:#8C7E78;font-size:10px;font-style:italic">Cargá una imagen (escala de color de orina)</div>';
-  var pgHid = wrapPage(H.hid ? '' : (heading(d.hidT) + textBlk(d.hidX) + hidImgHtml + textBlk(d.hidC)), 'background:#FAF8F4');
-  var pgMate = wrapPage(H.mat ? '' : (subheading(d.matT) + textBlk(d.matX)), 'background:#FAF8F4');
+    : '';
+  var b_hid = H.hid ? '' : (heading(d.hidT) + textBlk(d.hidX) + hidImgHtml + textBlk(d.hidC));
+  var b_mat = H.mat ? '' : (subheading(d.matT) + textBlk(d.matX));
+  var pgHid = wrapPage(b_hid + b_mat, 'background:#FAF8F4');
 
   // === SUPLEMENTACIÓN (todo junto: intro + items + dosis + imagen cafeína + advertencia) ===
   var cafeImgHtml = runImgs.cafeImg
     ? '<div style="margin:14px 0;text-align:center"><img src="'+runImgs.cafeImg+'" style="max-width:100%;max-height:200px;border-radius:8px"></div>'
-    : '<div style="margin:14px 0;padding:16px;border:1px dashed rgba(169,138,130,.35);border-radius:8px;text-align:center;color:#8C7E78;font-size:10px;font-style:italic">Cargá la imagen «Cantidad de cafeína por porción»</div>';
+    : '';
   var pgSup = wrapPage(H.sup ? '' : (
     heading(d.supT) + textBlk(d.supX) + itemsBlk(d.supI) +
     textBlk(d.supD) + cafeImgHtml + textBlk(d.supA)
@@ -3378,7 +3380,7 @@ function buildRunDoc() {
     pgAntesIntro + pgAntesSimples + pgDespues +
     pgCom +
     pgPautas + pgLimitar +
-    pgHid + pgMate +
+    pgHid +
     pgSup +
     pgBeb +
     pgAy1 + pgAy2 +

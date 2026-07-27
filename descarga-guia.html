@@ -206,12 +206,14 @@ function buildRunDoc(d, imgs, coverImg) {
     '<div class="run-inline-t">' + esc(d.lfT) + '</div>' + textBlk(d.lfX) +
     '<div class="run-inline-t">' + esc(d.evT) + '</div>' + textBlk(d.evX), false, 'Alimentos a limitar');
 
-  // Hidratación (con imagen)
+  // Hidratación + Mate en una sola página (sin placeholder si no hay imagen)
   const hidImgHtml = imgs.hidImg
     ? '<div style="margin:18px 0;text-align:center"><img src="' + imgs.hidImg + '" style="max-width:100%;max-height:180px;border-radius:8px"></div>'
     : '';
-  const pgHid = page(heading(d.hidT) + textBlk(d.hidX) + hidImgHtml + textBlk(d.hidC), true, 'Hidratación');
-  const pgMate = page(subheading(d.matT) + textBlk(d.matX), true);
+  const pgHid = page(
+    heading(d.hidT) + textBlk(d.hidX) + hidImgHtml + textBlk(d.hidC) +
+    subheading(d.matT) + textBlk(d.matX),
+    true, 'Hidratación');
 
   // Suplementación (todo junto: intro + efectos + dosis + imagen cafeína + advertencia)
   const cafeImgHtml = imgs.cafeImg
@@ -246,7 +248,7 @@ function buildRunDoc(d, imgs, coverImg) {
     pgAntesIntro + pgAntesSimples + pgDespues +
     pgCom +
     pgPautas + pgLimitar +
-    pgHid + pgMate +
+    pgHid +
     pgSup +
     pgBeb +
     pgAy1 + pgAy2 +
