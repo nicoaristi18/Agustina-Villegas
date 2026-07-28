@@ -385,6 +385,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 <!-- TAB 2: RECOMENDADOS -->
 <div id="panel-sup" class="tab-panel">
   <div class="form-col">
+    <!-- SAVE/LOAD -->
+    <div class="save-bar" style="flex-direction:column;gap:.45rem">
+      <div style="display:flex;gap:.4rem;width:100%;align-items:center">
+        <input id="sup-save-name" type="text" placeholder="Nombre del guardado (auto desde cliente + fecha)" style="flex:1;min-width:0;padding:.35rem .55rem;background:#fff;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text);outline:none;">
+        <button class="sb-btn primary" onclick="saveSupSnapshot()">&#128190; Guardar</button>
+      </div>
+      <div style="display:flex;gap:.4rem;width:100%;align-items:center">
+        <select id="sup-saves-sel" style="flex:1;min-width:0;padding:.35rem .55rem;background:#fff;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text);outline:none;"><option value="">— Cargar guardado… —</option></select>
+        <button class="sb-btn" onclick="loadSupSnapshot()">Cargar</button>
+        <button class="sb-btn danger" onclick="deleteSupSnapshot()">Borrar</button>
+      </div>
+      <div id="sup-save-status" style="font-size:.75rem;font-weight:500;color:var(--rose-dark);display:none;padding:.3rem .5rem;background:rgba(168,112,106,.1);border-radius:6px;text-align:center"></div>
+    </div>
     <div class="fsec">
       <div class="fsec-title">Datos del documento</div>
       <div class="fg"><label>Nombre del cliente</label><input id="sup-nombre" type="text" placeholder="Mar&iacute;a Garc&iacute;a" oninput="upSup()"></div>
@@ -1313,6 +1326,126 @@ function renderCatsForm() {
       (c.vis ? '<div style="padding:.6rem .75rem"><div class="fg" style="margin:0"><textarea rows="3" placeholder="Un producto por l&iacute;nea&hellip;" oninput="syncCat(' + c.id + ',\'items\',this.value)">' + esc(c.items) + '</textarea></div></div>' : '') +
       '</div>';
   }).join('');
+}
+
+/* CLOUD SAVES para Recomendados del súper — misma lógica que el plan pero
+   con su propia key en el KV (ag:gen_sup_saves) para no mezclarse. */
+async function cloudGetSupSaves() {
+  try {
+    const r = await fetch('/api/kv?op=get&key=ag:gen_sup_saves', {cache:'no-store'});
+    if (r.ok) { const d = await r.json(); if (d.value) return typeof d.value==='string'?JSON.parse(d.value):d.value; }
+  } catch(e) {}
+  try {
+    const r = await fetch('/api/data?key=agustina_generator_sup_saves', {cache:'no-store'});
+    if (r.ok) { const d = await r.json(); if (d.value) return typeof d.value==='string'?JSON.parse(d.value):d.value; }
+  } catch(e) {}
+  try { const ls = localStorage.getItem('ag_sup_saves'); if (ls) return JSON.parse(ls); } catch(e) {}
+  return [];
+}
+
+async function cloudPutSupSaves(arr) {
+  localStorage.setItem('ag_sup_saves', JSON.stringify(arr));
+  try { await fetch('/api/kv', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'set',key:'ag:gen_sup_saves',value:JSON.stringify(arr)})}); } catch(e) {}
+  try { await fetch('/api/data', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'agustina_generator_sup_saves',value:JSON.stringify(arr)})}); } catch(e) {}
+}
+
+function showSupSaveStatus(msg, isErr) {
+  var el = $('sup-save-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = isErr ? '#a32d2d' : 'var(--rose-dark)';
+  el.style.background = isErr ? 'rgba(163,45,45,.1)' : 'rgba(168,112,106,.1)';
+  el.style.display = '';
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.style.display='none'; }, 5000);
+}
+
+function collectSupData() {
+  return {
+    nombre: val('sup-nombre'),
+    fecha: val('sup-fecha'),
+    periodo: val('sup-periodo'),
+    custom: val('sup-custom'),
+    intro: val('sup-intro'),
+    cats: JSON.parse(JSON.stringify(cats))
+  };
+}
+
+function applySupData(d) {
+  function setV(id,v){var e=$(id); if(e) e.value = v||'';}
+  setV('sup-nombre', d.nombre);
+  setV('sup-fecha', d.fecha);
+  if (d.periodo) { var pSel = $('sup-periodo'); if (pSel) pSel.value = d.periodo; }
+  setV('sup-custom', d.custom);
+  setV('sup-intro', d.intro);
+  // Mostrar/ocultar el input custom según el period seleccionado
+  var cf = $('sup-custom-fg');
+  if (cf) cf.style.display = (d.periodo === 'otro') ? '' : 'none';
+  if (Array.isArray(d.cats)) {
+    cats = d.cats.map(function(c){ return { id:c.id, name:c.name, items:c.items||'', vis:c.vis!==false }; });
+    // Actualizar contador para no colisionar IDs si se agregan nuevas categorías
+    catCtr = Math.max.apply(null, cats.map(function(c){return c.id||0;}).concat([catCtr]));
+    renderCatsForm();
+  }
+}
+
+async function saveSupSnapshot() {
+  var nameInp = $('sup-save-name');
+  var name = nameInp ? nameInp.value.trim() : '';
+  if (!name) {
+    var pNombre = val('sup-nombre') || 'Sin nombre';
+    var now = new Date();
+    name = pNombre + ' — ' + now.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + now.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'});
+    if (nameInp) nameInp.value = name;
+  }
+  var snap = collectSupData();
+  snap._name = name; snap._ts = new Date().toISOString(); snap._id = Date.now().toString();
+  showSupSaveStatus('Guardando…');
+  var arr = await cloudGetSupSaves();
+  arr.unshift(snap);
+  if (arr.length > 50) arr = arr.slice(0, 50);
+  await cloudPutSupSaves(arr);
+  updateSupSavesUI(arr);
+  showSupSaveStatus('✓ Guardado: ' + name);
+}
+
+function updateSupSavesUI(arr) {
+  var sel = $('sup-saves-sel');
+  if (!sel) return;
+  if (!arr) { try { arr = JSON.parse(localStorage.getItem('ag_sup_saves')||'[]'); } catch(e){ arr=[]; } }
+  sel.innerHTML = '<option value="">— Cargar guardado… (' + arr.length + ') —</option>' +
+    arr.map(function(s,i){
+      var ts = s._ts ? ' · ' + new Date(s._ts).toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '';
+      return '<option value="'+i+'">'+esc(s._name||'Sin nombre')+ts+'</option>';
+    }).join('');
+}
+
+async function loadSupSnapshot() {
+  var sel = $('sup-saves-sel');
+  if (!sel || sel.value === '') { showSupSaveStatus('Seleccioná un guardado primero.', true); return; }
+  var arr = await cloudGetSupSaves();
+  var snap = arr[parseInt(sel.value)];
+  if (!snap) return;
+  applySupData(snap);
+  if ($('sup-save-name')) $('sup-save-name').value = snap._name || '';
+  upSup();
+  showSupSaveStatus('✓ Cargado: ' + (snap._name||'guardado'));
+}
+
+async function deleteSupSnapshot() {
+  var sel = $('sup-saves-sel');
+  if (!sel || sel.value === '') { showSupSaveStatus('Seleccioná un guardado primero.', true); return; }
+  if (!confirm('¿Borrar este guardado?')) return;
+  var arr = await cloudGetSupSaves();
+  arr.splice(parseInt(sel.value), 1);
+  await cloudPutSupSaves(arr);
+  updateSupSavesUI(arr);
+  showSupSaveStatus('Guardado eliminado.');
+}
+
+async function initSupSavesUI() {
+  var arr = await cloudGetSupSaves();
+  updateSupSavesUI(arr);
 }
 
 function supPeriodoChange() {
@@ -3528,6 +3661,7 @@ document.addEventListener('DOMContentLoaded', function() {
   renderIdeasForm();
   initTabla();
   initSavesUI();
+  initSupSavesUI();
   loadRunData();
   updateRunModeUI();
   upRec();
