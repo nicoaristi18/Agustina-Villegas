@@ -250,7 +250,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 .macro-sub-note{font-size:9px;color:rgba(255,255,255,.38);font-style:italic;margin-top:7px;line-height:1.5;}
 
 /* PORCIONES E INTERCAMBIOS (PDF) — diseño horizontal sin writing-mode (compatible html2canvas) */
-.porc-pg-row{margin-bottom:13px;break-inside:avoid;page-break-inside:avoid;}
+.porc-pg-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;}
+.porc-pg-row{margin-bottom:0;break-inside:avoid;page-break-inside:avoid;}
 .porc-pg-cat-hdr{font-family:'Cormorant Garamond',serif;font-size:12px;font-weight:500;color:#A8706A;text-transform:uppercase;letter-spacing:.09em;border-bottom:1.5px solid rgba(169,138,130,.22);padding-bottom:4px;margin-bottom:6px;}
 .porc-pg-pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px;}
 .porc-pg-pill{font-size:9px;font-weight:400;color:#2A2118;background:#FAF8F4;border:1px solid rgba(169,138,130,.22);border-radius:20px;padding:3.5px 9px;white-space:nowrap;}
@@ -2396,6 +2397,7 @@ function buildPlanDoc() {
       pgHdr('Porciones e intercambios', nombre)+
       '<div class="sec-label first">Porciones e intercambios</div>'+
       (porcSub?'<div class="intro-box">'+esc(porcSub)+'</div>':'')+
+      '<div class="porc-pg-grid">'+
       porcs.map(function(p){
         var pills = (p.items||'').split('\n').map(function(line){ return line.trim(); }).filter(Boolean)
           .map(function(line){ return '<span class="porc-pg-pill">'+esc(line)+'</span>'; }).join('');
@@ -2404,7 +2406,8 @@ function buildPlanDoc() {
           '<div class="porc-pg-pills">'+pills+'</div>'+
           (p.note?'<div class="porc-pg-note-txt">'+esc(p.note)+'</div>':'')+
           '</div>';
-      }).join('')+'</div>';
+      }).join('')+
+      '</div></div>';
   }
 
   /* Crudos/cocidos page — celdas redondeadas */
@@ -2659,6 +2662,9 @@ async function dlPDF(docId, filename, btnId) {
 
     var pdfPageCount = 0;
     var isRunDoc = (docId === 'doc-run');
+    // Aplicamos la compresión tolerante también al Plan de alimentación para
+    // que Porciones y otras páginas largas no se corten a mitad de contenido.
+    var isCompressibleDoc = isRunDoc || (docId === 'doc-plan');
     for (var i = 0; i < pageEls.length; i++) {
       var pageEl = pageEls[i];
       var isMacroPg = pageEl.classList.contains('macro-pg');
@@ -2705,12 +2711,12 @@ async function dlPDF(docId, filename, btnId) {
       var canvasW = pageCanvas.width;
       var canvasH = pageCanvas.height;
       var pageHpx = PAGE_H * SCALE;
-      // Tolerancia de compresión SOLO en doc-run: si el canvas se pasa hasta
-      // 35% de la altura de página, lo aplastamos en 1 página en vez de dividir
-      // (evita páginas casi vacías por diferencias de font-rendering en móvil).
+      // Tolerancia de compresión (doc-run + doc-plan): si el canvas se pasa
+      // hasta 35% de la altura de página, lo aplastamos en 1 página en vez
+      // de dividir (evita páginas casi vacías y cortes a mitad de contenido).
       var COMPRESS_MAX = 1.35;
       var numSlices;
-      if (isRunDoc && canvasH <= pageHpx * COMPRESS_MAX) {
+      if (isCompressibleDoc && canvasH <= pageHpx * COMPRESS_MAX) {
         numSlices = 1;
       } else {
         numSlices = Math.ceil(canvasH / pageHpx);
@@ -2723,7 +2729,7 @@ async function dlPDF(docId, filename, btnId) {
         var srcY = s * pageHpx;
         var sliceH = Math.min(pageHpx, canvasH - srcY);
 
-        if (isRunDoc && numSlices === 1) {
+        if (isCompressibleDoc && numSlices === 1) {
           // Path especial: comprimimos verticalmente si hace falta
           var sub0 = document.createElement('canvas');
           sub0.width = canvasW; sub0.height = pageHpx;
