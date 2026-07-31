@@ -1458,19 +1458,58 @@ function buildSupDoc() {
   var nombre = val('sup-nombre'), fecha = val('sup-fecha'), intro = val('sup-intro');
   var per = $('sup-periodo').value === 'otro' ? val('sup-custom') : val('sup-periodo');
   var vis = cats.filter(function(c){ return c.vis && c.items.trim(); });
-  var catsHtml = vis.map(function(c) {
+
+  // Chunking automático: dividir categorías en páginas para que ninguna
+  // se corte a la mitad. Costo aproximado en 'unidades' = 3 (título) + items.
+  // Presupuesto por página: ~28 unidades (empíricamente da ~700px de alto en
+  // el grid de 2 columnas). Categorías atómicas: no se dividen individualmente.
+  function chunkCats(list, maxCost, firstPageMax) {
+    var chunks = [];
+    var current = [];
+    var currentCost = 0;
+    var isFirst = true;
+    list.forEach(function(c) {
+      var itemCount = (c.items||'').split('\n').filter(function(l){return l.trim();}).length;
+      var cost = 3 + itemCount;
+      var budget = isFirst ? firstPageMax : maxCost;
+      if (current.length > 0 && (currentCost + cost) > budget) {
+        chunks.push(current);
+        current = [];
+        currentCost = 0;
+        isFirst = false;
+      }
+      current.push(c);
+      currentCost += cost;
+    });
+    if (current.length > 0) chunks.push(current);
+    return chunks;
+  }
+
+  var chunks = chunkCats(vis, 28, intro ? 22 : 28);
+  if (chunks.length === 0) chunks = [[]]; // página vacía si no hay categorías
+
+  function renderCat(c) {
     return '<div class="cat-block">' +
       '<div class="cat-title">' + c.name + '</div>' +
       '<ul class="cat-items">' + (nl2li(c.items, 'cat-item') || '<li class="cat-item">&mdash;</li>') + '</ul>' +
       '</div>';
+  }
+
+  var pagesHtml = chunks.map(function(chunk, i) {
+    var catsHtml = chunk.map(renderCat).join('') ||
+      '<p style="font-size:11px;color:#8C7E78">Completá las categorías.</p>';
+    // El intro solo va en la primera página; las siguientes solo repiten el header
+    return '<div class="doc-page">' +
+      pgHdr('Recomendados del súper', nombre) +
+      (i === 0 && intro ? '<div class="intro-box">' + esc(intro) + '</div>' : '') +
+      '<div class="cats-grid">' + catsHtml + '</div>' +
+      '</div>';
   }).join('');
+
   return '<div class="ag-doc" id="doc-sup">' +
     buildCover('Recomendados\ndel súper', nombre, fecha, 'gen_cv_sup', per ? 'Período: ' + per : '') +
-    '<div class="doc-page">' +
-    pgHdr('Recomendados del súper', nombre) +
-    (intro ? '<div class="intro-box">' + esc(intro) + '</div>' : '') +
-    '<div class="cats-grid">' + (catsHtml || '<p style="font-size:11px;color:#8C7E78">Completá las categorías.</p>') + '</div>' +
-    '</div></div>';
+    pagesHtml +
+    '</div>';
 }
 
 var upSup = deb(function() {
