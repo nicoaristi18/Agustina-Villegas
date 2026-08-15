@@ -58,7 +58,7 @@ body.rb::after{
 }
 
 /* scroll progress */
-#rb-prog{ position:fixed; top:0; left:0; z-index:9999; height:2px; width:0%; background:var(--clay); pointer-events:none; transition:width .08s linear; }
+#rbProg{ position:fixed; top:0; left:0; z-index:9999; height:2px; width:0%; background:var(--clay); pointer-events:none; transition:width .08s linear; }
 
 /* ═══════════════════════════════════════════════
    NAV
@@ -84,6 +84,7 @@ body.rb::after{
   transition:transform .4s var(--spring), background .4s;
 }
 .rb-nav-cta:hover{ background:var(--forest2); transform:translateY(-2px); }
+.rb-nav-cta.current{ background:var(--forest2); box-shadow:0 0 0 2px var(--sage-light) inset; }
 .rb-nav-right{ display:flex; align-items:center; gap:1.6rem; }
 .rb-burger{ display:none; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:.4rem; }
 .rb-burger span{ width:22px; height:2px; background:var(--forest2); transition:transform .35s var(--spring), opacity .3s; }
