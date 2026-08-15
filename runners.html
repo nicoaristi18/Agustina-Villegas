@@ -293,11 +293,11 @@
   <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 004.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.02c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.13.11-1.82-.12-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36h.55c.18 0 .42-.03.65.5.24.56.8 1.95.87 2.09.07.14.12.31.02.5-.1.19-.15.31-.29.48-.14.17-.3.37-.43.5-.14.14-.29.29-.12.57.17.28.75 1.24 1.62 2 1.11.99 2.05 1.3 2.33 1.44.28.14.44.12.6-.07.17-.19.71-.83.9-1.11.19-.28.38-.24.64-.14.26.1 1.64.77 1.92.91.28.14.47.21.53.33.07.12.07.68-.17 1.36z"/></svg>
 </a>
 
-<!-- ===== MODAL COMPRA (sin payment todavía, redirige a WhatsApp) ===== -->
+<!-- ===== MODAL COMPRA (con MercadoPago) ===== -->
 <div class="rn-modal" id="purchaseModal" onclick="if(event.target.id==='purchaseModal')closePurchaseModal()">
   <div class="rn-modal-inner">
     <h3>Comprar el plan</h3>
-    <p class="intro">Completá tus datos. Cuando tengamos el pago online te enviamos el PDF al instante. <strong>Por ahora coordinamos por WhatsApp.</strong></p>
+    <p class="intro">Completá tus datos y te llevamos a MercadoPago para pagar. Al confirmarse el pago te llega la guía en PDF a tu correo al instante.</p>
     <div class="rn-field">
       <label>Tu nombre</label>
       <input id="buyer-name" type="text" placeholder="María García" autocomplete="name">
@@ -306,11 +306,24 @@
       <label>Tu email</label>
       <input id="buyer-email" type="email" placeholder="tu@email.com" autocomplete="email">
     </div>
+    <div class="rn-field">
+      <label>Código de descuento (opcional)</label>
+      <div style="display:flex;gap:.5rem;align-items:stretch">
+        <input id="coupon-code" type="text" placeholder="Ej: BIENVENIDA20" style="flex:1;text-transform:uppercase" autocomplete="off">
+        <button type="button" id="btn-apply-coupon" onclick="applyCouponCode()" style="padding:.6rem 1rem;border-radius:10px;border:1.5px solid var(--border2);background:transparent;color:var(--clay-deep);font-family:var(--font-body);font-size:.78rem;font-weight:500;cursor:pointer;white-space:nowrap">Aplicar</button>
+      </div>
+      <div id="coupon-status" style="margin-top:.5rem;font-size:.78rem;line-height:1.4;display:none"></div>
+    </div>
+    <div id="price-summary" style="margin:0 0 1.1rem;padding:.9rem 1rem;background:var(--cream);border-radius:12px;font-size:.85rem;display:none">
+      <div style="display:flex;justify-content:space-between;color:var(--text-muted)"><span>Precio</span><span id="ps-base">—</span></div>
+      <div style="display:flex;justify-content:space-between;color:var(--sage);margin-top:.3rem" id="ps-discount-row"><span>Descuento</span><span id="ps-discount">—</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:600;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border2);color:var(--forest2)"><span>Total a pagar</span><span id="ps-final">—</span></div>
+    </div>
     <div class="rn-modal-buttons">
       <button class="cancel" onclick="closePurchaseModal()">Cancelar</button>
-      <button class="confirm" onclick="submitPurchase()">Continuar por WhatsApp →</button>
+      <button class="confirm" id="btn-submit-purchase" onclick="submitPurchase()">Ir a pagar →</button>
     </div>
-    <div class="rn-modal-note">💳 Próximamente vas a poder pagar online con MercadoPago y recibir el PDF al instante. Por ahora coordinamos por WhatsApp.</div>
+    <div class="rn-modal-note">💳 Pago 100% seguro con MercadoPago. Aceptamos tarjeta de crédito y débito.</div>
   </div>
 </div>
 
@@ -345,7 +358,82 @@ function openPurchaseModal() {
 function closePurchaseModal() {
   document.getElementById('purchaseModal').classList.remove('open');
 }
-function submitPurchase() {
+
+// Estado del cupón validado (si hay uno aplicado)
+let validCoupon = null;
+
+function fmtPrice(v) {
+  return '$' + Number(v || 0).toLocaleString('es-UY');
+}
+
+function updatePriceSummary(base, discount, final) {
+  const box = document.getElementById('price-summary');
+  document.getElementById('ps-base').textContent = fmtPrice(base);
+  document.getElementById('ps-discount').textContent = '-' + fmtPrice(discount);
+  document.getElementById('ps-final').textContent = fmtPrice(final);
+  document.getElementById('ps-discount-row').style.display = discount > 0 ? 'flex' : 'none';
+  box.style.display = 'block';
+}
+
+function clearCouponState() {
+  validCoupon = null;
+  document.getElementById('price-summary').style.display = 'none';
+  const s = document.getElementById('coupon-status');
+  s.style.display = 'none';
+  s.textContent = '';
+}
+
+async function applyCouponCode() {
+  const codeInput = document.getElementById('coupon-code');
+  const code = codeInput.value.trim().toUpperCase();
+  const statusEl = document.getElementById('coupon-status');
+  if (!code) {
+    clearCouponState();
+    return;
+  }
+  const btn = document.getElementById('btn-apply-coupon');
+  const prev = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/products/validate-coupon', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, slug: 'runner-principiantes' })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+    if (!d.valid) {
+      validCoupon = null;
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#A34747';
+      statusEl.textContent = '✕ ' + (d.error || 'Cupón inválido');
+      document.getElementById('price-summary').style.display = 'none';
+      return;
+    }
+    validCoupon = { code, ...d };
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#5C8A5F';
+    statusEl.textContent = d.isFree
+      ? '✓ Cupón aplicado: la guía es gratis con este código'
+      : '✓ Cupón aplicado: ' + fmtPrice(d.discountAmount) + ' de descuento';
+    updatePriceSummary(d.basePrice, d.discountAmount, d.finalPrice);
+    // Cambiar texto del botón de submit si es free
+    const submitBtn = document.getElementById('btn-submit-purchase');
+    submitBtn.textContent = d.isFree ? 'Recibir la guía →' : 'Ir a pagar →';
+  } catch (err) {
+    validCoupon = null;
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#A34747';
+    statusEl.textContent = '✕ ' + err.message;
+    document.getElementById('price-summary').style.display = 'none';
+  } finally {
+    btn.textContent = prev;
+    btn.disabled = false;
+  }
+}
+
+async function submitPurchase() {
   const name = document.getElementById('buyer-name').value.trim();
   const email = document.getElementById('buyer-email').value.trim();
   if (!name || !email) {
@@ -356,18 +444,39 @@ function submitPurchase() {
     alert('Email inválido.');
     return;
   }
-  // Por ahora: armar mensaje de WhatsApp y redirigir
-  const productName = currentProduct?.title || 'Plan de Nutrición para Runners Principiantes';
-  const price = currentProduct?.price || 1500;
-  const msg = encodeURIComponent(
-    `Hola Agustina! Quiero comprar el "${productName}" ($${price.toLocaleString('es')} UYU).\n\n` +
-    `Mis datos:\n` +
-    `Nombre: ${name}\n` +
-    `Email: ${email}\n\n` +
-    `¿Cómo coordinamos el pago? Gracias!`
-  );
-  const phone = '59899712691';
-  window.location.href = `https://wa.me/${phone}?text=${msg}`;
+  const btn = document.getElementById('btn-submit-purchase');
+  const prev = btn.textContent;
+  const isFree = validCoupon && validCoupon.isFree;
+  btn.textContent = isFree ? 'Enviando…' : 'Conectando con MercadoPago…';
+  btn.disabled = true;
+  try {
+    const payload = { name, email, slug: 'runner-principiantes' };
+    if (validCoupon && validCoupon.code) payload.couponCode = validCoupon.code;
+    const r = await fetch('/api/products/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+
+    // Si el cupón cubre el 100%, el backend entrega directo por email
+    if (d.freeCoupon) {
+      alert('¡Listo! Te enviamos un email a ' + email + ' con el link para descargar la guía. Revisá también Spam o Promociones.');
+      closePurchaseModal();
+      btn.textContent = prev;
+      btn.disabled = false;
+      return;
+    }
+
+    if (!d.init_point) throw new Error('No pudimos iniciar el pago (falta init_point).');
+    window.location.href = d.init_point;
+  } catch (err) {
+    alert('No pudimos procesar tu compra: ' + err.message + '\n\nSi el problema persiste, escribinos por WhatsApp.');
+    console.error('[checkout]', err);
+    btn.textContent = prev;
+    btn.disabled = false;
+  }
 }
 </script>
 <script src="animations.js"></script>

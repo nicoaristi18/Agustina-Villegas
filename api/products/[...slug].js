@@ -13,7 +13,11 @@
 
 import {
   getProducts, saveProducts, getProductBySlug, scrubProductForPublic,
-  getAdminFromRequest, readJsonBody
+  getAdminFromRequest, readJsonBody,
+  getGuidePurchases, saveGuidePurchases,
+  generateGuideDownloadToken, verifyGuideDownloadToken,
+  sendGuideDeliveryEmail,
+  getCoupons, applyCoupon, incrementCouponUse
 } from '../../lib/auth.js';
 
 export default async function handler(req, res) {
@@ -78,6 +82,238 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: 'seeded', product: scrubProductForPublic(seed) });
     }
 
+    // === HELPERS PARA COMPRA ===
+    // Auto-seed del producto runner-principiantes si no existe.
+    async function ensureProduct(slug) {
+      let product = await getProductBySlug(slug);
+      if (!product && slug === 'runner-principiantes') {
+        const now = new Date().toISOString();
+        product = {
+          id: 'runner-principiantes', slug: 'runner-principiantes', category: 'runners',
+          title: 'Plan de Nutrición para Runners Principiantes',
+          tagline: 'Tu guía completa para comenzar a correr sin frustrarte por la comida.',
+          price: 1500, currency: 'UYU', active: true, pdfData: {},
+          createdAt: now, updatedAt: now
+        };
+        const arr = await getProducts();
+        arr.push(product);
+        await saveProducts(arr);
+      }
+      return product;
+    }
+
+    // Registra la compra en KV + genera token + manda email de entrega.
+    // Idempotente por paymentId (si ya se procesó, no reenvía).
+    async function finalizePurchase({ product, name, email, source, paymentId }) {
+      const purchases = await getGuidePurchases();
+      if (paymentId) {
+        const already = purchases.find(p => p.paymentId === String(paymentId));
+        if (already) return { ok: true, purchaseId: already.id, alreadyProcessed: true };
+      }
+      const now = new Date().toISOString();
+      const purchaseId = 'pur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+      const token = generateGuideDownloadToken({ slug: product.slug, email });
+      purchases.unshift({ id: purchaseId, slug: product.slug, name, email, ts: now, source, paymentId: paymentId || null });
+      if (purchases.length > 500) purchases.length = 500;
+      await saveGuidePurchases(purchases);
+
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+      const proto = req.headers['x-forwarded-proto'] || 'https';
+      const downloadUrl = `${proto}://${host}/descarga-guia.html?token=${encodeURIComponent(token)}`;
+
+      const emailResult = await sendGuideDeliveryEmail({
+        name, email, downloadUrl, productTitle: product.title
+      });
+      if (!emailResult.ok) console.error('[finalizePurchase] email fail', emailResult.error);
+      return { ok: true, purchaseId, emailSent: emailResult.ok, downloadUrl };
+    }
+
+    // === VALIDAR CUPÓN ===
+    // POST /api/products/validate-coupon  body { code, slug }
+    if (path === 'validate-coupon' && method === 'POST') {
+      const body = await readJsonBody(req) || {};
+      const code = String(body.code || '').trim().toUpperCase();
+      const slug = String(body.slug || 'runner-principiantes').trim();
+      if (!code) return res.status(400).json({ error: 'Falta code' });
+      const product = await ensureProduct(slug);
+      if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+      const basePrice = Number(product.price) || 0;
+      const all = await getCoupons();
+      const coupon = all[code];
+      const result = applyCoupon(coupon, basePrice);
+      if (!result.ok) return res.status(200).json({ valid: false, error: result.error });
+      return res.status(200).json({
+        valid: true,
+        code,
+        type: coupon.type,
+        basePrice,
+        finalPrice: result.finalPrice,
+        discountAmount: result.discountAmount,
+        isFree: result.finalPrice === 0
+      });
+    }
+
+    // === MERCADOPAGO CHECKOUT ===
+    // POST /api/products/checkout  body { name, email, slug, couponCode? }
+    // Crea preferencia MP y devuelve init_point. Si el cupón es 'free' (100% off),
+    // salta MP y entrega el producto directo por email.
+    if (path === 'checkout' && method === 'POST') {
+      const body = await readJsonBody(req) || {};
+      const name = String(body.name || '').trim();
+      const email = String(body.email || '').trim().toLowerCase();
+      const slug = String(body.slug || 'runner-principiantes').trim();
+      const couponCode = body.couponCode ? String(body.couponCode).trim().toUpperCase() : '';
+      if (!name || !email) return res.status(400).json({ error: 'Faltan name/email' });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email inválido' });
+
+      const product = await ensureProduct(slug);
+      if (!product || !product.active) return res.status(404).json({ error: 'Producto no encontrado' });
+
+      const basePrice = Number(product.price) || 0;
+      if (basePrice <= 0) return res.status(400).json({ error: 'Precio del producto inválido' });
+
+      // Validar cupón si se envió
+      let finalPrice = basePrice;
+      let appliedCoupon = null;
+      if (couponCode) {
+        const all = await getCoupons();
+        const coupon = all[couponCode];
+        const cResult = applyCoupon(coupon, basePrice);
+        if (!cResult.ok) return res.status(400).json({ error: 'Cupón inválido: ' + cResult.error });
+        finalPrice = cResult.finalPrice;
+        appliedCoupon = couponCode;
+      }
+
+      // Cupón 100% descuento → entregar directamente sin pasar por MP
+      if (finalPrice === 0) {
+        const result = await finalizePurchase({
+          product, name, email, source: 'coupon:' + couponCode, paymentId: null
+        });
+        if (appliedCoupon) { try { await incrementCouponUse(appliedCoupon); } catch(e) {} }
+        return res.status(200).json({ freeCoupon: true, ...result });
+      }
+
+      const MP_TOKEN = process.env.MP_ACCESS_TOKEN;
+      const IS_TEST = process.env.MP_TEST === 'true';
+      const SITE_URL = (process.env.SITE_URL || 'https://nutricionistaagustinavillegas.com').replace(/\/$/, '');
+      if (!MP_TOKEN) return res.status(500).json({ error: 'MercadoPago no configurado' });
+
+      const externalRef = JSON.stringify({
+        type: 'guide', slug: product.slug, email, name,
+        coupon: appliedCoupon
+      });
+
+      const preference = {
+        items: [{
+          id: 'guide_' + product.slug,
+          title: product.title + (appliedCoupon ? ' (cupón ' + appliedCoupon + ')' : ''),
+          description: product.tagline || 'Guía digital descargable en PDF',
+          quantity: 1,
+          unit_price: finalPrice,
+          currency_id: product.currency || 'UYU'
+        }],
+        payer: { name, email },
+        back_urls: {
+          success: `${SITE_URL}/comprado.html`,
+          failure: `${SITE_URL}/comprado.html`,
+          pending: `${SITE_URL}/comprado.html`
+        },
+        auto_return: 'approved',
+        external_reference: externalRef,
+        statement_descriptor: 'Agustina Villegas',
+        expires: true,
+        expiration_date_to: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        payment_methods: { excluded_payment_types: [{ id: 'ticket' }, { id: 'atm' }] }
+      };
+
+      const mpRes = await fetch('https://api.mercadopago.com/checkout/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${MP_TOKEN}` },
+        body: JSON.stringify(preference)
+      });
+      const data = await mpRes.json();
+      if (!mpRes.ok) {
+        console.error('[products/checkout] MP error:', data);
+        return res.status(mpRes.status).json({ error: data.message || 'Error en MercadoPago', detail: data });
+      }
+      const initPoint = IS_TEST ? data.sandbox_init_point : data.init_point;
+      return res.status(200).json({ id: data.id, init_point: initPoint, finalPrice, basePrice, discount: basePrice - finalPrice });
+    }
+
+    // GET /api/products/confirm?payment_id=xxx
+    // Consulta el pago en MP y si está aprobado registra la compra + manda email.
+    if (path === 'confirm' && method === 'GET') {
+      const paymentId = req.query.payment_id;
+      if (!paymentId) return res.status(400).json({ error: 'Falta payment_id' });
+
+      const MP_TOKEN = process.env.MP_ACCESS_TOKEN;
+      if (!MP_TOKEN) return res.status(500).json({ error: 'MercadoPago no configurado' });
+
+      const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(paymentId)}`, {
+        headers: { Authorization: `Bearer ${MP_TOKEN}` }
+      });
+      const payment = await mpRes.json();
+      if (!mpRes.ok) return res.status(502).json({ error: 'Error consultando MercadoPago', detail: payment });
+      if (payment.status !== 'approved') {
+        return res.status(200).json({ status: payment.status, status_detail: payment.status_detail, message: `Pago en estado: ${payment.status}` });
+      }
+
+      let ref;
+      try { ref = JSON.parse(payment.external_reference || '{}'); }
+      catch { return res.status(400).json({ error: 'external_reference inválido' }); }
+      if (ref.type !== 'guide' || !ref.slug || !ref.email) {
+        return res.status(400).json({ error: 'El pago no corresponde a una guía' });
+      }
+
+      const product = await ensureProduct(ref.slug);
+      if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+
+      const result = await finalizePurchase({
+        product, name: ref.name || 'Runner', email: ref.email,
+        source: 'mercadopago', paymentId: String(paymentId)
+      });
+
+      // Contabilizar uso del cupón (solo si es la primera vez que se procesa)
+      if (ref.coupon && !result.alreadyProcessed) {
+        try { await incrementCouponUse(ref.coupon); }
+        catch(e) { console.warn('[confirm] increment coupon fail', e); }
+      }
+
+      return res.status(200).json({
+        status: 'approved',
+        purchaseId: result.purchaseId,
+        emailSent: result.emailSent,
+        alreadyProcessed: !!result.alreadyProcessed
+      });
+    }
+
+    // === PURCHASE DIRECTA (sin pago — para tests o entrega manual futura) ===
+    // POST /api/products/purchase  body { name, email, slug }
+    if (path === 'purchase' && method === 'POST') {
+      const body = await readJsonBody(req) || {};
+      const name = String(body.name || '').trim();
+      const email = String(body.email || '').trim().toLowerCase();
+      const slug = String(body.slug || 'runner-principiantes').trim();
+      if (!name || !email) return res.status(400).json({ error: 'Faltan name/email' });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email inválido' });
+
+      const product = await ensureProduct(slug);
+      if (!product || !product.active) return res.status(404).json({ error: 'Producto no encontrado' });
+
+      const result = await finalizePurchase({ product, name, email, source: 'direct', paymentId: null });
+      return res.status(200).json(result);
+    }
+
+    // GET /api/products/download?token=xxx
+    if (path === 'download' && method === 'GET') {
+      const token = String(req.query.token || '');
+      const payload = verifyGuideDownloadToken(token);
+      if (!payload) return res.status(401).json({ error: 'Token inválido o expirado' });
+      const product = await getProductBySlug(payload.slug);
+      if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+      return res.status(200).json({ product, email: payload.email });
+    }
+
     // === ADMIN ===
     if (path.startsWith('admin')) {
       const session = getAdminFromRequest(req);
@@ -118,6 +354,12 @@ export default async function handler(req, res) {
         }
         await saveProducts(products);
         return res.status(200).json({ product: products.find(p => p.slug === body.product.slug) });
+      }
+
+      // GET /api/products/admin/purchases → lista de compras de guías
+      if (path === 'admin/purchases' && method === 'GET') {
+        const purchases = await getGuidePurchases();
+        return res.status(200).json({ purchases });
       }
 
       // DELETE /api/products/admin?slug=...

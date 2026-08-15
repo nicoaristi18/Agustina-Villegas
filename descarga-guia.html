@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Descarga tu guía · Agustina Villegas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --cream:#FAF8F4;--cream2:#F5F0E8;--blush:#F0E6DF;
+  --rose:#C9958E;--rose-dark:#A8706A;--rose-deep:#8B5550;
+  --text:#2A2118;--text-muted:#8C7E78;
+  --border:rgba(169,138,130,.15);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text);min-height:100vh;line-height:1.5;}
+
+.top{background:var(--text);color:#fff;padding:1rem 1.5rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.15);}
+.top-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+.top-brand{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;flex:1;min-width:200px;}
+.top-brand em{color:var(--rose);font-style:italic;}
+.dl-btn{background:var(--rose-dark);color:#fff;border:none;padding:.65rem 1.3rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;transition:background .2s;display:flex;align-items:center;gap:.4rem;}
+.dl-btn:hover{background:var(--rose-deep);}
+.dl-btn:disabled{background:var(--text-muted);cursor:not-allowed;opacity:.7;}
+
+.hero-msg{background:#fff;padding:2.5rem 1.5rem 1.5rem;text-align:center;border-bottom:1px solid var(--border);}
+.hero-msg h1{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:400;color:var(--text);margin-bottom:.4rem;}
+.hero-msg h1 em{color:var(--rose-dark);font-style:italic;}
+.hero-msg p{color:var(--text-muted);font-size:.95rem;max-width:600px;margin:0 auto;}
+
+.doc-container{max-width:660px;margin:2rem auto;padding:0 1rem;}
+.status-box{padding:2rem;background:#fff;border-radius:12px;text-align:center;color:var(--text-muted);}
+.status-box.error{border-left:4px solid #a32d2d;color:#a32d2d;}
+
+/* === PDF DOC STYLES (mirror de generador.html) === */
+.ag-doc{width:595px;font-family:'DM Sans',sans-serif;color:#2A2118;background:#fff;max-width:100%;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,.08);}
+.ag-doc *{box-sizing:border-box;}
+.doc-page{width:595px;min-width:595px;padding:52px 58px 72px;position:relative;background:#fff;break-before:page;page-break-before:always;min-height:auto;flex-shrink:0;}
+.doc-page:first-child{break-before:auto;page-break-before:auto;}
+.doc-page.tinted{background:#FAF8F4;}
+
+/* ÍNDICE */
+.toc-list{margin-top:14px;}
+.toc-row{display:flex;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(169,138,130,.12);font-size:12px;}
+.toc-row:last-child{border-bottom:none;}
+.toc-title{color:#2A2118;font-weight:400;}
+.toc-dots{flex:1;border-bottom:1px dotted rgba(169,138,130,.4);margin:0 10px 3px;}
+.toc-page-num{color:#A8706A;font-weight:500;font-family:'Cormorant Garamond',serif;font-size:15px;min-width:24px;text-align:right;}
+.toc-intro{font-size:11px;color:#8C7E78;font-weight:300;line-height:1.6;margin-bottom:20px;font-style:italic;}
+
+.page-cover{padding:0;background:#8B5550;height:842px;min-height:842px;overflow:hidden;}
+.cover-bg-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;}
+.cover-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(150deg,rgba(43,33,24,.52) 0%,rgba(139,85,80,.38) 100%);}
+.cover-body{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;padding:50px 58px;}
+.cover-sig{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:300;}
+.cover-space{flex:1;}
+.cover-line{width:32px;height:1px;background:rgba(255,255,255,.38);margin-bottom:16px;}
+.cover-title{font-family:'Cormorant Garamond',serif;font-size:68px;font-weight:300;line-height:1.05;color:#fff;letter-spacing:-.01em;margin-bottom:12px;white-space:pre-line;}
+.cover-sub{font-size:13px;font-weight:300;color:rgba(255,255,255,.7);letter-spacing:.02em;margin-bottom:3px;}
+.cover-sub2{font-size:11px;font-weight:300;color:rgba(255,255,255,.48);}
+.cover-foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:44px;}
+.cover-date{font-size:9px;color:rgba(255,255,255,.38);letter-spacing:.09em;text-transform:uppercase;}
+.cover-brand{font-family:'Cormorant Garamond',serif;font-size:12px;color:rgba(255,255,255,.32);font-style:italic;font-weight:300;}
+
+.pg-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;padding-bottom:14px;border-bottom:1px solid rgba(169,138,130,.18);}
+.pg-hdr-doc{font-family:'Cormorant Garamond',serif;font-size:10px;color:rgba(169,138,130,.55);letter-spacing:.1em;text-transform:uppercase;font-weight:400;}
+.pg-hdr-name{font-size:9px;color:rgba(169,138,130,.45);font-weight:300;}
+
+.sec-label{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:400;color:#A8706A;letter-spacing:.03em;display:flex;align-items:center;gap:11px;margin-bottom:18px;margin-top:26px;}
+.sec-label.first{margin-top:0;}
+.sec-label::after{content:'';flex:1;height:1px;background:rgba(169,138,130,.22);}
+
+.run-p{font-size:11px;font-weight:300;color:#2A2118;line-height:1.7;margin-bottom:10px;}
+.run-list{list-style:none;margin-bottom:14px;padding-left:0;}
+.run-list li{font-size:11px;font-weight:300;color:#2A2118;padding:3px 0 3px 16px;position:relative;line-height:1.55;}
+.run-list li::before{content:'●';position:absolute;left:0;top:3px;color:#A8706A;font-size:8px;}
+.run-sub{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:#2A2118;font-style:italic;margin:22px 0 10px;padding-bottom:5px;border-bottom:1px solid rgba(169,138,130,.2);}
+.run-inline-t{font-size:11px;font-weight:500;color:#A8706A;margin:12px 0 6px;letter-spacing:.02em;}
+.run-contact-box{background:#2A2118;color:#fff;padding:22px 28px;border-radius:12px;margin-top:20px;}
+.run-contact-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:#fff;margin-bottom:14px;letter-spacing:.03em;}
+.run-contact-row{display:flex;align-items:baseline;gap:14px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1);}
+.run-contact-row:last-child{border-bottom:none;}
+.rc-label{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.45);width:72px;flex-shrink:0;}
+.rc-val{font-size:12px;color:#fff;font-weight:300;}
+
+.overlay-loader{position:fixed;inset:0;background:rgba(43,33,24,.82);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.overlay-loader-inner{background:#fff;padding:24px 36px;border-radius:14px;font-family:'DM Sans',sans-serif;text-align:center;}
+.overlay-loader-inner h4{font-size:14px;color:#2A2118;margin-bottom:5px;font-weight:500;}
+.overlay-loader-inner p{font-size:11px;color:#8C7E78;}
+
+/* En pantallas angostas, escalamos el doc entero con transform en vez de
+   cambiar padding/anchos — así el layout que se ve en pantalla es EL MISMO
+   que se exporta al PDF (595px fijo). Sin esto, el media query rompía el
+   ancho de la portada al capturar. */
+.doc-scaler{max-width:100%;overflow-x:auto;}
+@media(max-width:660px){
+  .doc-container{padding:0 .5rem;}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="top-brand">Lic. <em>Agustina Villegas</em> · Nutricionista</div>
+    <button class="dl-btn" id="btn-dl" onclick="dlPDF()" disabled>↓ Descargar PDF</button>
+  </div>
+</header>
+
+<section class="hero-msg">
+  <h1>Tu guía está <em>lista</em></h1>
+  <p>Podés leerla acá abajo o descargarla en PDF con el botón de arriba. El link es tuyo y no expira, guardalo bien.</p>
+</section>
+
+<div class="doc-container">
+  <div id="status" class="status-box">Cargando tu guía…</div>
+  <div id="doc-wrapper" style="display:none"></div>
+</div>
+
+<script>
+'use strict';
+
+const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function textBlk(txt) {
+  if (!txt) return '';
+  return '<div class="run-p">' + esc(txt).replace(/\n\n/g, '</div><div class="run-p">').replace(/\n/g, '<br>') + '</div>';
+}
+function itemsBlk(items) {
+  if (!items || !items.trim()) return '';
+  return '<ul class="run-list">' + items.split('\n').map(l => l.trim()).filter(Boolean).map(l => '<li>' + esc(l) + '</li>').join('') + '</ul>';
+}
+function heading(t) { return '<div class="sec-label first">' + esc(t) + '</div>'; }
+function subheading(t) { return '<div class="run-sub">' + esc(t) + '</div>'; }
+
+function pgHdr(label, name) {
+  return '<div class="pg-hdr"><span class="pg-hdr-doc">' + esc(label) + (name ? ' · ' + esc(name) : '') + '</span><span class="pg-hdr-name">' + esc(name) + '</span></div>';
+}
+
+function buildRunDoc(d, imgs, coverImg) {
+  imgs = imgs || {};
+  // Cover
+  const coverTop = '<div class="cover-sig">Lic. Agustina Villegas · Nutricionista</div>';
+  const cover = '<div class="doc-page page-cover">' +
+    (coverImg ? '<img class="cover-bg-img" src="' + coverImg + '" alt="">' : '') +
+    '<div class="cover-overlay"></div>' +
+    '<div class="cover-body">' +
+    coverTop +
+    '<div class="cover-space"></div>' +
+    '<div class="cover-line"></div>' +
+    '<div class="cover-title">' + esc(d.pTitulo) + '</div>' +
+    (d.pSub ? '<div class="cover-sub">' + esc(d.pSub) + '</div>' : '') +
+    (d.pTexto ? '<div class="cover-sub2" style="max-width:400px;line-height:1.55;margin-top:8px">' + esc(d.pTexto) + '</div>' : '') +
+    '<div class="cover-foot"><span class="cover-date">Guía para principiantes</span><span class="cover-brand">Agustina Villegas</span></div>' +
+    '</div></div>';
+
+  const hdr = pgHdr('Guía Runner', '');
+
+  // Helper: envuelve contenido en una .doc-page con header estándar.
+  // toc: si se pasa, marca esta página como inicio de un tópico para el índice.
+  const page = (bodyHtml, tinted, tocLabel) => {
+    const cls = 'doc-page' + (tinted ? ' tinted' : '');
+    const attr = tocLabel ? ' data-toc="' + esc(tocLabel) + '"' : '';
+    return '<div class="' + cls + '"' + attr + '>' + hdr + bodyHtml + '</div>';
+  };
+
+  // Presentación
+  const pgPres = page(heading(d.presT) + textBlk(d.presX), false, 'Presentación');
+
+  // Importancia → 4 páginas (intro / carbs / proteínas / grasas+cierre)
+  const pgImportancia = page(heading(d.impT) + textBlk(d.impX) + itemsBlk(d.impI) + textBlk(d.impC), true, 'Importancia de la nutrición');
+  const pgCarbs = page(heading(d.carT) + textBlk(d.carX) + itemsBlk(d.carI), false, 'Los macronutrientes');
+  const pgProt = page(heading(d.proT) + textBlk(d.proX) + itemsBlk(d.proI));
+  const pgGras = page(heading(d.graT) + textBlk(d.graX) + itemsBlk(d.graI) + textBlk(d.graC));
+
+  // Antes/después → 3 sub-páginas equilibradas
+  const pgAntesIntro = page(
+    heading(d.antT) +
+    subheading(d.antSt) + textBlk(d.antX) +
+    '<div class="run-inline-t">' + esc(d.ccT) + '</div>' + itemsBlk(d.ccI) + textBlk(d.ccN), true, 'Qué comer antes y después');
+  // Simples + timing + 2 sets de ejemplos juntos (antes eran 2 páginas cortas)
+  const pgAntesSimples = page(
+    '<div class="run-inline-t">' + esc(d.csT) + '</div>' + itemsBlk(d.csI) + textBlk(d.csN) +
+    textBlk(d.tim) +
+    '<div class="run-inline-t">' + esc(d.e30T) + '</div>' + itemsBlk(d.e30I) +
+    '<div class="run-inline-t">' + esc(d.e12T) + '</div>' + itemsBlk(d.e12I), true);
+  // Después completo en una sola página (intro + fuentes + cierre + ejemplos)
+  const pgDespues = page(
+    subheading(d.desSt) + textBlk(d.desX) +
+    '<div class="run-inline-t">' + esc(d.pfT) + '</div>' + itemsBlk(d.pfI) +
+    textBlk(d.recC) +
+    '<div class="run-inline-t">' + esc(d.epT) + '</div>' + itemsBlk(d.epI), true);
+
+  // Cómo saber
+  const pgCom = page(heading(d.comT) + textBlk(d.comX), false, '¿Cómo saber qué consumir?');
+
+  // Pautas día previo (una página)
+  const pgPautas = page(heading(d.pauT) + textBlk(d.pauX) +
+    subheading(d.dpT) + textBlk(d.dpX) + itemsBlk(d.dpI) + textBlk(d.dpC), false, 'Pautas día previo y carrera');
+  // Alimentos a limitar en una página (grasas + fibra + pruebas nuevas)
+  const pgLimitar = page(subheading(d.limT) +
+    '<div class="run-inline-t">' + esc(d.lgT) + '</div>' + textBlk(d.lgX) +
+    '<div class="run-inline-t">' + esc(d.lfT) + '</div>' + textBlk(d.lfX) +
+    '<div class="run-inline-t">' + esc(d.evT) + '</div>' + textBlk(d.evX), false, 'Alimentos a limitar');
+
+  // Hidratación + Mate en una sola página (sin placeholder si no hay imagen)
+  const hidImgHtml = imgs.hidImg
+    ? '<div style="margin:18px 0;text-align:center"><img src="' + imgs.hidImg + '" style="max-width:100%;max-height:180px;border-radius:8px"></div>'
+    : '';
+  const pgHid = page(
+    heading(d.hidT) + textBlk(d.hidX) + hidImgHtml + textBlk(d.hidC) +
+    subheading(d.matT) + textBlk(d.matX),
+    true, 'Hidratación');
+
+  // Suplementación (todo junto: intro + efectos + dosis + imagen cafeína + advertencia)
+  const cafeImgHtml = imgs.cafeImg
+    ? '<div style="margin:14px 0;text-align:center"><img src="' + imgs.cafeImg + '" style="max-width:100%;max-height:200px;border-radius:8px"></div>'
+    : '';
+  const pgSup = page(heading(d.supT) + textBlk(d.supX) + itemsBlk(d.supI) +
+    textBlk(d.supD) + cafeImgHtml + textBlk(d.supA), false, 'Suplementación y cafeína');
+
+  // Bebidas deportivas
+  const pgBeb = page(heading(d.bebT) + textBlk(d.bebX) + itemsBlk(d.bebI) + textBlk(d.bebE) +
+    '<div class="run-inline-t">' + esc(d.buT) + '</div>' + itemsBlk(d.buI), false, 'Bebidas deportivas');
+
+  // Ayunas → dividido
+  const pgAy1 = page(heading(d.ayT) + textBlk(d.ayX) + itemsBlk(d.ayI), true, 'Correr en ayunas');
+  const pgAy2 = page(textBlk(d.ayM) + textBlk(d.ayC), true);
+
+  // Cierre + contacto
+  const pgFin = page(
+    heading('En resumen') + textBlk(d.resX) +
+    '<div style="margin:26px 0 20px;font-family:\'Cormorant Garamond\',serif;font-size:20px;color:#A8706A;font-style:italic;text-align:center">' + esc(d.cierre) + '</div>' +
+    '<div class="run-contact-box">' +
+    '<div class="run-contact-title">Contacto</div>' +
+    (d.ctIg ? '<div class="run-contact-row"><span class="rc-label">Instagram</span><span class="rc-val">@' + esc(d.ctIg) + '</span></div>' : '') +
+    (d.ctCel ? '<div class="run-contact-row"><span class="rc-label">Celular</span><span class="rc-val">' + esc(d.ctCel) + '</span></div>' : '') +
+    (d.ctMail ? '<div class="run-contact-row"><span class="rc-label">Email</span><span class="rc-val">' + esc(d.ctMail) + '</span></div>' : '') +
+    '</div>',
+    false, 'En resumen y contacto');
+
+  return '<div class="ag-doc" id="doc-run">' +
+    cover + pgPres +
+    pgImportancia + pgCarbs + pgProt + pgGras +
+    pgAntesIntro + pgAntesSimples + pgDespues +
+    pgCom +
+    pgPautas + pgLimitar +
+    pgHid +
+    pgSup +
+    pgBeb +
+    pgAy1 + pgAy2 +
+    pgFin +
+    '</div>';
+}
+
+let loadedProduct = null;
+
+// Inserta una .doc-page de índice después de la portada, con títulos y
+// números de página calculados a partir de la altura real de cada sección.
+function injectTOC() {
+  const docEl = document.getElementById('doc-run');
+  if (!docEl) return;
+  const PAGE_H = 842;
+  const allPages = Array.from(docEl.querySelectorAll('.doc-page'));
+  if (allPages.length < 2) return;
+
+  // Portada = página 1, índice será página 2, contenido empieza página 3
+  const entries = [];
+  let pdfPage = 3;
+  for (let i = 1; i < allPages.length; i++) {
+    const el = allPages[i];
+    const h = el.offsetHeight;
+    const pdfPagesThisSection = Math.max(1, Math.ceil(h / PAGE_H));
+    const label = el.getAttribute('data-toc');
+    if (label) entries.push({ title: label, page: pdfPage });
+    pdfPage += pdfPagesThisSection;
+  }
+
+  const rows = entries.map(e =>
+    '<div class="toc-row">' +
+      '<span class="toc-title">' + esc(e.title) + '</span>' +
+      '<span class="toc-dots"></span>' +
+      '<span class="toc-page-num">' + e.page + '</span>' +
+    '</div>'
+  ).join('');
+
+  const hdr = '<div class="pg-hdr"><span class="pg-hdr-doc">Guía Runner</span><span class="pg-hdr-name"></span></div>';
+  const tocHtml =
+    '<div class="doc-page tinted" id="doc-toc">' +
+    hdr +
+    '<div class="sec-label first">Índice</div>' +
+    '<div class="toc-intro">Todo lo que vas a encontrar en esta guía.</div>' +
+    '<div class="toc-list">' + rows + '</div>' +
+    '</div>';
+
+  // Insertar después de la portada
+  const cover = allPages[0];
+  cover.insertAdjacentHTML('afterend', tocHtml);
+}
+
+async function loadGuide() {
+  const params = new URLSearchParams(location.search);
+  const token = params.get('token');
+  const statusEl = document.getElementById('status');
+
+  if (!token) {
+    statusEl.className = 'status-box error';
+    statusEl.textContent = 'Link inválido. Volvé al email que te enviamos y cliqueá el botón de descarga.';
+    return;
+  }
+
+  try {
+    const r = await fetch('/api/products/download?token=' + encodeURIComponent(token), { cache: 'no-store' });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+    if (!d.product) throw new Error('Producto no encontrado');
+    const guia = d.product.pdfData?.guiaRunning;
+    if (!guia?.data) {
+      throw new Error('La guía aún no está publicada. Escribinos por WhatsApp y la mandamos manualmente.');
+    }
+    loadedProduct = d.product;
+    document.getElementById('doc-wrapper').innerHTML = buildRunDoc(guia.data, guia.imgs || {}, (guia.imgs && guia.imgs.coverImg) || '');
+    document.getElementById('doc-wrapper').style.display = 'block';
+    // Insertar página de índice después de la portada, con números calculados
+    injectTOC();
+    statusEl.style.display = 'none';
+    document.getElementById('btn-dl').disabled = false;
+  } catch (err) {
+    statusEl.className = 'status-box error';
+    statusEl.textContent = 'No pudimos cargar tu guía: ' + err.message;
+    console.error('[descarga-guia]', err);
+  }
+}
+
+async function dlPDF() {
+  const docEl = document.getElementById('doc-run');
+  if (!docEl) return;
+  const btn = document.getElementById('btn-dl');
+  const prev = btn.textContent;
+  btn.textContent = 'Generando…';
+  btn.disabled = true;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay-loader';
+  overlay.innerHTML = '<div class="overlay-loader-inner"><h4>Generando PDF…</h4><p>Esto puede tomar unos segundos</p></div>';
+  document.body.appendChild(overlay);
+
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+  try {
+    const h2c = window.html2canvas;
+    const JSPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    if (!h2c || !JSPDF) throw new Error('Faltan librerías');
+
+    const SCALE = 2, PAGE_W = 595, PAGE_H = 842;
+    const pdf = new JSPDF({ orientation: 'portrait', unit: 'pt', format: [PAGE_W, PAGE_H] });
+    const pageEls = docEl.querySelectorAll('.doc-page');
+
+    let pdfPageNum = 0; // 0 = cover (sin footer), 1+ = páginas de contenido
+    let isFirst = true;
+    for (let i = 0; i < pageEls.length; i++) {
+      const pageEl = pageEls[i];
+      // Para la portada, forzamos también la altura para que el aspect ratio
+      // sea exacto 595:842 y la imagen no se estire (bug en móvil).
+      const isCover = pageEl.classList.contains('page-cover');
+      const h2cOpts = {
+        scale: SCALE, useCORS: true, allowTaint: true,
+        backgroundColor: isCover ? '#8B5550' : '#ffffff',
+        imageTimeout: 15000, logging: false,
+        width: PAGE_W, windowWidth: PAGE_W
+      };
+      if (isCover) {
+        h2cOpts.height = PAGE_H;
+        h2cOpts.windowHeight = PAGE_H;
+      }
+      // Capturar SOLO este .doc-page (evita cualquier bleed entre secciones)
+      const pageCanvas = await h2c(pageEl, h2cOpts);
+      const canvasW = pageCanvas.width;
+      const canvasH = pageCanvas.height;
+      const pageHpx = PAGE_H * SCALE;
+
+      // Función helper para agregar el pie de página con número
+      const addFooter = () => {
+        if (pdfPageNum > 0) {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(7.5);
+          pdf.setTextColor(140, 126, 120);
+          pdf.text('Guía de Nutrición para Runners Principiantes · Lic. Agustina Villegas', PAGE_W / 2, PAGE_H - 28, { align: 'center' });
+          pdf.setFontSize(8);
+          pdf.setTextColor(168, 112, 106);
+          pdf.text(String(pdfPageNum), PAGE_W / 2, PAGE_H - 16, { align: 'center' });
+        }
+        pdfPageNum++;
+      };
+
+      // Estrategia:
+      // - Si el canvas cabe en pageHpx * 1.35 (hasta 35% overflow), lo
+      //   ponemos en UNA página, comprimiendo verticalmente lo que sobre.
+      //   Esto absorbe las diferencias móvil vs desktop (~15-20% típicas)
+      //   sin generar páginas vacías intermedias.
+      // - Solo secciones realmente largas se dividen en múltiples slices.
+      const COMPRESS_MAX = 1.35;
+
+      if (canvasH <= pageHpx * COMPRESS_MAX) {
+        if (!isFirst) pdf.addPage([PAGE_W, PAGE_H], 'portrait');
+        isFirst = false;
+        const sub = document.createElement('canvas');
+        sub.width = canvasW;
+        sub.height = pageHpx;
+        const ctx = sub.getContext('2d');
+        // Usar el color de fondo de la sección (tinted usa beige, resto blanco)
+        // para que el sobrante debajo del contenido matchee el resto de la página.
+        ctx.fillStyle = pageEl.classList.contains('tinted') ? '#FAF8F4' : '#ffffff';
+        ctx.fillRect(0, 0, sub.width, sub.height);
+        if (canvasH > pageHpx) {
+          // Overflow leve: comprimir todo el contenido a pageHpx (leve
+          // distorsión vertical, imperceptible salvo comparando lado a lado)
+          ctx.drawImage(pageCanvas, 0, 0, canvasW, canvasH, 0, 0, canvasW, pageHpx);
+        } else {
+          // Sin overflow: dibujar al top con blanco abajo
+          ctx.drawImage(pageCanvas, 0, 0, canvasW, canvasH, 0, 0, canvasW, canvasH);
+        }
+        pdf.addImage(sub.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, PAGE_W, PAGE_H);
+        addFooter();
+      } else {
+        // Sección realmente larga: dividir en varios slices
+        const numSlices = Math.ceil(canvasH / pageHpx);
+        for (let s = 0; s < numSlices; s++) {
+          if (!isFirst) pdf.addPage([PAGE_W, PAGE_H], 'portrait');
+          isFirst = false;
+          const srcY = s * pageHpx;
+          const sliceH = Math.min(pageHpx, canvasH - srcY);
+          const sub = document.createElement('canvas');
+          sub.width = canvasW;
+          sub.height = pageHpx;
+          const ctx = sub.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, sub.width, sub.height);
+          ctx.drawImage(pageCanvas, 0, srcY, canvasW, sliceH, 0, 0, canvasW, sliceH);
+          pdf.addImage(sub.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, PAGE_W, PAGE_H);
+          addFooter();
+        }
+      }
+    }
+
+    pdf.save('Guia_Running_Principiantes.pdf');
+  } catch (err) {
+    alert('Error al generar el PDF: ' + err.message);
+    console.error(err);
+  } finally {
+    if (document.body.contains(overlay)) document.body.removeChild(overlay);
+    btn.textContent = prev;
+    btn.disabled = false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadGuide);
+</script>
+</body>
+</html>
