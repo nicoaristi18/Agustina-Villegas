@@ -18,213 +18,126 @@
 <meta name="twitter:title" content="Reservar turno — Lic. Agustina Villegas">
 <meta name="twitter:description" content="Reservá tu consulta de nutrición o masaje online o presencial en Tarariras, Colonia.">
 <meta name="twitter:image" content="https://nutricionistaagustinavillegas.com/og-image.jpg">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <style>
-/* ── RESERVAR — menú de spa de lujo ── */
-.res-wrap{padding:9rem 5rem 6rem;max-width:860px;margin:0 auto;}
-.res-intro{margin-bottom:3.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border);}
-.res-wrap h1{
-  font-family:'Cormorant Garamond',serif;
-  font-size:clamp(2.8rem,5vw,4.8rem);
-  font-weight:300;margin:.6rem 0 1rem;line-height:1.08;letter-spacing:-.01em;
-}
-.res-wrap h1 em{font-style:italic;color:var(--rose-dark);}
-.res-wrap>p{font-size:.93rem;color:var(--text-muted);font-weight:300;margin-bottom:0;line-height:1.85;}
+/* ── RESERVAR — mismas clases/IDs que la lógica JS espera, restyled al nuevo sistema ── */
+.res-wrap{padding:9rem clamp(1.25rem,4vw,5rem) 6rem;max-width:860px;margin:0 auto;}
+.section-label{display:inline-flex;align-items:center;gap:.6rem;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--clay-deep);font-weight:500;}
+.section-label::before{content:'';width:26px;height:1px;background:var(--clay-deep);}
+.res-wrap h1{font-family:var(--font-display);font-size:clamp(2.4rem,4.6vw,3.6rem);font-weight:400;margin:.7rem 0 1rem;line-height:1.08;letter-spacing:-.01em;color:var(--forest2);}
+.res-wrap h1 em{font-style:italic;color:var(--sage);}
+.res-wrap>p{font-size:.95rem;color:var(--text-mid);margin-bottom:0;line-height:1.75;}
 
-/* STEPS — líneas finas, no pills */
-.steps{
-  display:flex;gap:0;margin-bottom:3.5rem;
-  border-bottom:1px solid var(--border);
-}
-.step{
-  flex:1;padding:.9rem 1rem;text-align:center;
-  font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;
-  color:var(--text-muted);background:transparent;
-  border-bottom:2px solid transparent;
-  margin-bottom:-1px;
-  transition:color .3s,border-color .3s;
-}
-.step.active{color:var(--rose-dark);border-bottom-color:var(--rose-dark);}
+.btn-primary{display:inline-flex;align-items:center;gap:.6rem;background:var(--clay-deep);color:var(--paper);border:none;padding:1rem 2.1rem;border-radius:99px;font-family:var(--font-body);font-size:.85rem;font-weight:500;letter-spacing:.01em;cursor:pointer;transition:transform .4s var(--spring),box-shadow .4s var(--smooth),background .4s,opacity .3s;}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:var(--sh-clay);background:var(--forest2);}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-outline{display:inline-flex;align-items:center;gap:.6rem;border:1.5px solid var(--border2);color:var(--forest2);background:transparent;padding:1rem 2.1rem;border-radius:99px;font-family:var(--font-body);font-size:.85rem;font-weight:500;cursor:pointer;transition:all .4s var(--spring);}
+.btn-outline:hover{border-color:var(--forest2);background:var(--forest2);color:var(--paper);transform:translateY(-3px);}
+.btn-back{border:1px solid var(--border2);color:var(--text-mid);padding:.85rem 1.8rem;border-radius:99px;background:transparent;font-family:var(--font-body);font-size:.8rem;font-weight:500;cursor:pointer;transition:all .3s;}
+.btn-back:hover{border-color:var(--forest2);color:var(--forest2);}
+
+.steps{display:flex;gap:0;margin-bottom:3rem;border-bottom:1px solid var(--border);}
+.step{flex:1;padding:.9rem .5rem;text-align:center;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);background:transparent;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .3s,border-color .3s;font-weight:500;}
+.step.active{color:var(--clay-deep);border-bottom-color:var(--clay-deep);}
 .step.done{color:var(--sage);border-bottom-color:var(--sage);}
 
-/* SERVICE SELECTION — lista tipo menú de restaurante */
 .svc-select-grid{display:flex;flex-direction:column;gap:0;}
-.svc-opt{
-  background:transparent;border:none;
-  border-bottom:1px solid var(--border);
-  padding:1.4rem 0;cursor:pointer;
-  display:flex;align-items:center;gap:1.5rem;
-  transition:background .2s;
-  position:relative;
-}
+.svc-opt{background:transparent;border:none;border-bottom:1px solid var(--border);padding:1.3rem .5rem;cursor:pointer;display:flex;align-items:center;gap:1.2rem;transition:background .25s;position:relative;border-radius:10px;}
 .svc-opt:first-child{border-top:1px solid var(--border);}
-.svc-opt::before{
-  content:'';
-  position:absolute;left:0;top:0;bottom:0;width:2px;
-  background:var(--rose-dark);
-  transform:scaleY(0);transform-origin:bottom;
-  transition:transform .4s cubic-bezier(.16,1,.3,1);
-}
+.svc-opt::before{content:'';position:absolute;left:0;top:.4rem;bottom:.4rem;width:3px;border-radius:3px;background:var(--clay-deep);transform:scaleY(0);transform-origin:bottom;transition:transform .4s var(--spring);}
 .svc-opt:hover::before,.svc-opt.selected::before{transform:scaleY(1);}
-.svc-opt:hover{background:var(--cream);}
-.svc-opt.selected{background:var(--cream);}
-/* ocultar emoji icon — reemplazado por la línea lateral */
+.svc-opt:hover,.svc-opt.selected{background:var(--sage-pale);}
 .svc-opt-icon{display:none !important;}
-.svc-opt-name{
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.05rem;font-weight:400;
-  margin-bottom:.15rem;color:var(--text);
-  transition:color .25s;
-}
-.svc-opt:hover .svc-opt-name,.svc-opt.selected .svc-opt-name{color:var(--rose-dark);}
-.svc-opt-dur{font-size:.72rem;color:var(--text-muted);letter-spacing:.04em;}
-.svc-opt-price{
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.15rem;color:var(--rose-dark);
-  margin-left:auto;white-space:nowrap;font-weight:400;
-}
+.svc-opt-name{font-family:var(--font-display);font-size:1.08rem;font-weight:500;margin-bottom:.15rem;color:var(--forest2);transition:color .25s;}
+.svc-opt-dur{font-size:.76rem;color:var(--text-muted);}
+.svc-opt-price{font-family:var(--font-display);font-size:1.2rem;color:var(--clay-deep);margin-left:auto;white-space:nowrap;font-weight:500;}
 
-/* MODALITY */
-.modality-row{display:flex;gap:.6rem;margin-bottom:2rem;}
-.mod-btn{
-  padding:.6rem 1.5rem;border-radius:2px;
-  border:1px solid var(--border);background:transparent;
-  font-family:'DM Sans',sans-serif;font-size:.75rem;
-  letter-spacing:.1em;text-transform:uppercase;
-  color:var(--text-muted);cursor:pointer;transition:all .3s;
-}
-.mod-btn.active{background:var(--rose-deep);color:white;border-color:var(--rose-deep);}
+.modality-row{display:flex;gap:.6rem;margin-bottom:2rem;flex-wrap:wrap;}
+.mod-btn{padding:.7rem 1.5rem;border-radius:99px;border:1px solid var(--border2);background:transparent;font-family:var(--font-body);font-size:.78rem;font-weight:500;color:var(--text-mid);cursor:pointer;transition:all .3s;}
+.mod-btn.active{background:var(--forest2);color:var(--paper);border-color:var(--forest2);}
 
-/* CALENDAR */
-.cal-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;}
-.cal-box{background:var(--white);border:1px solid var(--border);border-radius:2px;padding:1.8rem;}
-.cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.4rem;}
-.cal-month{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:400;letter-spacing:.02em;}
-.cal-nav{
-  background:none;border:1px solid var(--border);border-radius:2px;
-  width:32px;height:32px;cursor:pointer;font-size:.9rem;transition:all .3s;
-}
-.cal-nav:hover{background:var(--cream);border-color:var(--rose);}
+.cal-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.6rem;}
+.cal-box,.slots-box,.confirm-box{background:var(--paper);border:1px solid var(--border);border-radius:20px;padding:1.7rem;}
+.cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.3rem;}
+.cal-month{font-family:var(--font-display);font-size:1.2rem;font-weight:500;color:var(--forest2);}
+.cal-nav{background:none;border:1px solid var(--border2);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:.9rem;transition:all .3s;color:var(--text);}
+.cal-nav:hover{background:var(--sage-pale);border-color:var(--sage);}
 .cal-days-header{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:.6rem;}
-.cal-days-header span{font-size:.65rem;color:var(--text-muted);font-weight:500;letter-spacing:.08em;text-transform:uppercase;}
+.cal-days-header span{font-size:.65rem;color:var(--text-muted);font-weight:500;letter-spacing:.06em;text-transform:uppercase;}
 .cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
-.cal-day{
-  aspect-ratio:1;display:flex;align-items:center;justify-content:center;
-  border-radius:2px;font-size:.82rem;cursor:pointer;transition:all .2s;
-}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:.82rem;cursor:pointer;transition:all .2s;}
 .cal-day.empty,.cal-day.past{color:var(--text-muted);opacity:.35;cursor:not-allowed;pointer-events:none;}
-.cal-day.available:hover{background:var(--blush);color:var(--rose-dark);}
-.cal-day.selected{background:var(--rose-deep);color:white;}
-.cal-day.today{font-weight:600;outline:1px solid var(--rose);}
+.cal-day.available:hover{background:var(--sage-pale);color:var(--forest2);}
+.cal-day.selected{background:var(--clay-deep);color:white;}
+.cal-day.today{font-weight:700;outline:1px solid var(--sage);}
 
-/* SLOTS */
-.slots-box{background:var(--white);border:1px solid var(--border);border-radius:2px;padding:1.8rem;}
-.slots-title{
-  font-size:.62rem;font-weight:500;letter-spacing:.16em;
-  text-transform:uppercase;margin-bottom:1.2rem;color:var(--text-muted);
-}
+.slots-title{font-size:.66rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.1rem;color:var(--text-muted);}
 .slots-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;max-height:300px;overflow-y:auto;}
-.slot{
-  padding:.6rem;text-align:center;
-  border:1px solid var(--border);border-radius:2px;
-  font-size:.8rem;cursor:pointer;transition:all .2s;
-}
-.slot:hover{border-color:var(--rose);color:var(--rose-dark);}
-.slot.selected{background:var(--rose-deep);color:white;border-color:var(--rose-deep);}
-.slot.blocked{background:var(--cream2);color:var(--text-muted);opacity:.45;cursor:not-allowed;pointer-events:none;text-decoration:line-through;}
+.slot{padding:.65rem;text-align:center;border:1px solid var(--border2);border-radius:8px;font-size:.8rem;cursor:pointer;transition:all .2s;}
+.slot:hover{border-color:var(--clay-deep);color:var(--clay-deep);}
+.slot.selected{background:var(--clay-deep);color:white;border-color:var(--clay-deep);}
+.slot.blocked{background:var(--cream-deep);color:var(--text-muted);opacity:.45;cursor:not-allowed;pointer-events:none;text-decoration:line-through;}
 
-/* CONFIRM */
-.confirm-box{background:var(--white);border:1px solid var(--border);border-radius:2px;padding:2.4rem;}
-.confirm-summary{
-  border-left:2px solid var(--rose-dark);
-  padding:1.2rem 1.6rem;margin-bottom:2rem;
-  background:var(--cream);
-}
-.confirm-summary h4{
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.1rem;font-weight:400;margin-bottom:.8rem;color:var(--text);
-  letter-spacing:.02em;
-}
-.confirm-row{display:flex;justify-content:space-between;font-size:.83rem;margin-bottom:.4rem;}
+.confirm-summary{border-left:3px solid var(--clay-deep);padding:1.2rem 1.5rem;margin-bottom:1.8rem;background:var(--cream);border-radius:0 14px 14px 0;}
+.confirm-summary h4{font-family:var(--font-display);font-size:1.1rem;font-weight:500;margin-bottom:.8rem;color:var(--forest2);}
+.confirm-row{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.4rem;}
 .confirm-row span:first-child{color:var(--text-muted);}
-.confirm-row span:last-child{font-weight:500;}
+.confirm-row span:last-child{font-weight:500;color:var(--text);}
 .fg{margin-bottom:1rem;}
-.fg label{
-  display:block;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--text-muted);margin-bottom:.4rem;font-weight:500;
-}
-.fg input,.fg select{
-  width:100%;padding:.8rem 1rem;
-  background:var(--cream);border:1px solid var(--border);border-radius:2px;
-  font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);
-  outline:none;transition:border-color .3s;
-}
-.fg input:focus,.fg select:focus{border-color:var(--rose-dark);}
+.fg label{display:block;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.4rem;font-weight:500;}
+.fg input,.fg select{width:100%;padding:.8rem 1rem;background:var(--cream);border:1px solid var(--border2);border-radius:10px;font-family:var(--font-body);font-size:.88rem;color:var(--text);outline:none;transition:border-color .3s;}
+.fg input:focus,.fg select:focus{border-color:var(--clay-deep);}
 .form-row2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
 
-/* SUCCESS */
-.success-box{text-align:center;padding:5rem 2rem;}
-.success-icon{
-  font-size:0;margin-bottom:2rem;
-  width:56px;height:56px;border-radius:50%;
-  border:1px solid var(--rose-dark);
-  display:flex;align-items:center;justify-content:center;
-  margin:0 auto 2rem;
-}
-.success-icon::after{
-  content:"✓";font-size:1.4rem;color:var(--rose-dark);
-  font-family:'Cormorant Garamond',serif;
-}
-.success-box h2{font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:300;margin-bottom:.8rem;letter-spacing:-.01em;}
-.success-box h2 em{font-style:italic;color:var(--rose-dark);}
-.success-box p{font-size:.93rem;color:var(--text-muted);line-height:1.9;max-width:380px;margin:0 auto 2.5rem;font-weight:300;}
-.success-detail{
-  border-left:2px solid var(--rose-dark);
-  padding:1rem 1.8rem;display:inline-block;
-  margin-bottom:2.5rem;text-align:left;min-width:260px;
-  background:var(--cream);
-}
-.success-detail p{font-size:.83rem;margin-bottom:.4rem;color:var(--text-mid);}
+.success-box{text-align:center;padding:5rem 1rem;}
+.success-icon{font-size:0;margin-bottom:1.8rem;width:56px;height:56px;border-radius:50%;border:1.5px solid var(--sage);display:flex;align-items:center;justify-content:center;margin:0 auto 1.8rem;background:var(--sage-pale);}
+.success-box h2{font-family:var(--font-display);font-size:clamp(2rem,4vw,2.8rem);font-weight:400;margin-bottom:.8rem;color:var(--forest2);}
+.success-box h2 em{font-style:italic;color:var(--sage);}
+.success-box p{font-size:.95rem;color:var(--text-mid);line-height:1.75;max-width:380px;margin:0 auto 2.2rem;}
+.success-detail{border-left:3px solid var(--clay-deep);padding:1rem 1.6rem;display:inline-block;margin-bottom:2.2rem;text-align:left;min-width:260px;background:var(--cream);border-radius:0 14px 14px 0;}
+.success-detail p{font-size:.85rem;margin-bottom:.4rem;color:var(--text);}
 
-/* NAV BTNS */
-.nav-btns{display:flex;justify-content:space-between;align-items:center;margin-top:2.5rem;flex-wrap:wrap;gap:1rem;}
-.btn-back{
-  border:1px solid var(--border);color:var(--text-muted);
-  padding:.85rem 2rem;border-radius:3px;background:transparent;
-  font-family:'DM Sans',sans-serif;font-size:.72rem;
-  letter-spacing:.1em;text-transform:uppercase;
-  cursor:pointer;transition:all .3s;
-}
-.btn-back:hover{border-color:var(--rose-dark);color:var(--rose-dark);}
+.nav-btns{display:flex;justify-content:space-between;align-items:center;margin-top:2.2rem;flex-wrap:wrap;gap:1rem;}
 
 @media(max-width:800px){
-  .res-wrap{padding:6.5rem 1.5rem 4rem;}
+  .res-wrap{padding:6.5rem 1.25rem 4rem;}
   .svc-select-grid,.cal-grid,.form-row2{grid-template-columns:1fr;}
   .slots-grid{grid-template-columns:repeat(4,1fr);}
 }
 </style>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("eF8R0hxnnAPWRxx6i");</script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script>emailjs.init("eF8R0hxnnAPWRxx6i");</script>
 </head>
-<body>
-<nav class="main-nav" id="nav">
-  <a href="index.html" class="nav-logo">Lic. <span>Agustina</span> Villegas</a>
-  <ul class="nav-links">
-    <li><a href="index.html">Inicio</a></li>
-    <li><a href="sobre-mi.html">Sobre mí</a></li>
-    <li><a href="servicios.html">Servicios</a></li>
-    <li><a href="planes.html">Planes</a></li>
-    <li><a href="runners.html">Runners</a></li>
-    <li><a href="habito.html">Hábito</a></li>
-    <li><a href="contacto.html">Contacto</a></li>
-  </ul>
-  <button class="hamburger" onclick="document.getElementById('mm').classList.toggle('open')"><span></span><span></span><span></span></button>
+<body class="rb">
+<div id="rbProg"></div>
+
+<nav class="rb-nav" id="rbNav">
+  <a href="index.html" class="rb-logo">Agustina <em>Villegas</em></a>
+  <div class="rb-nav-right">
+    <ul class="rb-links">
+      <li><a href="index.html">Inicio</a></li>
+      <li><a href="sobre-mi.html">Sobre mí</a></li>
+      <li><a href="servicios.html">Servicios</a></li>
+      <li><a href="planes.html">Planes</a></li>
+      <li><a href="runners.html">Runners</a></li>
+      <li><a href="habito.html">Hábito</a></li>
+      <li><a href="contacto.html">Contacto</a></li>
+    </ul>
+    <button class="rb-nav-cta" onclick="location.href='reservar.html'">Reservar turno <span class="arr">→</span></button>
+    <button class="rb-burger" id="rbBurger" aria-label="Abrir menú"><span></span><span></span><span></span></button>
+  </div>
 </nav>
-<div class="mobile-menu" id="mm">
-  <a href="index.html">Inicio</a><a href="servicios.html">Servicios</a><a href="contacto.html">Contacto</a>
+
+<div class="rb-mmenu" id="rbMmenu">
+  <button class="rb-mmenu-close" id="rbMmenuClose" aria-label="Cerrar menú">✕</button>
+  <a href="index.html">Inicio</a>
+  <a href="sobre-mi.html">Sobre mí</a>
+  <a href="servicios.html">Servicios</a>
+  <a href="planes.html">Planes</a>
+  <a href="runners.html">Runners</a>
+  <a href="habito.html">Hábito</a>
+  <a href="contacto.html">Contacto</a>
+  <a href="reservar.html" style="color:var(--clay-pale);">Reservar turno →</a>
 </div>
 
 <div class="res-wrap">
@@ -242,17 +155,17 @@
   <!-- STEP 1 -->
   <div id="panel1">
     <div class="svc-select-grid">
-      <div class="svc-opt" data-key="plan" onclick="selectSvc(this,'Plan de alimentación',60,'$2.500','nutricion')">
-        <div class="svc-opt-icon">🥗</div><div><div class="svc-opt-name">Plan de alimentación</div><div class="svc-opt-dur">60 min · Online o presencial</div></div><div class="svc-opt-price">$2.500</div>
+      <div class="svc-opt" data-key="plan" onclick="selectSvc(this,'Plan de alimentación',60,'$2.800','nutricion')">
+        <div class="svc-opt-icon">🥗</div><div><div class="svc-opt-name">Plan de alimentación</div><div class="svc-opt-dur">60 min · Online o presencial</div></div><div class="svc-opt-price">$2.800</div>
       </div>
-      <div class="svc-opt" data-key="consulta" onclick="selectSvc(this,'Primera consulta nutricional',60,'$1.200','nutricion')">
-        <div class="svc-opt-icon">🔍</div><div><div class="svc-opt-name">Primera consulta nutricional</div><div class="svc-opt-dur">60 min · Online o presencial</div></div><div class="svc-opt-price">$1.200</div>
+      <div class="svc-opt" data-key="consulta" onclick="selectSvc(this,'Primera consulta nutricional',60,'$1.500','nutricion')">
+        <div class="svc-opt-icon">🔍</div><div><div class="svc-opt-name">Primera consulta nutricional</div><div class="svc-opt-dur">60 min · Online o presencial</div></div><div class="svc-opt-price">$1.500</div>
       </div>
       <div class="svc-opt" data-key="control" onclick="selectSvc(this,'Consulta de control',45,'$800','nutricion')">
         <div class="svc-opt-icon">🔄</div><div><div class="svc-opt-name">Consulta de control</div><div class="svc-opt-dur">45 min · Online o presencial</div></div><div class="svc-opt-price">$800</div>
       </div>
-      <div class="svc-opt" data-key="isak" onclick="selectSvc(this,'Medición ISAK',60,'$1.100','nutricion')">
-        <div class="svc-opt-icon">📏</div><div><div class="svc-opt-name">Medición ISAK</div><div class="svc-opt-dur">60 min · Solo presencial</div></div><div class="svc-opt-price">$1.100</div>
+      <div class="svc-opt" data-key="isak" onclick="selectSvc(this,'Medición ISAK',60,'$1.500','nutricion')">
+        <div class="svc-opt-icon">📏</div><div><div class="svc-opt-name">Medición ISAK</div><div class="svc-opt-dur">60 min · Solo presencial</div></div><div class="svc-opt-price">$1.500</div>
       </div>
       <div class="svc-opt" data-key="cuerpo" onclick="selectSvc(this,'Masaje cuerpo completo',60,'$1.100','masaje')">
         <div class="svc-opt-icon">💆</div><div><div class="svc-opt-name">Masaje cuerpo completo</div><div class="svc-opt-dur">60 min · Presencial</div></div><div class="svc-opt-price">$1.100</div>
@@ -279,7 +192,7 @@
   <!-- STEP 2 -->
   <div id="panel2" style="display:none;">
     <div id="modality-section" style="display:none;margin-bottom:1.5rem;">
-      <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.8rem;font-weight:500;">¿Cómo querés la consulta?</p>
+      <p style="font-size:.85rem;color:var(--text-mid);margin-bottom:.8rem;font-weight:500;">¿Cómo querés la consulta?</p>
       <div class="modality-row">
         <button class="mod-btn active" id="mod-online" onclick="setModality('online')">Online (videollamada)</button>
         <button class="mod-btn" id="mod-presencial" onclick="setModality('presencial')">Presencial — Tarariras, Colonia</button>
@@ -332,9 +245,9 @@
         <div style="display:flex;gap:.6rem;align-items:flex-end;">
           <div class="fg" style="flex:1;margin:0;">
             <label style="font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:.3rem;">Cupón de descuento (opcional)</label>
-            <input type="text" id="f-coupon" placeholder="CÓDIGO" style="text-transform:uppercase;width:100%;padding:.58rem .85rem;background:var(--cream);border:1px solid var(--border);border-radius:7px;font-size:.85rem;outline:none;font-family:'DM Sans',sans-serif;">
+            <input type="text" id="f-coupon" placeholder="CÓDIGO" style="text-transform:uppercase;width:100%;padding:.58rem .85rem;background:var(--cream);border:1px solid var(--border2);border-radius:10px;font-size:.85rem;outline:none;font-family:var(--font-body);">
           </div>
-          <button onclick="applyCoupon()" style="padding:.58rem 1.1rem;background:transparent;border:1px solid var(--rose-dark);color:var(--rose-dark);border-radius:3px;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Aplicar</button>
+          <button onclick="applyCoupon()" style="padding:.6rem 1.1rem;background:transparent;border:1px solid var(--clay-deep);color:var(--clay-deep);border-radius:99px;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;font-family:var(--font-body);font-weight:500;">Aplicar</button>
         </div>
         <div id="coupon-msg" style="font-size:.78rem;margin-top:.4rem;display:none;"></div>
       </div>
@@ -360,20 +273,39 @@
   </div>
 </div>
 
-<footer class="main-footer">
-  <div class="footer-top">
-    <div class="footer-brand"><div class="footer-logo">Lic. <span>Agustina</span> Villegas</div><p>Nutricionista · Masajista · Running</p><p>Tarariras, Colonia, Uruguay</p><div class="footer-social"><a href="https://www.instagram.com/lic.agustinavillegas/" target="_blank">📷 Instagram</a><a href="https://www.tiktok.com/@agustinavillegas.e" target="_blank">🎵 TikTok</a><a href="https://wa.me/59899712691" target="_blank">💬 WhatsApp</a></div></div>
-    <div class="footer-col"><h4>Servicios</h4><a href="servicios.html">Nutrición clínica</a><a href="servicios.html">Masajes terapéuticos</a><a href="planes.html">Planes de alimentación</a></div>
-    <div class="footer-col"><h4>Navegación</h4><a href="sobre-mi.html">Sobre mí</a><a href="reservar.html">Reservar turno</a><a href="contacto.html">Contacto</a></div>
-    <div class="footer-col"><h4>Contacto</h4><a href="mailto:lic.agustinavillegase@gmail.com">lic.agustinavillegase@gmail.com</a><a href="https://wa.me/59899712691">+598 99 712 691</a><span>Lun–Vie · 8:00–20:00</span></div>
+<footer class="rb-footer">
+  <div class="wrap">
+    <div class="rb-footer-grid">
+      <div>
+        <div class="rb-footer-logo">Agustina Villegas</div>
+        <p class="desc">Nutricionista y masajista en Tarariras, Colonia — atención online en todo Uruguay.</p>
+      </div>
+      <div>
+        <h4>Navegación</h4>
+        <ul><li><a href="sobre-mi.html">Sobre mí</a></li><li><a href="servicios.html">Servicios</a></li><li><a href="reservar.html">Reservar turno</a></li><li><a href="contacto.html">Contacto</a></li></ul>
+      </div>
+      <div>
+        <h4>Servicios</h4>
+        <ul><li><a href="servicios.html">Nutrición clínica</a></li><li><a href="servicios.html">Masajes terapéuticos</a></li><li><a href="planes.html">Planes de alimentación</a></li></ul>
+      </div>
+      <div>
+        <h4>Contacto</h4>
+        <ul><li><a href="https://wa.me/59899712691" target="_blank">+598 99 712 691</a></li><li><a href="https://instagram.com/lic.agustinavillegas/" target="_blank">Instagram</a></li><li><a href="https://www.tiktok.com/@agustinavillegas.e" target="_blank">TikTok</a></li><li><a href="mailto:lic.agustinavillegase@gmail.com">Email</a></li></ul>
+      </div>
+    </div>
+    <div class="rb-footer-bottom">
+      <span>© 2026 Agustina Villegas — Todos los derechos reservados</span>
+      <span>Tarariras, Colonia, Uruguay</span>
+    </div>
   </div>
-  <div class="footer-bottom"><p>© 2025 Lic. Agustina Villegas · Todos los derechos reservados</p><p>Tarariras, Colonia, Uruguay</p></div>
 </footer>
-<a href="https://wa.me/59899712691" target="_blank" class="wa-float" title="Escribir por WhatsApp"><svg viewBox="0 0 24 24" fill="white" width="26" height="26"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.855L.057 23.547a.75.75 0 00.906.928l5.919-1.525A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.715 9.715 0 01-4.964-1.361l-.355-.212-3.683.948.988-3.558-.232-.368A9.712 9.712 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg></a>
 
+<a href="https://wa.me/59899712691" target="_blank" class="rb-wa" aria-label="WhatsApp" title="Escribir por WhatsApp">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 004.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.02c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.13.11-1.82-.12-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36h.55c.18 0 .42-.03.65.5.24.56.8 1.95.87 2.09.07.14.12.31.02.5-.1.19-.15.31-.29.48-.14.17-.3.37-.43.5-.14.14-.29.29-.12.57.17.28.75 1.24 1.62 2 1.11.99 2.05 1.3 2.33 1.44.28.14.44.12.6-.07.17-.19.71-.83.9-1.11.19-.28.38-.24.64-.14.26.1 1.64.77 1.92.91.28.14.47.21.53.33.07.12.07.68-.17 1.36z"/></svg>
+</a>
+
+<script src="animations.js"></script>
 <script>
-window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',scrollY>50));
-
 let sel={svc:'',dur:0,price:'',type:'',date:null,time:'',dateStr:'',modality:'online'};
 let appliedCoupon=null; // cupón validado y aplicado
 
@@ -428,7 +360,7 @@ let curYear=new Date().getFullYear(),curMonth=new Date().getMonth();
 // ── PRECIOS desde Vercel KV ──
 // Defaults hardcodeados — se sobreescriben si KV tiene valores
 const PRICES = {
-  consulta: 1200, plan: 2500, control: 800, isak: 1100,
+  consulta: 1500, plan: 2800, control: 800, isak: 1500,
   cuerpo: 1100, descontrac: 890, relajante: 800,
   drenaje: 750, deportivo: 890, embarazo: 800
 };
@@ -868,7 +800,5 @@ function newBooking(){
 
 renderCal();
 </script>
-
-<script src="animations.js"></script>
 </body>
 </html>

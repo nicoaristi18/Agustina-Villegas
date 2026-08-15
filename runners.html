@@ -10,193 +10,204 @@
 <meta property="og:title" content="Plan de Nutrición para Runners Principiantes — Descarga inmediata">
 <meta property="og:description" content="Tu guía completa de nutrición deportiva para comenzar a correr sin frustrarte por la comida. PDF descargable inmediato.">
 <meta property="og:image" content="https://nutricionistaagustinavillegas.com/og-image.jpg">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <style>
-/* ===== Landing runners ===== */
-.runners-hero{min-height:88vh;display:flex;align-items:center;background:linear-gradient(135deg,#FAF8F4 0%,#F0E6DF 100%);padding:7rem 2rem 4rem;position:relative;overflow:hidden;}
-.runners-hero::before{content:"";position:absolute;top:-10%;right:-10%;width:600px;height:600px;background:radial-gradient(circle,rgba(168,112,106,.08) 0%,transparent 70%);border-radius:50%;}
-.runners-hero-inner{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.15fr 1fr;gap:4rem;align-items:center;position:relative;z-index:1;}
-.runners-eyebrow{display:inline-flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.6);backdrop-filter:blur(8px);border:1px solid rgba(168,112,106,.18);border-radius:50px;padding:.45rem 1rem;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rose-dark);font-weight:500;margin-bottom:1.4rem;}
-.runners-eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:#7A9E7E;animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
-.runners-hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.4rem,5vw,3.8rem);font-weight:300;line-height:1.05;color:var(--text);margin-bottom:1.4rem;}
-.runners-hero h1 em{font-style:italic;color:var(--rose-dark);}
-.runners-hero-desc{font-size:1.05rem;line-height:1.65;color:var(--text-muted);margin-bottom:2rem;max-width:520px;}
-.runners-price-box{background:white;border-radius:18px;padding:1.5rem 1.8rem;box-shadow:0 12px 40px rgba(42,33,24,.08);display:inline-flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;border:1px solid rgba(168,112,106,.1);}
-.runners-price-label{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);font-weight:500;margin-bottom:.2rem;}
-.runners-price-amount{font-family:'Cormorant Garamond',serif;font-size:2.3rem;font-weight:400;color:var(--text);line-height:1;}
-.runners-price-currency{font-size:.8rem;color:var(--text-muted);margin-left:.3rem;}
-.runners-price-divider{width:1px;height:48px;background:rgba(168,112,106,.2);}
-.runners-instant{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:#7A9E7E;font-weight:500;}
-.runners-cta-row{display:flex;gap:1rem;flex-wrap:wrap;align-items:center;}
-.runners-cta-primary{background:linear-gradient(135deg,#A8706A,#8B5550);color:white;border:none;padding:1.1rem 2.2rem;border-radius:50px;font-family:inherit;font-size:.92rem;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:.6rem;transition:transform .2s,box-shadow .2s;box-shadow:0 8px 24px rgba(168,112,106,.3);}
-.runners-cta-primary:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(168,112,106,.4);}
-.runners-cta-secondary{background:transparent;color:var(--text);border:1.5px solid rgba(168,112,106,.3);padding:1rem 1.8rem;border-radius:50px;font-family:inherit;font-size:.88rem;font-weight:500;cursor:pointer;}
-.runners-trust{display:flex;gap:1.5rem;margin-top:2rem;flex-wrap:wrap;}
-.runners-trust-item{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--text-muted);}
-.runners-trust-item svg{width:18px;height:18px;color:#7A9E7E;flex-shrink:0;}
+/* ═══════════════════════════════════════════════
+   RUNNERS — extensiones al sistema organic modern
+   ═══════════════════════════════════════════════ */
 
-/* Visual de la derecha */
-.runners-hero-visual{position:relative;display:flex;justify-content:center;align-items:center;}
-.runners-mockup{background:white;border-radius:14px;padding:2.5rem 2rem;box-shadow:0 30px 80px rgba(42,33,24,.18);transform:rotate(-3deg);width:340px;position:relative;border:1px solid rgba(0,0,0,.04);}
-.runners-mockup::before{content:"";position:absolute;inset:-2px;border-radius:16px;background:linear-gradient(135deg,rgba(168,112,106,.3),transparent);z-index:-1;}
-.mockup-badge{position:absolute;top:-12px;right:1.5rem;background:#7A9E7E;color:white;padding:.3rem .8rem;border-radius:50px;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;font-weight:500;}
-.mockup-cover-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:400;line-height:1.1;color:var(--text);margin-bottom:.4rem;}
-.mockup-cover-sub{font-size:.78rem;color:var(--text-muted);margin-bottom:1.5rem;line-height:1.5;}
-.mockup-divider{height:1px;background:rgba(168,112,106,.2);margin:1rem 0;}
-.mockup-toc-item{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;font-size:.78rem;color:var(--text);}
-.mockup-toc-item .mockup-toc-page{color:var(--text-muted);font-size:.7rem;}
-.mockup-author{display:flex;align-items:center;gap:.6rem;margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(168,112,106,.15);}
-.mockup-author-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#C9958E,#A8706A);display:flex;align-items:center;justify-content:center;color:white;font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:500;}
-.mockup-author-text{font-size:.7rem;color:var(--text-muted);}
-.mockup-author-text strong{display:block;color:var(--text);font-size:.78rem;}
+/* ---- Hero ---- */
+.rn-hero{ position:relative; min-height:100svh; display:flex; align-items:center; padding:7rem clamp(1.25rem,4vw,3rem) 4rem; overflow:hidden; background:linear-gradient(160deg,var(--cream) 0%,var(--cream-deep) 100%); }
+.rn-hero-grid{ position:relative; z-index:2; width:100%; max-width:1240px; margin:0 auto; display:grid; grid-template-columns:1.1fr .9fr; gap:clamp(2rem,5vw,4rem); align-items:center; }
 
-/* ===== Sección "Para quién" ===== */
-.runners-for-who{padding:6rem 2rem;background:white;}
-.section-inner{max-width:1100px;margin:0 auto;}
-.section-eyebrow{display:block;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--rose-dark);font-weight:500;margin-bottom:.6rem;text-align:center;}
-.section-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,3.5vw,2.8rem);font-weight:300;color:var(--text);text-align:center;margin-bottom:1rem;line-height:1.15;}
-.section-title em{font-style:italic;color:var(--rose-dark);}
-.section-subtitle{font-size:1.02rem;color:var(--text-muted);text-align:center;max-width:620px;margin:0 auto 3.5rem;line-height:1.65;}
-.for-who-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;}
-.for-who-card{background:#FAF8F4;border-radius:16px;padding:2.2rem 2rem;border:1px solid rgba(168,112,106,.08);}
-.for-who-card.yes{border-color:rgba(122,158,126,.25);background:#F2F7F2;}
-.for-who-card.no{border-color:rgba(168,112,106,.15);background:#FAF6F4;}
-.for-who-card h3{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:400;margin-bottom:1.2rem;display:flex;align-items:center;gap:.6rem;color:var(--text);}
-.for-who-card.yes h3 em{color:#5F8463;font-style:normal;}
-.for-who-card.no h3 em{color:#A8706A;font-style:normal;}
-.for-who-list{list-style:none;padding:0;margin:0;}
-.for-who-list li{padding:.55rem 0;padding-left:2rem;position:relative;font-size:.92rem;color:var(--text);line-height:1.5;}
-.for-who-list li::before{position:absolute;left:0;top:.7rem;font-size:.9rem;font-weight:500;}
-.for-who-card.yes .for-who-list li::before{content:"✓";color:#7A9E7E;}
-.for-who-card.no .for-who-list li::before{content:"✗";color:#C9958E;}
+.rn-price-box{ display:inline-flex; align-items:center; gap:1.4rem; background:var(--paper); border:1px solid var(--border); border-radius:20px; padding:1.3rem 1.7rem; margin:1.8rem 0 1.6rem; box-shadow:var(--sh-sm); }
+.rn-price-label{ font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); font-weight:500; margin-bottom:.25rem; }
+.rn-price-amount{ font-family:var(--font-display); font-size:2.1rem; font-weight:400; color:var(--forest2); line-height:1; }
+.rn-price-currency{ font-size:.78rem; color:var(--text-muted); margin-left:.3rem; }
+.rn-price-divider{ width:1px; height:44px; background:var(--border2); }
+.rn-instant{ display:flex; align-items:center; gap:.6rem; font-size:.8rem; color:var(--sage); font-weight:500; line-height:1.3; }
+.rn-instant svg{ flex-shrink:0; color:var(--sage); }
 
-/* ===== Autora ===== */
-.runners-author{padding:6rem 2rem;background:white;}
-.author-card{max-width:780px;margin:0 auto;display:grid;grid-template-columns:auto 1fr;gap:2.4rem;align-items:center;background:linear-gradient(135deg,#FAF8F4,#F5F0E8);border-radius:24px;padding:3rem 3rem;}
-.author-avatar-big{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,#C9958E,#8B5550);display:flex;align-items:center;justify-content:center;color:white;font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:400;flex-shrink:0;box-shadow:0 12px 40px rgba(139,85,80,.3);}
-.author-content small{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rose-dark);font-weight:500;}
-.author-content h3{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:400;margin:.3rem 0 .8rem;color:var(--text);}
-.author-content p{font-size:.95rem;color:var(--text-muted);line-height:1.7;margin:0;}
-.author-content em{color:var(--rose-dark);font-style:italic;}
+.rn-trust{ display:flex; gap:1.6rem; margin-top:2rem; flex-wrap:wrap; }
+.rn-trust-item{ display:flex; align-items:center; gap:.55rem; font-size:.8rem; color:var(--text-mid); }
+.rn-trust-item svg{ width:18px; height:18px; color:var(--sage); flex-shrink:0; }
 
-/* ===== CTA final ===== */
-.runners-cta-final{padding:6rem 2rem;background:linear-gradient(135deg,#2A2118 0%,#5C4232 100%);color:white;text-align:center;}
-.runners-cta-final h2{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:300;line-height:1.15;margin-bottom:1rem;}
-.runners-cta-final h2 em{font-style:italic;color:#E8D5D0;}
-.runners-cta-final p{font-size:1.05rem;color:rgba(255,255,255,.75);max-width:560px;margin:0 auto 2.5rem;line-height:1.6;}
-.runners-cta-final-price{display:inline-flex;align-items:baseline;gap:.3rem;background:rgba(255,255,255,.08);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);border-radius:50px;padding:.8rem 1.6rem;margin-bottom:2rem;}
-.runners-cta-final-price strong{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:400;color:white;}
-.runners-cta-final-price small{color:rgba(255,255,255,.6);font-size:.8rem;}
-.runners-cta-final .runners-cta-primary{background:white;color:var(--text);padding:1.2rem 2.4rem;font-size:1rem;}
-.runners-cta-final .runners-cta-primary:hover{background:#FAF8F4;}
+.rn-mockup-card{ position:absolute; z-index:2; left:-8%; bottom:5%; background:var(--paper); border-radius:20px; padding:1.5rem 1.6rem; box-shadow:var(--sh-md); width:230px; animation:float 5s ease-in-out infinite; }
+.rn-mockup-badge{ display:inline-block; background:var(--sage); color:var(--paper); padding:.25rem .7rem; border-radius:99px; font-size:.6rem; letter-spacing:.08em; text-transform:uppercase; font-weight:500; margin-bottom:.7rem; }
+.rn-mockup-title{ font-family:var(--font-display); font-size:1.15rem; font-weight:500; color:var(--forest2); line-height:1.15; margin-bottom:.9rem; }
+.rn-mockup-toc{ list-style:none; display:flex; flex-direction:column; gap:.4rem; }
+.rn-mockup-toc li{ display:flex; justify-content:space-between; font-size:.72rem; color:var(--text-mid); border-top:1px solid var(--border); padding-top:.4rem; }
+.rn-mockup-toc li:first-child{ border-top:none; padding-top:0; }
+.rn-photo-badge{ position:absolute; z-index:2; top:6%; right:-8%; width:96px; height:96px; border-radius:50%; overflow:hidden; border:4px solid var(--paper); box-shadow:var(--sh-md); animation:float 5s ease-in-out infinite; animation-delay:1.4s; pointer-events:none; }
+.rn-photo-badge img{ width:100%; height:100%; object-fit:cover; }
 
-/* ===== Modal compra ===== */
-.purchase-modal{display:none;position:fixed;inset:0;background:rgba(42,33,24,.78);backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;padding:2rem;}
-.purchase-modal.open{display:flex;}
-.purchase-modal-inner{background:white;border-radius:20px;padding:2.5rem 2.5rem;max-width:480px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.4);}
-.purchase-modal-inner h3{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:400;margin-bottom:.4rem;color:var(--text);}
-.purchase-modal-inner p.intro{font-size:.9rem;color:var(--text-muted);margin-bottom:1.5rem;line-height:1.55;}
-.purchase-field{margin-bottom:1rem;}
-.purchase-field label{display:block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-weight:500;margin-bottom:.45rem;}
-.purchase-field input{width:100%;padding:.85rem 1rem;border:1.5px solid rgba(168,112,106,.2);border-radius:10px;font-family:inherit;font-size:.95rem;outline:none;transition:border-color .2s;}
-.purchase-field input:focus{border-color:var(--rose-dark);}
-.purchase-buttons{display:flex;gap:.8rem;margin-top:1.5rem;}
-.purchase-buttons button{flex:1;padding:.95rem;border-radius:50px;font-family:inherit;font-size:.88rem;font-weight:500;cursor:pointer;border:none;}
-.purchase-buttons .cancel{background:transparent;border:1.5px solid rgba(168,112,106,.25);color:var(--text);}
-.purchase-buttons .confirm{background:linear-gradient(135deg,#A8706A,#8B5550);color:white;}
-.purchase-note{font-size:.78rem;color:var(--text-muted);text-align:center;margin-top:1.2rem;padding:.9rem;background:#FAF6F4;border-radius:10px;line-height:1.5;}
+/* ---- Para quién ---- */
+.rn-forwho-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1.8rem; }
+.rn-forwho-card{ border-radius:22px; padding:2.2rem 2rem; border:1px solid var(--border); background:var(--paper); transition:transform .5s var(--spring), box-shadow .5s var(--smooth); }
+.rn-forwho-card:hover{ transform:translateY(-6px); box-shadow:var(--sh-md); }
+.rn-forwho-card.yes{ background:var(--sage-pale); border-color:rgba(126,148,115,.25); }
+.rn-forwho-card.no{ background:var(--clay-pale); border-color:rgba(198,123,84,.22); }
+.rn-forwho-card h3{ font-family:var(--font-display); font-weight:500; font-size:1.35rem; color:var(--forest2); margin-bottom:1.2rem; display:flex; align-items:center; gap:.6rem; }
+.rn-forwho-card.yes h3 em{ font-style:normal; color:var(--sage); }
+.rn-forwho-card.no h3 em{ font-style:normal; color:var(--clay-deep); }
+.rn-forwho-list{ list-style:none; display:flex; flex-direction:column; gap:.2rem; }
+.rn-forwho-list li{ padding:.55rem 0; padding-left:1.9rem; position:relative; font-size:.92rem; color:var(--text); line-height:1.5; }
+.rn-forwho-list li::before{ position:absolute; left:0; top:.6rem; font-size:.85rem; font-weight:600; }
+.rn-forwho-card.yes .rn-forwho-list li::before{ content:"✓"; color:var(--sage); }
+.rn-forwho-card.no .rn-forwho-list li::before{ content:"✗"; color:var(--clay-deep); }
+.rn-forwho-note{ margin-top:1.1rem; padding-top:1.1rem; border-top:1px solid rgba(38,52,34,.12); font-size:.85rem; color:var(--text-mid); line-height:1.55; }
+.rn-forwho-note a{ color:var(--clay-deep); font-weight:500; text-decoration:underline; }
 
-/* Responsive */
-@media (max-width:880px){
-  .runners-hero{padding:7rem 1.4rem 4rem;}
-  .runners-hero-inner{grid-template-columns:1fr;gap:3rem;}
-  .runners-hero-visual{order:-1;}
-  .runners-mockup{width:280px;}
-  .for-who-grid{grid-template-columns:1fr;}
-  .author-card{grid-template-columns:1fr;text-align:center;padding:2.5rem 1.8rem;}
-  .author-avatar-big{margin:0 auto;}
-  .runners-price-box{flex-direction:column;align-items:flex-start;gap:.8rem;}
-  .runners-price-divider{display:none;}
+/* ---- Autora ---- */
+.rn-author-card{ max-width:820px; margin:0 auto; display:grid; grid-template-columns:auto 1fr; gap:2.4rem; align-items:center; background:linear-gradient(135deg,var(--cream),var(--cream-deep)); border-radius:28px; padding:3rem clamp(1.8rem,4vw,3.2rem); border:1px solid var(--border); }
+.rn-author-avatar{ position:relative; width:128px; height:128px; flex-shrink:0; }
+.rn-author-avatar img{ width:100%; height:100%; border-radius:50%; object-fit:cover; box-shadow:var(--sh-md); }
+.rn-author-content small{ font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--clay-deep); font-weight:500; }
+.rn-author-content h3{ font-family:var(--font-display); font-weight:500; font-size:1.7rem; margin:.35rem 0 .9rem; color:var(--forest2); }
+.rn-author-content p{ font-size:.96rem; color:var(--text-mid); line-height:1.7; margin:0; }
+.rn-author-content em{ font-style:italic; color:var(--clay-deep); }
+
+/* ---- CTA final ---- */
+.rn-cta-price{ display:inline-flex; align-items:baseline; gap:.35rem; background:rgba(247,244,236,.08); backdrop-filter:blur(10px); border:1px solid rgba(247,244,236,.18); border-radius:99px; padding:.8rem 1.6rem; margin:0 auto 2.2rem; position:relative; z-index:1; }
+.rn-cta-price strong{ font-family:var(--font-display); font-size:1.5rem; font-weight:500; color:var(--paper); }
+.rn-cta-price small{ color:rgba(247,244,236,.6); font-size:.8rem; }
+
+/* ---- Modal ---- */
+.rn-modal{ display:none; position:fixed; inset:0; background:rgba(27,38,24,.72); backdrop-filter:blur(8px); z-index:9999; align-items:center; justify-content:center; padding:2rem; }
+.rn-modal.open{ display:flex; }
+.rn-modal-inner{ background:var(--paper); border-radius:24px; padding:2.6rem clamp(1.6rem,4vw,2.6rem); max-width:480px; width:100%; box-shadow:var(--sh-lg); }
+.rn-modal-inner h3{ font-family:var(--font-display); font-weight:500; font-size:1.6rem; margin-bottom:.5rem; color:var(--forest2); }
+.rn-modal-inner p.intro{ font-size:.9rem; color:var(--text-mid); margin-bottom:1.6rem; line-height:1.55; }
+.rn-field{ margin-bottom:1.1rem; }
+.rn-field label{ display:block; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--text-muted); font-weight:500; margin-bottom:.5rem; }
+.rn-field input{ width:100%; padding:.85rem 1rem; border:1.5px solid var(--border2); border-radius:12px; font-family:var(--font-body); font-size:.95rem; outline:none; transition:border-color .3s; background:var(--white); color:var(--text); }
+.rn-field input:focus{ border-color:var(--clay-deep); }
+.rn-modal-buttons{ display:flex; gap:.8rem; margin-top:1.6rem; }
+.rn-modal-buttons button{ flex:1; padding:.95rem; border-radius:99px; font-family:var(--font-body); font-size:.86rem; font-weight:500; cursor:pointer; border:none; transition:transform .35s var(--spring), background .35s; }
+.rn-modal-buttons .cancel{ background:transparent; border:1.5px solid var(--border2); color:var(--text); }
+.rn-modal-buttons .cancel:hover{ background:var(--cream-deep); }
+.rn-modal-buttons .confirm{ background:var(--clay-deep); color:var(--paper); }
+.rn-modal-buttons .confirm:hover{ background:var(--forest2); transform:translateY(-2px); }
+.rn-modal-note{ font-size:.78rem; color:var(--text-mid); text-align:center; margin-top:1.3rem; padding:.9rem 1rem; background:var(--sage-pale); border-radius:12px; line-height:1.5; }
+
+/* ---- Responsive ---- */
+@media (max-width:980px){
+  .rn-hero-grid{ grid-template-columns:1fr; }
+  .rn-hero{ padding-top:6.5rem; }
+  .rb-hero-media{ max-width:22rem; margin:2.5rem auto 3rem; }
+  .rn-forwho-grid{ grid-template-columns:1fr; }
+  .rn-author-card{ grid-template-columns:1fr; text-align:center; padding:2.6rem 1.8rem; }
+  .rn-author-avatar{ margin:0 auto; }
+}
+@media (max-width:640px){
+  .rn-price-box{ flex-direction:column; align-items:flex-start; gap:.9rem; }
+  .rn-price-divider{ display:none; }
+  .rn-mockup-card{ display:none; }
+  .rn-photo-badge{ display:none; }
 }
 </style></head>
-<body>
+<body class="rb">
+<div id="rbProg"></div>
 
-<nav class="main-nav" id="nav"><a href="index.html" class="nav-logo">Lic. <span>Agustina</span> Villegas</a><ul class="nav-links"><li><a href="index.html">Inicio</a></li><li><a href="sobre-mi.html">Sobre mí</a></li><li><a href="servicios.html">Servicios</a></li><li><a href="planes.html">Planes</a></li><li><a href="runners.html" class="active">Runners</a></li><li><a href="habito.html">Hábito</a></li><li><a href="contacto.html">Contacto</a></li></ul><button class="nav-cta" onclick="location.href='reservar.html'">Reservar turno</button><button class="hamburger" onclick="document.getElementById('mm').classList.toggle('open')"><span></span><span></span><span></span></button></nav>
-<div class="mobile-menu" id="mm"><a href="index.html">Inicio</a><a href="sobre-mi.html">Sobre mí</a><a href="servicios.html">Servicios</a><a href="planes.html">Planes</a><a href="runners.html">Runners</a><a href="habito.html">Hábito</a><a href="contacto.html">Contacto</a><a href="reservar.html" style="color:var(--rose-dark);font-weight:500;">Reservar turno</a></div>
+<nav class="rb-nav" id="rbNav">
+  <a href="index.html" class="rb-logo">Agustina <em>Villegas</em></a>
+  <div class="rb-nav-right">
+    <ul class="rb-links">
+      <li><a href="index.html">Inicio</a></li>
+      <li><a href="sobre-mi.html">Sobre mí</a></li>
+      <li><a href="servicios.html">Servicios</a></li>
+      <li><a href="planes.html">Planes</a></li>
+      <li><a href="runners.html" class="active">Runners</a></li>
+      <li><a href="habito.html">Hábito</a></li>
+      <li><a href="contacto.html">Contacto</a></li>
+    </ul>
+    <button class="rb-nav-cta" onclick="location.href='reservar.html'">Reservar turno <span class="arr">→</span></button>
+    <button class="rb-burger" id="rbBurger" aria-label="Abrir menú"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<div class="rb-mmenu" id="rbMmenu">
+  <button class="rb-mmenu-close" id="rbMmenuClose" aria-label="Cerrar menú">✕</button>
+  <a href="index.html">Inicio</a>
+  <a href="sobre-mi.html">Sobre mí</a>
+  <a href="servicios.html">Servicios</a>
+  <a href="planes.html">Planes</a>
+  <a href="runners.html">Runners</a>
+  <a href="habito.html">Hábito</a>
+  <a href="contacto.html">Contacto</a>
+  <a href="reservar.html" style="color:var(--clay-pale);">Reservar turno →</a>
+</div>
 
 <!-- ===== HERO ===== -->
-<section class="runners-hero">
-  <div class="runners-hero-inner">
+<section class="rn-hero runners-hero">
+  <div class="rn-hero-grid">
     <div>
-      <span class="runners-eyebrow">🏃 Nuevo · Descarga inmediata</span>
-      <h1 id="hero-title">Plan de nutrición para <em>runners principiantes</em></h1>
-      <p class="runners-hero-desc" id="hero-tagline">Tu guía completa para comenzar a correr sin frustrarte por la comida. Aprendé qué comer antes, durante y después del entrenamiento, cómo prepararte para tu primera carrera y mejorar tu rendimiento.</p>
+      <span class="rb-eyebrow rb-reveal in">🏃 Nuevo · Descarga inmediata</span>
+      <h1 class="rb-reveal in d1" id="hero-title">Plan de nutrición para <em>runners principiantes</em></h1>
+      <p class="lead rb-reveal in d2" id="hero-tagline">Tu guía completa para comenzar a correr sin frustrarte por la comida. Aprendé qué comer antes, durante y después del entrenamiento, cómo prepararte para tu primera carrera y mejorar tu rendimiento.</p>
 
-      <div class="runners-price-box">
+      <div class="rn-price-box rb-reveal in d3">
         <div>
-          <div class="runners-price-label">Precio</div>
-          <div class="runners-price-amount">$<span id="hero-price">1500</span><span class="runners-price-currency">UYU</span></div>
+          <div class="rn-price-label">Precio</div>
+          <div class="rn-price-amount">$<span id="hero-price">1500</span><span class="rn-price-currency">UYU</span></div>
         </div>
-        <div class="runners-price-divider"></div>
-        <div class="runners-instant">
+        <div class="rn-price-divider"></div>
+        <div class="rn-instant">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           PDF descargable<br>de inmediato
         </div>
       </div>
 
-      <div class="runners-cta-row">
-        <button class="runners-cta-primary" onclick="openPurchaseModal()">
-          Quiero el plan →
-        </button>
+      <div class="rb-hero-actions rb-reveal in d3">
+        <button class="rb-btn rb-btn-primary" onclick="openPurchaseModal()">Quiero el plan <span class="arr">→</span></button>
       </div>
 
-      <div class="runners-trust">
-        <div class="runners-trust-item">
+      <div class="rn-trust rb-reveal in d4">
+        <div class="rn-trust-item">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           Acceso de por vida
         </div>
-        <div class="runners-trust-item">
+        <div class="rn-trust-item">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           Sin suscripción
         </div>
-        <div class="runners-trust-item">
+        <div class="rn-trust-item">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           Hecho por una nutricionista runner
         </div>
       </div>
     </div>
 
-    <div class="runners-hero-visual">
-      <div class="runners-mockup">
-        <div class="mockup-badge">3 ejes clave</div>
-        <div class="mockup-cover-title">Nutrición en running</div>
-        <div class="mockup-cover-sub">Para principiantes</div>
-        <div class="mockup-divider"></div>
-        <div class="mockup-toc-item"><span>Alimentación según el momento</span><span class="mockup-toc-page">01</span></div>
-        <div class="mockup-toc-item"><span>El día de carrera</span><span class="mockup-toc-page">02</span></div>
-        <div class="mockup-toc-item"><span>Hidratación y hábitos</span><span class="mockup-toc-page">03</span></div>
-        <div class="mockup-author">
-          <div class="mockup-author-avatar">A</div>
-          <div class="mockup-author-text">Por<strong>Lic. Agustina Villegas</strong></div>
-        </div>
+    <div class="rb-hero-media rb-reveal in d2">
+      <div class="blob"></div>
+      <img src="images/site/running-race.jpeg" alt="Lic. Agustina Villegas corriendo una carrera">
+      <div class="rn-photo-badge"><img src="images/site/running-portrait.jpeg" alt="Lic. Agustina Villegas corriendo"></div>
+      <div class="rn-mockup-card">
+        <span class="rn-mockup-badge">3 ejes clave</span>
+        <div class="rn-mockup-title">Nutrición para corredoras<br><span style="font-size:.8rem;font-weight:400;color:var(--text-muted);">Para principiantes</span></div>
+        <ul class="rn-mockup-toc">
+          <li><span>Alimentación según el momento</span><span>01</span></li>
+          <li><span>El día de carrera</span><span>02</span></li>
+          <li><span>Hidratación y hábitos</span><span>03</span></li>
+        </ul>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ===== PARA QUIÉN ES / NO ES ===== -->
-<section class="runners-for-who">
-  <div class="section-inner">
-    <span class="section-eyebrow">A quién le sirve este plan</span>
-    <h2 class="section-title">¿Es para vos?</h2>
-    <p class="section-subtitle">Antes de comprar quiero ser honesta sobre el tipo de runner que más se va a beneficiar de esta guía.</p>
+<section class="rb-section runners-for-who">
+  <div class="wrap">
+    <div class="rb-section-head rb-reveal" style="max-width:38rem;margin-left:auto;margin-right:auto;text-align:center;">
+      <span class="rb-eyebrow" style="justify-content:center;">A quién le sirve este plan</span>
+      <h2>¿Es para <em>vos</em>?</h2>
+      <p>Antes de comprar quiero ser honesta sobre el tipo de runner que más se va a beneficiar de esta guía.</p>
+    </div>
 
-    <div class="for-who-grid">
-      <div class="for-who-card yes">
+    <div class="rn-forwho-grid">
+      <div class="rn-forwho-card yes rb-reveal d1">
         <h3>✓ <em>Sí</em>, este plan es para vos si:</h3>
-        <ul class="for-who-list">
+        <ul class="rn-forwho-list">
           <li>Empezaste a correr hace poco o estás por empezar</li>
           <li>Querés entrenar para tu primera 5K o 10K</li>
           <li>No sabés qué comer antes de salir a correr</li>
@@ -205,74 +216,101 @@
           <li>Querés evitar errores comunes desde el comienzo</li>
         </ul>
       </div>
-      <div class="for-who-card no">
+      <div class="rn-forwho-card no rb-reveal d2">
         <h3>✗ <em>No</em>, este plan no es para vos si:</h3>
-        <ul class="for-who-list">
+        <ul class="rn-forwho-list">
           <li>Sos un runner avanzado o profesional</li>
           <li>Tenés condiciones médicas que requieren plan personalizado</li>
           <li>Buscás un plan adaptado a tu peso, rutina y objetivos específicos</li>
           <li>Querés un seguimiento mensual con consultas</li>
         </ul>
-        <p style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(168,112,106,.15);font-size:.82rem;color:var(--text-muted);line-height:1.55;">En esos casos te conviene una <a href="reservar.html" style="color:var(--rose-dark);font-weight:500;text-decoration:underline;">consulta personalizada</a>.</p>
+        <p class="rn-forwho-note">En esos casos te conviene una <a href="reservar.html">consulta personalizada</a>.</p>
       </div>
     </div>
   </div>
 </section>
 
-
 <!-- ===== AUTORA ===== -->
-<section class="runners-author">
-  <div class="author-card">
-    <div class="author-avatar-big">A</div>
-    <div class="author-content">
-      <small>Quién armó este plan</small>
-      <h3>Lic. Agustina Villegas</h3>
-      <p>Soy nutricionista y <em>apasionada del running</em>. Armé este plan pensando en la información que me hubiera gustado saber cuando empecé: todos los errores que podría haber evitado y cómo potenciar el rendimiento con una alimentación adecuada desde el comienzo. Compilé acá lo más útil para principiantes — sin tecnicismos innecesarios.</p>
+<section class="rb-section on-sage runners-author">
+  <div class="wrap">
+    <div class="rn-author-card rb-reveal">
+      <div class="rn-author-avatar">
+        <img src="images/site/runners-selfie.jpeg" alt="Lic. Agustina Villegas corriendo">
+      </div>
+      <div class="rn-author-content">
+        <small>Quién armó este plan</small>
+        <h3>Lic. Agustina Villegas</h3>
+        <p>Soy nutricionista y <em>corredora apasionada</em>. Armé este plan pensando en la información que me hubiera gustado saber cuando empecé: todos los errores que podría haber evitado y cómo potenciar el rendimiento con una alimentación adecuada desde el comienzo. Compilé acá lo más útil para principiantes — sin tecnicismos innecesarios.</p>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- ===== CTA FINAL ===== -->
-<section class="runners-cta-final">
-  <div class="section-inner">
-    <h2>Empezá a correr <em>con la cabeza tranquila</em></h2>
-    <p>Sin dudas sobre qué comer, cuándo hidratarte ni cómo prepararte para tu primera carrera.</p>
-    <div class="runners-cta-final-price">
-      <strong>$<span id="cta-price">1500</span></strong><small>UYU · Acceso de por vida</small>
+<section class="rb-section runners-cta-final">
+  <div class="wrap">
+    <div class="rb-cta-band rb-reveal">
+      <h2>Empezá a correr <em>con la cabeza tranquila</em></h2>
+      <p>Sin dudas sobre qué comer, cuándo hidratarte ni cómo prepararte para tu primera carrera.</p>
+      <div class="rn-cta-price">
+        <strong>$<span id="cta-price">1500</span></strong><small>UYU · Acceso de por vida</small>
+      </div>
+      <div class="rb-hero-actions" style="justify-content:center;">
+        <button class="rb-btn rb-btn-primary" onclick="openPurchaseModal()">Quiero el plan <span class="arr">→</span></button>
+      </div>
     </div>
-    <br>
-    <button class="runners-cta-primary" onclick="openPurchaseModal()">Quiero el plan →</button>
   </div>
 </section>
 
-<!-- ===== FOOTER ===== -->
-<footer style="background:#1F1812;color:rgba(255,255,255,.7);padding:3rem 2rem 2rem;text-align:center;">
-  <div style="max-width:1100px;margin:0 auto;">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:white;margin-bottom:.4rem;">Lic. <em style="color:#E8D5D0;">Agustina</em> Villegas</div>
-    <div style="font-size:.75rem;color:rgba(255,255,255,.5);margin-bottom:1.5rem;">Nutricionista y Masajista · Uruguay</div>
-    <div style="font-size:.78rem;"><a href="index.html" style="color:rgba(255,255,255,.6);text-decoration:none;margin:0 .8rem;">Inicio</a> · <a href="planes.html" style="color:rgba(255,255,255,.6);text-decoration:none;margin:0 .8rem;">Planes</a> · <a href="reservar.html" style="color:rgba(255,255,255,.6);text-decoration:none;margin:0 .8rem;">Reservar</a> · <a href="contacto.html" style="color:rgba(255,255,255,.6);text-decoration:none;margin:0 .8rem;">Contacto</a></div>
-    <div style="margin-top:2rem;font-size:.7rem;color:rgba(255,255,255,.35);">© 2026 Lic. Agustina Villegas. Todos los derechos reservados.</div>
+<footer class="rb-footer">
+  <div class="wrap">
+    <div class="rb-footer-grid">
+      <div>
+        <div class="rb-footer-logo">Agustina Villegas</div>
+        <p class="desc">Nutricionista y masajista en Tarariras, Colonia — atención online en todo Uruguay.</p>
+      </div>
+      <div>
+        <h4>Navegación</h4>
+        <ul><li><a href="sobre-mi.html">Sobre mí</a></li><li><a href="servicios.html">Servicios</a></li><li><a href="planes.html">Planes</a></li><li><a href="contacto.html">Contacto</a></li></ul>
+      </div>
+      <div>
+        <h4>Servicios</h4>
+        <ul><li><a href="servicios.html">Nutrición</a></li><li><a href="servicios.html">Masajes</a></li><li><a href="runners.html">Runners</a></li><li><a href="habito.html">Hábito</a></li></ul>
+      </div>
+      <div>
+        <h4>Contacto</h4>
+        <ul><li><a href="https://wa.me/59899712691" target="_blank">+598 99 712 691</a></li><li><a href="https://instagram.com/lic.agustinavillegas/" target="_blank">Instagram</a></li><li><a href="https://www.tiktok.com/@agustinavillegas.e" target="_blank">TikTok</a></li><li><a href="mailto:lic.agustinavillegase@gmail.com">Email</a></li></ul>
+      </div>
+    </div>
+    <div class="rb-footer-bottom">
+      <span>© 2026 Agustina Villegas — Todos los derechos reservados</span>
+      <span>Tarariras, Colonia, Uruguay</span>
+    </div>
   </div>
 </footer>
 
+<a href="https://wa.me/59899712691" target="_blank" class="rb-wa" aria-label="WhatsApp">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 004.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.02c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.13.11-1.82-.12-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36h.55c.18 0 .42-.03.65.5.24.56.8 1.95.87 2.09.07.14.12.31.02.5-.1.19-.15.31-.29.48-.14.17-.3.37-.43.5-.14.14-.29.29-.12.57.17.28.75 1.24 1.62 2 1.11.99 2.05 1.3 2.33 1.44.28.14.44.12.6-.07.17-.19.71-.83.9-1.11.19-.28.38-.24.64-.14.26.1 1.64.77 1.92.91.28.14.47.21.53.33.07.12.07.68-.17 1.36z"/></svg>
+</a>
+
 <!-- ===== MODAL COMPRA (sin payment todavía, redirige a WhatsApp) ===== -->
-<div class="purchase-modal" id="purchaseModal" onclick="if(event.target.id==='purchaseModal')closePurchaseModal()">
-  <div class="purchase-modal-inner">
+<div class="rn-modal" id="purchaseModal" onclick="if(event.target.id==='purchaseModal')closePurchaseModal()">
+  <div class="rn-modal-inner">
     <h3>Comprar el plan</h3>
     <p class="intro">Completá tus datos. Cuando tengamos el pago online te enviamos el PDF al instante. <strong>Por ahora coordinamos por WhatsApp.</strong></p>
-    <div class="purchase-field">
+    <div class="rn-field">
       <label>Tu nombre</label>
       <input id="buyer-name" type="text" placeholder="María García" autocomplete="name">
     </div>
-    <div class="purchase-field">
+    <div class="rn-field">
       <label>Tu email</label>
       <input id="buyer-email" type="email" placeholder="tu@email.com" autocomplete="email">
     </div>
-    <div class="purchase-buttons">
+    <div class="rn-modal-buttons">
       <button class="cancel" onclick="closePurchaseModal()">Cancelar</button>
       <button class="confirm" onclick="submitPurchase()">Continuar por WhatsApp →</button>
     </div>
-    <div class="purchase-note">💳 Próximamente vas a poder pagar online con MercadoPago y recibir el PDF al instante. Por ahora coordinamos por WhatsApp.</div>
+    <div class="rn-modal-note">💳 Próximamente vas a poder pagar online con MercadoPago y recibir el PDF al instante. Por ahora coordinamos por WhatsApp.</div>
   </div>
 </div>
 
