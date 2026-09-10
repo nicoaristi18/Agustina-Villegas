@@ -311,6 +311,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 .ideas-item{font-size:10px;font-weight:300;color:#2A2118;padding:2px 0 2px 13px;position:relative;border-bottom:1px solid rgba(169,138,130,.05);}
 .ideas-item:last-child{border-bottom:none;}
 .ideas-item::before{content:'–';position:absolute;left:0;top:2px;color:rgba(169,138,130,.45);font-size:9px;}
+
+/* PLATO COMPLETO (PDF) */
+.plate-diagram{width:220px;height:220px;border-radius:50%;overflow:hidden;display:flex;box-shadow:0 2px 10px rgba(0,0,0,.14);border:1px solid rgba(169,138,130,.25);margin:6px auto 10px;}
+.plate-half{width:50%;height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;background:#C9DFC0;}
+.plate-half span{font-size:9.5px;font-weight:500;color:#3A5A34;letter-spacing:.03em;text-transform:uppercase;line-height:1.3;}
+.plate-quarters{width:50%;height:100%;display:flex;flex-direction:column;}
+.plate-quarter{width:100%;height:50%;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px;}
+.plate-quarter span{font-size:9px;font-weight:500;letter-spacing:.03em;text-transform:uppercase;line-height:1.3;}
+.plate-quarter.plate-carb{background:#E8D5C4;}
+.plate-quarter.plate-carb span{color:#7A5A34;}
+.plate-quarter.plate-prot{background:#E0B9B4;}
+.plate-quarter.plate-prot span{color:#7A342C;}
+.plate-caption{text-align:center;font-size:9px;color:#8C7E78;letter-spacing:.04em;margin-bottom:26px;}
+.plato-ejemplos{display:flex;flex-direction:column;gap:8px;}
+.plato-ejemplo-card{background:#fff;border:1px solid rgba(169,138,130,.18);border-radius:8px;padding:11px 14px;display:flex;align-items:baseline;gap:10px;}
+.plato-ejemplo-title{font-family:'Cormorant Garamond',serif;font-size:13px;color:#A8706A;font-weight:500;flex-shrink:0;min-width:56px;}
+.plato-ejemplo-txt{font-size:10px;color:#2A2118;font-weight:300;line-height:1.6;}
+.plato-nota{margin-top:14px;font-size:9px;color:#8C7E78;font-style:italic;font-weight:300;padding:6px 10px;background:#FAF8F4;border-radius:6px;}
 </style>
 </head>
 <body>
@@ -334,6 +352,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
   <button class="tab-btn on" data-tab="rec" onclick="switchTab('rec')">Recetario</button>
   <button class="tab-btn" data-tab="sup" onclick="switchTab('sup')">Recomendados del s&uacute;per</button>
   <button class="tab-btn" data-tab="plan" onclick="switchTab('plan')">Plan de alimentaci&oacute;n</button>
+  <button class="tab-btn" data-tab="sinplan" onclick="switchTab('sinplan')">Sin plan</button>
   <button class="tab-btn" data-tab="run" onclick="switchTab('run')">Gu&iacute;a Running</button>
 </div>
 
@@ -549,6 +568,76 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
     </div>
     <div class="prev-wrap" id="pw-plan">
       <div class="prev-inner" id="preview-plan"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: SIN PLAN (devolución de consulta) -->
+<div id="panel-sinplan" class="tab-panel">
+  <div class="form-col">
+    <div class="save-bar" style="flex-direction:column;gap:.45rem">
+      <div style="display:flex;gap:.4rem;width:100%;align-items:center">
+        <input id="sp-save-name" type="text" placeholder="Nombre del guardado (auto desde paciente + fecha)" style="flex:1;min-width:0;padding:.35rem .55rem;background:#fff;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text);outline:none;">
+        <button class="sb-btn primary" onclick="saveSpSnapshot()">💾 Guardar</button>
+      </div>
+      <div style="display:flex;gap:.4rem;width:100%;align-items:center">
+        <select id="sp-saves-sel" style="flex:1;min-width:0;padding:.35rem .55rem;background:#fff;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text);outline:none;"><option value="">— Cargar guardado… —</option></select>
+        <button class="sb-btn" onclick="loadSpSnapshot()">Cargar</button>
+        <button class="sb-btn danger" onclick="deleteSpSnapshot()">Borrar</button>
+      </div>
+      <div id="sp-save-status" style="font-size:.75rem;font-weight:500;color:var(--rose-dark);display:none;padding:.3rem .5rem;background:rgba(168,112,106,.1);border-radius:6px;text-align:center"></div>
+    </div>
+    <div class="fsec">
+      <div class="fsec-title">Datos del documento</div>
+      <div class="fg"><label>Nombre del cliente</label><input id="sp-nombre" type="text" placeholder="Mar&iacute;a Garc&iacute;a" oninput="upSp()"></div>
+      <div class="fg-row">
+        <div class="fg"><label>Fecha</label><input id="sp-fecha" type="date" oninput="upSp()"></div>
+        <div class="fg"><label>Imagen de portada</label><div style="display:flex;gap:.4rem;align-items:center"><input id="sp-portada" type="file" accept="image/*" onchange="setCover(this,'gen_cv_sp','upSp')" style="flex:1;min-width:0"><button id="btn-clear-sp-cover" class="sb-btn danger" onclick="clearCover('gen_cv_sp','upSp','sp-portada','btn-clear-sp-cover')" style="display:none;white-space:nowrap;font-size:.65rem">✕ Quitar</button></div></div>
+      </div>
+    </div>
+    <div class="fsec">
+      <div class="fsec-title">Devoluci&oacute;n de consulta</div>
+      <div class="fg"><label>Texto de devoluci&oacute;n (opcional)</label><textarea id="sp-devolucion" rows="6" placeholder="Notas y devoluci&oacute;n de la consulta&hellip;" oninput="upSp()"></textarea></div>
+    </div>
+    <div class="fsec">
+      <div class="fsec-title">Macronutrientes &mdash; contenido</div>
+      <p style="font-size:.7rem;color:var(--text-muted);margin-bottom:.7rem">4 p&aacute;ginas (prot&eacute;inas, grasas, carbohidratos, fibra). Clic en cada bloque para editar.</p>
+      <div id="macros4-list-sp"></div>
+    </div>
+    <div class="fsec">
+      <div class="fsec-title">C&oacute;mo armar un plato completo</div>
+      <div class="fg"><label>Texto introductorio</label><textarea id="sp-plato-intro" rows="3" oninput="upSp()">Para armar un plato equilibrado, dividí tu plato imaginariamente en 4 partes: un cuarto con alimentos ricos en carbohidratos, un cuarto con alimentos ricos en proteínas y la mitad restante con verduras.</textarea></div>
+      <div class="fg"><label>Plato 1</label><input id="sp-plato1" type="text" value="Boniato, carne, zapallo y chaucha" oninput="upSp()"></div>
+      <div class="fg"><label>Plato 2</label><input id="sp-plato2" type="text" value="Lasaña de espinaca y pollo" oninput="upSp()"></div>
+      <div class="fg"><label>Plato 3</label><input id="sp-plato3" type="text" value="Arroz integral, pechuga de pollo, zapallito" oninput="upSp()"></div>
+      <div class="fg"><label>Nota</label><input id="sp-platos-nota" type="text" value="Estas ideas de plato sirven de almuerzo y de cena." oninput="upSp()"></div>
+    </div>
+    <div class="fsec">
+      <div class="fsec-title">Organizaci&oacute;n semanal</div>
+      <div class="fg"><textarea id="sp-orgsem" rows="6" oninput="upSp()">La organización semanal es clave para sostener una alimentación equilibrada. Cocinar para varios días nos ayuda a no pensar constantemente qué comer.
+
+Planificar las comidas con anticipación evita recurrir a opciones de comida rápida o poco equilibrada en los momentos de apuro.</textarea></div>
+    </div>
+    <div class="fsec">
+      <div class="fsec-title">Hidrataci&oacute;n</div>
+      <div class="fg"><textarea id="sp-hidratacion" rows="6" oninput="upSp()">Mantenerse bien hidratado es fundamental para el funcionamiento del organismo: regula la temperatura corporal, favorece la digestión, el transporte de nutrientes y el rendimiento físico y mental.
+
+Se recomienda consumir entre 1,5 y 2 litros de agua al día, ajustando la cantidad según el nivel de actividad física, el clima y las necesidades individuales.</textarea></div>
+    </div>
+    <div class="fsec">
+      <div class="fsec-title">Ejercicio f&iacute;sico</div>
+      <div class="fg"><textarea id="sp-ejercicio" rows="6" oninput="upSp()">La actividad física regular complementa una alimentación equilibrada: ayuda a mantener un peso saludable, mejora el estado de ánimo, fortalece el sistema cardiovascular y muscular, y contribuye al bienestar general.
+
+Se recomienda realizar al menos 150 minutos semanales de actividad física moderada, combinando ejercicio cardiovascular con trabajo de fuerza.</textarea></div>
+    </div>
+  </div>
+  <div class="prev-col">
+    <div class="prev-toolbar">
+      <span class="prev-info" id="sp-info">Sin plan</span>
+      <button class="dl-btn" id="btn-dl-sp" onclick="dlPDF('doc-sinplan','Sin_plan.pdf','btn-dl-sp')">&#8595; Descargar PDF</button>
+    </div>
+    <div class="prev-wrap" id="pw-sinplan">
+      <div class="prev-inner" id="preview-sinplan"></div>
     </div>
   </div>
 </div>
@@ -1010,7 +1099,7 @@ function setCover(inp, key, upFn) {
   const r = new FileReader();
   r.onload = e => {
     localStorage.setItem(key, e.target.result);
-    const btnMap = {'gen_cv_rec':'btn-clear-rec-cover','gen_cv_sup':'btn-clear-sup-cover','gen_cv_plan':'btn-clear-plan-cover'};
+    const btnMap = {'gen_cv_rec':'btn-clear-rec-cover','gen_cv_sup':'btn-clear-sup-cover','gen_cv_plan':'btn-clear-plan-cover','gen_cv_sp':'btn-clear-sp-cover'};
     const btn = $(btnMap[key]); if (btn) btn.style.display = '';
     window[upFn]();
   };
@@ -1025,7 +1114,7 @@ function clearCover(key, upFn, inpId, btnId) {
 }
 
 function initCoverButtons() {
-  [['gen_cv_rec','btn-clear-rec-cover'],['gen_cv_sup','btn-clear-sup-cover'],['gen_cv_plan','btn-clear-plan-cover']].forEach(function(p){
+  [['gen_cv_rec','btn-clear-rec-cover'],['gen_cv_sup','btn-clear-sup-cover'],['gen_cv_plan','btn-clear-plan-cover'],['gen_cv_sp','btn-clear-sp-cover']].forEach(function(p){
     if (localStorage.getItem(p[0])) { const b=$(p[1]); if(b) b.style.display=''; }
   });
 }
@@ -1671,6 +1760,9 @@ var DEF_MACROS4 = [
 ];
 var macros4 = DEF_MACROS4.map(function(m){ return {key:m.key,label:m.label,s2on:m.s2on,imgs:m.imgs.slice(),desc:m.desc,s1t:m.s1t,s1s:m.s1s,s1i:m.s1i,s2t:m.s2t,s2s:m.s2s,s2i:m.s2i}; });
 
+/* MACRONUTRIENTES — copia independiente para la solapa "Sin plan" */
+var spMacros4 = DEF_MACROS4.map(function(m){ return {key:m.key,label:m.label,s2on:m.s2on,imgs:m.imgs.slice(),desc:m.desc,s1t:m.s1t,s1s:m.s1s,s1i:m.s1i,s2t:m.s2t,s2s:m.s2s,s2i:m.s2i}; });
+
 function renderMacros4Form() {
   var el = $('macros4-list');
   if (!el) return;
@@ -1741,6 +1833,78 @@ function setMacroImg(mi, ji, inp) {
       container.appendChild(d);
     }
     upPlan();
+  };
+  r.readAsDataURL(f);
+}
+
+/* MACRONUTRIENTES — form/sync/imagen para la solapa "Sin plan" (copia independiente) */
+function renderMacros4FormSp() {
+  var el = $('macros4-list-sp');
+  if (!el) return;
+  el.innerHTML = spMacros4.map(function(m, i) {
+    if (!m.imgs) m.imgs = ['','','',''];
+    var imgInputs = [0,1,2,3].map(function(j) {
+      return '<div class="fg" style="margin:0">' +
+        '<label>Imagen '+(j+1)+'</label>' +
+        '<input type="file" accept="image/*" onchange="setMacroImgSp('+i+','+j+',this)">' +
+        (m.imgs[j] ? '<div style="margin-top:.25rem"><img src="'+m.imgs[j]+'" style="height:32px;border-radius:4px;border:1px solid var(--border)"></div>' : '') +
+        '</div>';
+    });
+    return '<div class="rcard" style="margin-bottom:.65rem">' +
+      '<div class="rcard-head" onclick="toggleCard(\'mc4sp-' + i + '\')">' +
+      '<span class="rcard-title">' + m.label + '</span>' +
+      '<span class="rcard-badge">Página ' + (i+1) + '</span>' +
+      '</div>' +
+      '<div class="rcard-body" id="mc4sp-' + i + '" style="display:none">' +
+      '<div class="fg"><label>Descripción</label><textarea rows="3" oninput="syncMacro4Sp(' + i + ',\'desc\',this.value)">' + esc(m.desc) + '</textarea></div>' +
+      '<div style="border:1px solid var(--border);border-radius:8px;padding:.6rem .7rem;margin-bottom:.6rem">' +
+      '<div style="font-size:.6rem;letter-spacing:.07em;text-transform:uppercase;color:var(--rose-dark);margin-bottom:.4rem">Bloque 1</div>' +
+      '<div class="fg"><label>Subtítulo</label><input type="text" value="' + esc(m.s1t) + '" oninput="syncMacro4Sp(' + i + ',\'s1t\',this.value)"></div>' +
+      '<div class="fg" style="margin:0"><label>Contenido</label><textarea rows="2" oninput="syncMacro4Sp(' + i + ',\'s1s\',this.value)">' + esc(m.s1s) + '</textarea></div>' +
+      '</div>' +
+      '<div style="border:1px solid var(--border);border-radius:8px;padding:.6rem .7rem;margin-bottom:.6rem">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">' +
+      '<div style="font-size:.6rem;letter-spacing:.07em;text-transform:uppercase;color:var(--rose-dark)">Bloque 2 (opcional)</div>' +
+      '<label class="fg-check" style="margin:0"><input type="checkbox"'+(m.s2on?' checked':'')+' onchange="syncMacro4Sp('+i+',\'s2on\',this.checked);renderMacros4FormSp()"> Mostrar</label>' +
+      '</div>' +
+      (m.s2on ?
+        '<div class="fg"><label>Subtítulo</label><input type="text" value="' + esc(m.s2t) + '" oninput="syncMacro4Sp(' + i + ',\'s2t\',this.value)"></div>' +
+        '<div class="fg" style="margin:0"><label>Contenido</label><textarea rows="2" oninput="syncMacro4Sp(' + i + ',\'s2s\',this.value)">' + esc(m.s2s) + '</textarea></div>'
+        : '<p style="font-size:.72rem;color:var(--text-muted);margin:0">Bloque 2 oculto — el bloque 1 queda centrado en la página.</p>') +
+      '</div>' +
+      '<div style="border:1px solid var(--border);border-radius:8px;padding:.6rem .7rem">' +
+      '<div style="font-size:.6rem;letter-spacing:.07em;text-transform:uppercase;color:var(--rose-dark);margin-bottom:.5rem">Imágenes de ejemplo (opcional, 2×2)</div>' +
+      '<div class="fg-row">' + imgInputs[0] + imgInputs[1] + '</div>' +
+      '<div class="fg-row" style="margin-top:.4rem">' + imgInputs[2] + imgInputs[3] + '</div>' +
+      '</div>' +
+      '</div></div>';
+  }).join('');
+}
+
+function syncMacro4Sp(i, f, v) { spMacros4[i][f] = v; upSp(); }
+
+function setMacroImgSp(mi, ji, inp) {
+  var f = inp.files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function(e) {
+    if (!spMacros4[mi].imgs) spMacros4[mi].imgs = ['','','',''];
+    spMacros4[mi].imgs[ji] = e.target.result;
+    var container = inp.parentElement;
+    var thumb = container.querySelector('img');
+    if (thumb) {
+      thumb.src = e.target.result;
+    } else {
+      var d = document.createElement('div');
+      d.style.marginTop = '.25rem';
+      var img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.height = '32px';
+      img.style.borderRadius = '4px';
+      img.style.border = '1px solid var(--border)';
+      d.appendChild(img);
+      container.appendChild(d);
+    }
+    upSp();
   };
   r.readAsDataURL(f);
 }
@@ -2146,6 +2310,7 @@ async function deletePlanSnapshot() {
 async function initSavesUI() {
   var arr = await cloudGetSaves();
   updatePlanSavesUI(arr);
+  updateSpSavesUI(arr);
   initCoverButtons();
 
   // Si admin abrió un recetario específico, cargarlo
@@ -2552,6 +2717,268 @@ var upPlan = deb(function() {
   scaleDoc('pw-plan', 'preview-plan');
   autoFillSaveName();
 }, 200);
+
+/* ============================================================
+   SIN PLAN (devolución de consulta) — build + save/load
+   ============================================================ */
+function buildSinPlanDoc() {
+  var nombre = val('sp-nombre'), fecha = val('sp-fecha');
+  var devolucion = val('sp-devolucion');
+  var macroLogo = getLogo();
+
+  var macrosPgs = spMacros4.map(function(m) {
+    var userImgs = m.imgs || ['','','',''];
+    var defaults = MACRO_DEFAULT_IMGS[m.key] || ['','','',''];
+    var imgs = userImgs.map(function(src, i){ return src || defaults[i] || ''; });
+    var hasImgs = imgs.some(function(x){ return !!x; });
+    var imgGrid = '<div class="macro-img-grid">' +
+      imgs.map(function(src) {
+        if (src) {
+          return '<div class="macro-img-cell" style="background-image:url(\''+src+'\');background-size:cover;background-position:center center;background-repeat:no-repeat"></div>';
+        }
+        return '<div class="macro-img-cell" style="background:rgba(255,255,255,.06);border:1px dashed rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.3);font-size:9px;letter-spacing:.1em;text-transform:uppercase">imagen</div>';
+      }).join('') + '</div>';
+    var subcols;
+    if (m.s2on) {
+      subcols = '<div class="macro-subcols">'+
+        '<div class="macro-subcol"><div class="macro-sub-title">'+esc(m.s1t)+'</div><div class="macro-sub-items">'+esc(m.s1s)+'</div>'+(m.s1i?'<div class="macro-sub-note">'+esc(m.s1i)+'</div>':'')+' </div>'+
+        '<div class="macro-subcol"><div class="macro-sub-title">'+esc(m.s2t)+'</div><div class="macro-sub-items">'+esc(m.s2s)+'</div>'+(m.s2i?'<div class="macro-sub-note">'+esc(m.s2i)+'</div>':'')+' </div>'+
+        '</div>';
+    } else {
+      subcols = '<div style="max-width:340px">'+
+        '<div class="macro-subcol"><div class="macro-sub-title">'+esc(m.s1t)+'</div><div class="macro-sub-items">'+esc(m.s1s)+'</div>'+(m.s1i?'<div class="macro-sub-note">'+esc(m.s1i)+'</div>':'')+' </div>'+
+        '</div>';
+    }
+    return '<div class="macro-pg" data-macro-key="'+esc(m.key)+'">'+
+      '<div class="macro-pg-overlay"></div>'+
+      '<div class="macro-pg-body">'+
+      '<div class="macro-eyebrow">Macronutrientes &middot; '+esc(nombre)+'</div>'+
+      '<div class="macro-pg-title">'+esc(m.label)+'</div>'+
+      '<div class="macro-pg-desc">'+esc(m.desc)+'</div>'+
+      subcols+
+      (macroLogo&&!hasImgs?'<div style="margin-top:24px"><img class="macro-logo-img" src="'+macroLogo+'" alt="Agustina Villegas"></div>':'')+
+      '</div>'+
+      imgGrid+
+      '</div>';
+  }).join('');
+
+  var devolucionPg = devolucion ? '<div class="doc-page" style="background:#FAF8F4">'+
+    pgHdr('Devolución de consulta', nombre)+
+    '<div class="sec-label first">Devolución de consulta</div>'+
+    '<div class="recs-text">'+esc(devolucion)+'</div>'+
+    '</div>' : '';
+
+  /* Plato completo */
+  var platoIntro = val('sp-plato-intro');
+  var platos = [
+    {t:'Plato 1', d: val('sp-plato1')},
+    {t:'Plato 2', d: val('sp-plato2')},
+    {t:'Plato 3', d: val('sp-plato3')}
+  ].filter(function(p){ return p.d && p.d.trim(); });
+  var platosNota = val('sp-platos-nota');
+
+  var plateDiagram = '<div class="plate-diagram">' +
+      '<div class="plate-half"><span>Verduras y vegetales</span></div>' +
+      '<div class="plate-quarters">' +
+        '<div class="plate-quarter plate-carb"><span>Carbohidratos</span></div>' +
+        '<div class="plate-quarter plate-prot"><span>Proteínas</span></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="plate-caption">¼ carbohidratos &middot; ¼ proteínas &middot; ½ verduras y vegetales</div>';
+
+  var platoPg = '<div class="doc-page" style="background:#FAF8F4">' +
+    pgHdr('Cómo armar un plato completo', nombre) +
+    '<div class="sec-label first">Cómo armar un plato completo</div>' +
+    (platoIntro ? '<div class="intro-box">'+esc(platoIntro)+'</div>' : '') +
+    plateDiagram +
+    (platos.length ? '<div class="sec-label">Ejemplos de plato</div>' +
+      '<div class="plato-ejemplos">' + platos.map(function(p){
+        return '<div class="plato-ejemplo-card"><div class="plato-ejemplo-title">'+esc(p.t)+'</div><div class="plato-ejemplo-txt">'+esc(p.d)+'</div></div>';
+      }).join('') + '</div>' : '') +
+    (platosNota ? '<div class="plato-nota">'+esc(platosNota)+'</div>' : '') +
+    '</div>';
+
+  var orgSemText = val('sp-orgsem');
+  var orgSemPg = orgSemText ? '<div class="doc-page" style="background:#FAF8F4">'+
+    pgHdr('Organización semanal', nombre)+
+    '<div class="sec-label first">Organización semanal</div>'+
+    '<div class="recs-text">'+esc(orgSemText)+'</div>'+
+    '</div>' : '';
+
+  var hidratacionText = val('sp-hidratacion');
+  var hidratacionPg = hidratacionText ? '<div class="doc-page" style="background:#FAF8F4">'+
+    pgHdr('Hidratación', nombre)+
+    '<div class="sec-label first">Hidratación</div>'+
+    '<div class="recs-text">'+esc(hidratacionText)+'</div>'+
+    '</div>' : '';
+
+  var ejercicioText = val('sp-ejercicio');
+  var logo = getLogo();
+  var sigBlock = logo
+    ? '<div class="doc-sig"><img class="sig-logo-img" src="'+logo+'" alt="Agustina Villegas"></div>'
+    : '<div class="doc-sig"><div class="sig-name">Lic. Agustina Villegas</div><div class="sig-role">Nutricionista</div></div>';
+  var ejercicioPg = ejercicioText ? '<div class="doc-page" style="background:#FAF8F4">'+
+    pgHdr('Ejercicio físico', nombre)+
+    '<div class="sec-label first">Ejercicio físico</div>'+
+    '<div class="recs-text">'+esc(ejercicioText)+'</div>'+
+    sigBlock+
+    '</div>' : '';
+
+  return '<div class="ag-doc" id="doc-sinplan">' +
+    buildCover('Devolución de\nconsulta', nombre, fecha, 'gen_cv_sp', '') +
+    devolucionPg +
+    macrosPgs +
+    platoPg +
+    orgSemPg +
+    hidratacionPg +
+    ejercicioPg +
+    '</div>';
+}
+
+var upSp = deb(function() {
+  var el = $('preview-sinplan');
+  if (!el) return;
+  el.innerHTML = buildSinPlanDoc();
+  scaleDoc('pw-sinplan', 'preview-sinplan');
+  autoFillSpSaveName();
+}, 200);
+
+function autoFillSpSaveName() {
+  var nameInp = $('sp-save-name');
+  if (!nameInp) return;
+  var pNombre = val('sp-nombre');
+  if (!pNombre) return;
+  var pFecha = val('sp-fecha');
+  var fechaStr = pFecha ? new Date(pFecha+'T12:00:00').toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+  nameInp.placeholder = pNombre + (fechaStr ? ' — ' + fechaStr : '') + ' (auto)';
+}
+
+function collectSpData() {
+  return {
+    _type: 'sinplan',
+    nombre: val('sp-nombre'),
+    fecha: val('sp-fecha'),
+    devolucion: val('sp-devolucion'),
+    macros4: JSON.parse(JSON.stringify(spMacros4)),
+    platoIntro: val('sp-plato-intro'),
+    plato1: val('sp-plato1'),
+    plato2: val('sp-plato2'),
+    plato3: val('sp-plato3'),
+    platosNota: val('sp-platos-nota'),
+    orgsem: val('sp-orgsem'),
+    hidratacion: val('sp-hidratacion'),
+    ejercicio: val('sp-ejercicio')
+  };
+}
+
+function applySpData(d) {
+  function setV(id,v){var e=$(id);if(e)e.value=v||'';}
+  setV('sp-nombre', d.nombre);
+  setV('sp-fecha', d.fecha);
+  setV('sp-devolucion', d.devolucion);
+  setV('sp-plato-intro', d.platoIntro);
+  setV('sp-plato1', d.plato1);
+  setV('sp-plato2', d.plato2);
+  setV('sp-plato3', d.plato3);
+  setV('sp-platos-nota', d.platosNota);
+  setV('sp-orgsem', d.orgsem);
+  setV('sp-hidratacion', d.hidratacion);
+  setV('sp-ejercicio', d.ejercicio);
+  if (Array.isArray(d.macros4) && d.macros4.length) {
+    spMacros4 = d.macros4.map(function(m){ return Object.assign({}, m); });
+    renderMacros4FormSp();
+  }
+}
+
+function showSpSaveStatus(msg, isErr) {
+  var el = $('sp-save-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = isErr ? '#a32d2d' : 'var(--rose-dark)';
+  el.style.background = isErr ? 'rgba(163,45,45,.1)' : 'rgba(168,112,106,.1)';
+  el.style.display = '';
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.style.display='none'; }, 5000);
+}
+
+function updateSpSavesUI(arr) {
+  var sel = $('sp-saves-sel');
+  if (!sel) return;
+  if (!arr) { try { arr = JSON.parse(localStorage.getItem('ag_plan_saves')||'[]'); } catch(e){ arr=[]; } }
+  var spOnly = (arr||[]).filter(function(s){ return s && s._type === 'sinplan'; });
+  spOnly.forEach(function(s, i){
+    if (s && !s._id) s._id = 'legacy_sp_' + (s._ts||'').replace(/\W/g,'_') + '_' + i;
+  });
+  sel.innerHTML = '<option value="">— Cargar guardado… (' + spOnly.length + ') —</option>' +
+    spOnly.map(function(s){
+      var ts = s._ts ? ' · ' + new Date(s._ts).toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' + new Date(s._ts).toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'}) : '';
+      var safeId = (s._id||'').replace(/"/g,'&quot;');
+      return '<option value="'+safeId+'">'+esc(s._name||'Sin nombre')+ts+'</option>';
+    }).join('');
+}
+
+async function saveSpSnapshot() {
+  var nameInp = $('sp-save-name');
+  var name = nameInp ? nameInp.value.trim() : '';
+  var pNombre = val('sp-nombre');
+  var now = new Date();
+  if (!pNombre) {
+    if (!confirm('El campo "Nombre del cliente" está vacío.\n\n¿Querés guardar igual? El guardado se va a llamar "Sin nombre".')) {
+      showSpSaveStatus('Guardado cancelado. Completá "Nombre del cliente" primero.', true);
+      return;
+    }
+    pNombre = 'Sin nombre';
+  }
+  if (!name) {
+    name = pNombre + ' — ' + now.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + now.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'});
+    if (nameInp) nameInp.value = name;
+  }
+  var snap = collectSpData();
+  snap._name = name;
+  snap._ts = now.toISOString();
+  snap._id = 'sp_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+  showSpSaveStatus('Guardando…');
+  var arr = await cloudGetSaves();
+  arr.unshift(snap);
+  if (arr.length > 50) arr = arr.slice(0, 50);
+  var res = await cloudPutSaves(arr);
+  updateSpSavesUI(arr);
+  var msg = '✓ Guardado';
+  if (res.kvOk || res.ecOk) msg += ' (sincroniza entre dispositivos)';
+  else msg += ' SOLO en este dispositivo';
+  showSpSaveStatus(msg, !res.kvOk && !res.ecOk);
+}
+
+async function loadSpSnapshot() {
+  var sel = $('sp-saves-sel');
+  if (!sel || sel.value === '') { showSpSaveStatus('Seleccioná un guardado primero.', true); return; }
+  var selectedId = sel.value;
+  var arr = await cloudGetSaves();
+  var snap = arr.find(function(s){ return s && s._id === selectedId && s._type === 'sinplan'; });
+  if (!snap) {
+    showSpSaveStatus('No se encontró el guardado. Refrescando lista…', true);
+    updateSpSavesUI(arr);
+    return;
+  }
+  applySpData(snap);
+  if ($('sp-save-name')) $('sp-save-name').value = snap._name || '';
+  upSp();
+  showSpSaveStatus('✓ Cargado: ' + (snap._name || 'guardado'));
+}
+
+async function deleteSpSnapshot() {
+  var sel = $('sp-saves-sel');
+  if (!sel || sel.value === '') { showSpSaveStatus('Seleccioná un guardado primero.', true); return; }
+  var selectedId = sel.value;
+  var arr = await cloudGetSaves();
+  var snap = arr.find(function(s){ return s && s._id === selectedId; });
+  if (!snap) { showSpSaveStatus('No se encontró el guardado.', true); return; }
+  if (!confirm('¿Borrar el guardado "' + (snap._name || 'sin nombre') + '"?')) return;
+  arr = arr.filter(function(s){ return !(s && s._id === selectedId); });
+  await cloudPutSaves(arr);
+  updateSpSavesUI(arr);
+  showSpSaveStatus('Guardado eliminado.');
+}
 
 /* ============================================================
    PDF DOWNLOAD
@@ -3690,7 +4117,7 @@ function buildTablaPage(nombre) {
 
 document.addEventListener('DOMContentLoaded', function() {
   var today = new Date().toISOString().slice(0, 10);
-  ['rec-fecha','sup-fecha','plan-fecha'].forEach(function(id) {
+  ['rec-fecha','sup-fecha','plan-fecha','sp-fecha'].forEach(function(id) {
     var el = $(id);
     if (el && !el.value) el.value = today;
   });
@@ -3699,6 +4126,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initCats();
   initDays();
   renderMacros4Form();
+  renderMacros4FormSp();
   initPorcs();
   initCrudos();
   renderIdeasForm();
@@ -3710,6 +4138,7 @@ document.addEventListener('DOMContentLoaded', function() {
   upRec();
   upSup();
   upPlan();
+  upSp();
   upRun();
 });
 
@@ -3717,6 +4146,7 @@ window.addEventListener('resize', function() {
   scaleDoc('pw-rec', 'preview-rec');
   scaleDoc('pw-sup', 'preview-sup');
   scaleDoc('pw-plan', 'preview-plan');
+  scaleDoc('pw-sinplan', 'preview-sinplan');
   scaleDoc('pw-run', 'preview-run');
 });
 </script>
