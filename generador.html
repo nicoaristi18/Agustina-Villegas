@@ -630,6 +630,12 @@ Se recomienda consumir entre 1,5 y 2 litros de agua al día, ajustando la cantid
 
 Se recomienda realizar al menos 150 minutos semanales de actividad física moderada, combinando ejercicio cardiovascular con trabajo de fuerza.</textarea></div>
     </div>
+    <div class="fsec">
+      <div class="fsec-title">Bloques adicionales</div>
+      <p style="font-size:.7rem;color:var(--text-muted);margin-bottom:.7rem">Cada bloque agrega una p&aacute;gina nueva con t&iacute;tulo y texto libre. Pod&eacute;s agregar los que necesites.</p>
+      <div id="sp-bloques-list"></div>
+      <button class="add-btn" onclick="addSpBloque()">+ Agregar bloque</button>
+    </div>
   </div>
   <div class="prev-col">
     <div class="prev-toolbar">
@@ -1909,6 +1915,48 @@ function setMacroImgSp(mi, ji, inp) {
   r.readAsDataURL(f);
 }
 
+/* BLOQUES ADICIONALES ("Sin plan") — cada uno ocupa una página propia (título + texto),
+   se pueden agregar tantos como se necesite */
+var spBloques = [];
+var spBloqueCtr = 0;
+
+function addSpBloque() {
+  spBloques.push({id: ++spBloqueCtr, titulo: '', texto: ''});
+  renderSpBloquesForm();
+  upSp();
+}
+
+function removeSpBloque(id) {
+  spBloques = spBloques.filter(function(b){ return b.id !== id; });
+  renderSpBloquesForm();
+  upSp();
+}
+
+function syncSpBloque(id, f, v) {
+  var b = spBloques.find(function(b){ return b.id === id; });
+  if (b) b[f] = v;
+  upSp();
+}
+
+function renderSpBloquesForm() {
+  var el = $('sp-bloques-list');
+  if (!el) return;
+  if (!spBloques.length) {
+    el.innerHTML = '<p style="font-size:.74rem;color:var(--text-muted);text-align:center;padding:.4rem 0">Sin bloques adicionales</p>';
+    return;
+  }
+  el.innerHTML = spBloques.map(function(b, i) {
+    return '<div class="porc-card">' +
+      '<div class="porc-head">' +
+      '<input class="porc-name-inp" type="text" value="' + esc(b.titulo) + '" placeholder="Título del bloque ' + (i+1) + '" oninput="syncSpBloque(' + b.id + ',\'titulo\',this.value)">' +
+      '<button class="del-btn" onclick="removeSpBloque(' + b.id + ')">&#x2715;</button>' +
+      '</div>' +
+      '<div style="padding:.5rem .7rem">' +
+      '<div class="fg" style="margin:0"><label>Texto</label><textarea rows="6" placeholder="Escribí el contenido de esta página…" oninput="syncSpBloque(' + b.id + ',\'texto\',this.value)">' + esc(b.texto) + '</textarea></div>' +
+      '</div></div>';
+  }).join('');
+}
+
 /* PORCIONES E INTERCAMBIOS */
 var DEF_PORCS = [
   { nom:'LÁCTEOS', items:'200 cc leche descremada\n200 cc yogur descremado\n½ taza leche en polvo\n½ pote yogur Ser 15 gr', note:'1 intercambio de lácteo equivale a 1 intercambio de panificado y 8 gr de proteínas magras.' },
@@ -2817,12 +2865,27 @@ function buildSinPlanDoc() {
   var sigBlock = logo
     ? '<div class="doc-sig"><img class="sig-logo-img" src="'+logo+'" alt="Agustina Villegas"></div>'
     : '<div class="doc-sig"><div class="sig-name">Lic. Agustina Villegas</div><div class="sig-role">Nutricionista</div></div>';
+
+  /* Bloques adicionales — título + texto libre, uno por página, cantidad variable */
+  var bloquesArr = spBloques.filter(function(b){ return (b.titulo && b.titulo.trim()) || (b.texto && b.texto.trim()); });
+  var hasBloques = bloquesArr.length > 0;
+
   var ejercicioPg = ejercicioText ? '<div class="doc-page" style="background:#FAF8F4">'+
     pgHdr('Ejercicio físico', nombre)+
     '<div class="sec-label first">Ejercicio físico</div>'+
     '<div class="recs-text">'+esc(ejercicioText)+'</div>'+
-    sigBlock+
+    (hasBloques ? '' : sigBlock)+
     '</div>' : '';
+
+  var bloquesPgs = bloquesArr.map(function(b, i) {
+    var isLast = i === bloquesArr.length - 1;
+    return '<div class="doc-page" style="background:#FAF8F4">'+
+      pgHdr('Información adicional', nombre)+
+      '<div class="sec-label first">'+esc(b.titulo||'Información adicional')+'</div>'+
+      '<div class="recs-text">'+esc(b.texto)+'</div>'+
+      (isLast ? sigBlock : '')+
+      '</div>';
+  }).join('');
 
   return '<div class="ag-doc" id="doc-sinplan">' +
     buildCover('Devolución de\nconsulta', nombre, fecha, 'gen_cv_sp', '') +
@@ -2832,6 +2895,7 @@ function buildSinPlanDoc() {
     orgSemPg +
     hidratacionPg +
     ejercicioPg +
+    bloquesPgs +
     '</div>';
 }
 
@@ -2867,7 +2931,8 @@ function collectSpData() {
     platosNota: val('sp-platos-nota'),
     orgsem: val('sp-orgsem'),
     hidratacion: val('sp-hidratacion'),
-    ejercicio: val('sp-ejercicio')
+    ejercicio: val('sp-ejercicio'),
+    bloques: JSON.parse(JSON.stringify(spBloques))
   };
 }
 
@@ -2888,6 +2953,10 @@ function applySpData(d) {
     spMacros4 = d.macros4.map(function(m){ return Object.assign({}, m); });
     renderMacros4FormSp();
   }
+  spBloques = Array.isArray(d.bloques) ? d.bloques.map(function(b){ return Object.assign({}, b); }) : [];
+  var maxBloqueId = spBloques.reduce(function(m,b){ return Math.max(m, b.id||0); }, 0);
+  spBloqueCtr = Math.max(spBloqueCtr, maxBloqueId);
+  renderSpBloquesForm();
 }
 
 function showSpSaveStatus(msg, isErr) {
@@ -4127,6 +4196,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initDays();
   renderMacros4Form();
   renderMacros4FormSp();
+  renderSpBloquesForm();
   initPorcs();
   initCrudos();
   renderIdeasForm();
