@@ -979,6 +979,25 @@ function _stripImagesFromSnap(snap) {
   return copy;
 }
 
+/* Límite de guardados POR TIPO de documento (recetario/plan/sinplan/etc.), no por
+   posición del array combinado. Los distintos guardan bajo un mismo array
+   compartido (ag_plan_saves / ag:gen_saves) — recortar por posición global hacía
+   que guardar, por ejemplo, un plan (límite bajo) borrara recetarios o guías
+   viejas que compartían el array, aunque esas nunca hubiesen superado su propio
+   límite. Filtrando por _type cada tipo conserva sus propios N más recientes sin
+   pisar a los demás. arr siempre viene más-nuevo-primero (unshift), así que el
+   orden relativo se preserva. */
+var MAX_SAVES_PER_TYPE = 200;
+function capSavesByType(arr, maxPerType) {
+  maxPerType = maxPerType || MAX_SAVES_PER_TYPE;
+  var counts = {};
+  return arr.filter(function(s) {
+    var t = (s && s._type) || 'plan';
+    counts[t] = (counts[t] || 0) + 1;
+    return counts[t] <= maxPerType;
+  });
+}
+
 /* Intenta subir N guardados al cloud; si falla por tamaño, recorta y reintenta.
    Edge Config tiene límite ~8KB por valor en plan free. */
 async function _tryCloudWrite(url, bodyBuilder, fullArr) {
@@ -2203,7 +2222,7 @@ async function saveRecSnapshot() {
   showRecSaveStatus('Guardando…');
   var arr = await cloudGetSaves();
   arr.unshift(snap);
-  if (arr.length > 100) arr = arr.slice(0, 100);
+  arr = capSavesByType(arr);
   var res = await cloudPutSaves(arr);
   updateRecSavesUI(arr);
   var msg = '✓ Recetario guardado';
@@ -2270,7 +2289,7 @@ async function savePlanSnapshot() {
   showSaveStatus('Guardando…');
   var arr = await cloudGetSaves();
   arr.unshift(snap);
-  if (arr.length > 50) arr = arr.slice(0, 50);
+  arr = capSavesByType(arr);
   var res = await cloudPutSaves(arr);
   updatePlanSavesUI(arr);
   // Mensaje claro sobre cuántos se sincronizaron
@@ -2425,7 +2444,7 @@ function _autoSaveLocal() {
     // Reemplazar el autoguardado anterior del mismo paciente (no acumular)
     arr = arr.filter(function(s){ return !(s._auto && s._id === snap._id); });
     arr.unshift(snap);
-    if (arr.length > 60) arr = arr.slice(0, 60);
+    arr = capSavesByType(arr);
     localStorage.setItem('ag_plan_saves', JSON.stringify(arr));
   } catch(e) {}
 }
@@ -3009,7 +3028,7 @@ async function saveSpSnapshot() {
   showSpSaveStatus('Guardando…');
   var arr = await cloudGetSaves();
   arr.unshift(snap);
-  if (arr.length > 50) arr = arr.slice(0, 50);
+  arr = capSavesByType(arr);
   var res = await cloudPutSaves(arr);
   updateSpSavesUI(arr);
   var msg = '✓ Guardado';
@@ -3331,7 +3350,7 @@ async function dlPDF(docId, filename, btnId) {
         cloudGetSaves().then(function(arr){
           arr = arr.filter(function(s){ return !(s._auto && (s._name||'').startsWith(pNombre + ' — PDF')); });
           arr.unshift(snap);
-          if (arr.length > 60) arr = arr.slice(0, 60);
+          arr = capSavesByType(arr);
           cloudPutSaves(arr).then(function(){ updatePlanSavesUI(arr); });
         });
         console.log('[dlPDF] auto-saved plan:', snap._name);
