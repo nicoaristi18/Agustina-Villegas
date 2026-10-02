@@ -2,7 +2,7 @@
    Reemplazar GA4_ID por el real (formato G-XXXXXXXXXX) cuando se cree la propiedad en
    analytics.google.com. Hasta entonces este script no manda datos a ningún lado. */
 (function () {
-  var GA4_ID = 'G-XXXXXXXXXX'; // TODO: pegar acá el Measurement ID real
+  var GA4_ID = 'G-B36WLGQNDF';
 
   if (!GA4_ID || GA4_ID.indexOf('XXXX') !== -1) return; // sin ID real, no cargar nada
 
