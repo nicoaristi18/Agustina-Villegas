@@ -7,6 +7,7 @@ import {
   getAdminFromRequest, verifyAdminCredentials, scrubUser, readJsonBody,
   sendSurveyEmail
 } from '../../lib/auth.js';
+import { getDashboardData, ga4Configured } from '../../lib/ga4.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -33,6 +34,7 @@ export default async function handler(req, res) {
       if (method === 'DELETE') return await handleAdminUsersDelete(req, res);
     }
     if (path === 'send-survey' && method === 'POST') return await handleSendSurvey(req, res);
+    if (path === 'analytics' && method === 'GET') return await handleAnalytics(req, res);
     return res.status(404).json({ error: 'Endpoint no encontrado', path, method });
   } catch (err) {
     console.error('[admin dispatcher]', path, err);
@@ -97,6 +99,19 @@ async function handleAdminUsersDelete(req, res) {
   delete users[email];
   await saveUsers(users);
   return res.status(200).json({ ok: true });
+}
+
+async function handleAnalytics(req, res) {
+  const session = getAdminFromRequest(req);
+  if (!session?.admin) return res.status(401).json({ error: 'No autenticado' });
+  if (!ga4Configured()) return res.status(503).json({ error: 'GA4 no configurado' });
+  try {
+    const data = await getDashboardData();
+    return res.status(200).json(data);
+  } catch (err) {
+    console.error('[admin analytics]', err);
+    return res.status(500).json({ error: err.message || 'Error consultando GA4' });
+  }
 }
 
 // Envía la encuesta inicial (Google Form) a una paciente nueva.

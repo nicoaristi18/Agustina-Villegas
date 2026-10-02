@@ -328,6 +328,7 @@ tbody tr:hover td{background:var(--cream);}
     <div class="sb-role">Panel admin</div>
     <div class="sb-sec">Principal</div>
     <button class="sb-btn on" onclick="go('dashboard',this)"><span class="ic">📊</span>Dashboard</button>
+    <button class="sb-btn" onclick="go('analitica',this)"><span class="ic">📈</span>Analítica web</button>
     <button class="sb-btn" onclick="go('reservas',this)"><span class="ic">📅</span>Reservas</button>
     <div class="sb-div"></div>
     <div class="sb-sec">Gestión</div>
@@ -389,6 +390,39 @@ tbody tr:hover td{background:var(--cream);}
         <div id="migrationBox" style="display:none;margin-top:1rem;">
           <div class="banner banner-amber">⚙️ <strong>Migración pendiente:</strong> los datos están en Edge Config. Hacé clic para migrarlos al nuevo sistema (Vercel KV). Solo es necesario hacerlo una vez.</div>
           <button class="btn-act" style="margin-top:.6rem;" onclick="runMigration()">Migrar datos a Vercel KV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALÍTICA WEB (GA4) -->
+    <div id="p-analitica" class="panel">
+      <div class="ph"><h1>Analítica web</h1><p>Datos reales de Google Analytics — últimas 8 semanas</p></div>
+      <div class="pb">
+        <div id="an-loading" style="font-size:.85rem;color:var(--text-muted);">Cargando datos de GA4...</div>
+        <div id="an-error" class="banner banner-amber" style="display:none;"></div>
+        <div id="an-content" style="display:none;">
+          <div class="stats">
+            <div class="stat"><div class="stat-n" id="an-s1">—</div><div class="stat-l">Usuarios activos (7 días)</div></div>
+            <div class="stat"><div class="stat-n" id="an-s2">—</div><div class="stat-l">Sesiones (28 días)</div></div>
+            <div class="stat"><div class="stat-n" id="an-s3">—</div><div class="stat-l">Reservas confirmadas (8 sem.)</div></div>
+            <div class="stat"><div class="stat-n" id="an-s4">—</div><div class="stat-l">Compras guías (8 sem.)</div></div>
+          </div>
+          <div class="tcard" style="margin-bottom:1.1rem;">
+            <div class="tcard-hd"><span class="tcard-title">Usuarios activos por semana</span></div>
+            <div style="padding:1rem 1.2rem 1.2rem;display:flex;align-items:flex-end;gap:6px;height:90px;" id="an-chart-users"></div>
+          </div>
+          <div class="tcard" style="margin-bottom:1.1rem;">
+            <div class="tcard-hd"><span class="tcard-title">Sesiones por canal — últimos 28 días</span></div>
+            <div style="padding:1rem 1.2rem 1.2rem;" id="an-chart-channel"></div>
+          </div>
+          <div class="tcard">
+            <div class="tcard-hd"><span class="tcard-title">Páginas más visitadas — últimos 28 días</span></div>
+            <div class="tw"><table>
+              <thead><tr><th>Página</th><th>Vistas</th></tr></thead>
+              <tbody id="an-pages-rows"></tbody>
+            </table></div>
+          </div>
+          <p style="font-size:.68rem;color:var(--text-muted);margin-top:.8rem;" id="an-updated"></p>
         </div>
       </div>
     </div>
@@ -897,7 +931,7 @@ function go(name,btn){
   if(btn) btn.classList.add('on');
   ({reservas:loadReservas,creditos:loadCreditos,pedidos:loadPedidos,contenido:loadContent,
     agenda:loadAgenda,encuesta:loadEncuesta,clientes:renderClientes,portafolio:renderPortfolio,
-    precios:loadPrecios,cupones:loadCupones,newsletter:loadNewsletter,
+    precios:loadPrecios,cupones:loadCupones,newsletter:loadNewsletter,analitica:loadAnalitica,
     historia:()=>{ document.getElementById('hist-result').innerHTML=''; document.getElementById('hist-search').value=''; },
     resenas:loadResenas
   }[name]||function(){})();
@@ -1056,6 +1090,90 @@ async function loadDashboard(){
     <td><span class="badge ${b.modality&&b.modality.toLowerCase().includes('online')?'b-green':'b-gray'}">${b.modality||'Presencial'}</span></td>
     <td class="td-sm">${b.notes||'—'}</td></tr>`).join('')
     ||`<tr class="empty"><td colspan="6">No hay reservas próximas</td></tr>`;
+}
+
+// ── ANALÍTICA WEB (GA4) ──
+// Paleta categórica validada para contraste/daltonismo (dataviz skill) — se usa
+// solo en el gráfico de canales (varias series); el resto usa el rose-dark de marca
+// porque son series únicas, sin necesidad de distinguir por color.
+const AN_CHANNEL_COLORS=['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#898781'];
+let _anLoaded=false;
+async function loadAnalitica(){
+  if(_anLoaded) return;
+  const loadingEl=document.getElementById('an-loading');
+  const errEl=document.getElementById('an-error');
+  const contentEl=document.getElementById('an-content');
+  loadingEl.style.display='block'; errEl.style.display='none'; contentEl.style.display='none';
+  try{
+    const r=await authFetch('/api/admin/analytics');
+    if(!r.ok) throw new Error(r.data?.error||'Error cargando datos de GA4');
+    const data=r.data;
+    _anLoaded=true;
+    renderAnalitica(data);
+    loadingEl.style.display='none'; contentEl.style.display='block';
+  }catch(err){
+    loadingEl.style.display='none';
+    errEl.style.display='block';
+    errEl.textContent='⚠️ '+(err.message||'No se pudo conectar con Google Analytics.');
+  }
+}
+
+function renderAnalitica(data){
+  // Semana ISO como clave ordenable "2026-40"
+  const weekKey=row=>row.dims[0]+'-'+row.dims[1].padStart(2,'0');
+
+  const usersByWeek=data.usersByWeek||[];
+  const totalActiveUsers=usersByWeek.reduce((s,r)=>s+r.metrics[0],0);
+  document.getElementById('an-s1').textContent=totalActiveUsers;
+
+  const sessionsByChannel=data.sessionsByChannel||[];
+  const totalSessions=sessionsByChannel.reduce((s,r)=>s+r.metrics[0],0);
+  document.getElementById('an-s2').textContent=totalSessions;
+
+  const reservaConfirmada=data.reservaConfirmada||[];
+  const totalReservas=reservaConfirmada.reduce((s,r)=>s+r.metrics[0],0);
+  document.getElementById('an-s3').textContent=totalReservas;
+
+  const purchases=data.purchases||[];
+  const totalPurchases=purchases.reduce((s,r)=>s+r.metrics[0],0);
+  document.getElementById('an-s4').textContent=totalPurchases;
+
+  // Gráfico: usuarios activos por semana (serie única → color de marca)
+  const sortedWeeks=[...usersByWeek].sort((a,b)=>weekKey(a).localeCompare(weekKey(b)));
+  const maxUsers=Math.max(...sortedWeeks.map(r=>r.metrics[0]),1);
+  document.getElementById('an-chart-users').innerHTML = sortedWeeks.length ? sortedWeeks.map(r=>{
+    const n=r.metrics[0];
+    const pct=Math.round((n/maxUsers)*100);
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div style="font-size:.65rem;color:var(--text-muted);">${n}</div>
+      <div style="width:100%;height:${pct||2}%;background:var(--rose-dark);border-radius:3px 3px 0 0;transition:height .6s ease;min-height:2px;"></div>
+      <div style="font-size:.6rem;color:var(--text-muted);">sem ${r.dims[1]}</div>
+    </div>`;
+  }).join('') : '<div style="font-size:.78rem;color:var(--text-muted);">Sin datos en este período.</div>';
+
+  // Gráfico: sesiones por canal (varias series → paleta categórica validada, con etiqueta directa)
+  const maxSessions=Math.max(...sessionsByChannel.map(r=>r.metrics[0]),1);
+  document.getElementById('an-chart-channel').innerHTML = sessionsByChannel.length ? sessionsByChannel.map((r,i)=>{
+    const [channel]=r.dims; const n=r.metrics[0];
+    const pct=Math.max(Math.round((n/maxSessions)*100),4);
+    const color=AN_CHANNEL_COLORS[i%AN_CHANNEL_COLORS.length];
+    return `<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;">
+      <div style="width:120px;font-size:.72rem;color:var(--text);flex-shrink:0;">${channel}</div>
+      <div style="flex:1;background:var(--border);border-radius:4px;height:18px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:4px;"></div>
+      </div>
+      <div style="width:36px;text-align:right;font-size:.72rem;color:var(--text-muted);flex-shrink:0;">${n}</div>
+    </div>`;
+  }).join('') : '<div style="font-size:.78rem;color:var(--text-muted);">Sin datos en este período.</div>';
+
+  // Top páginas
+  const topPages=data.topPages||[];
+  document.getElementById('an-pages-rows').innerHTML = topPages.length ? topPages.map(r=>
+    `<tr><td>${r.dims[0]}</td><td>${r.metrics[0]}</td></tr>`
+  ).join('') : '<tr class="empty"><td colspan="2">Sin datos en este período.</td></tr>';
+
+  const d=new Date(data.generatedAt||Date.now());
+  document.getElementById('an-updated').textContent='Actualizado: '+d.toLocaleString('es-UY');
 }
 
 // ── RESERVAS ──
