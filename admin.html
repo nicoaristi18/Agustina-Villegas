@@ -396,29 +396,49 @@ tbody tr:hover td{background:var(--cream);}
 
     <!-- ANALÍTICA WEB (GA4) -->
     <div id="p-analitica" class="panel">
-      <div class="ph"><h1>Analítica web</h1><p>Datos reales de Google Analytics — últimas 8 semanas</p></div>
+      <div class="ph"><h1>Analítica web</h1><p>Datos reales de Google Analytics</p></div>
       <div class="pb">
         <div id="an-loading" style="font-size:.85rem;color:var(--text-muted);">Cargando datos de GA4...</div>
         <div id="an-error" class="banner banner-amber" style="display:none;"></div>
         <div id="an-content" style="display:none;">
-          <div class="stats">
-            <div class="stat"><div class="stat-n" id="an-s1">—</div><div class="stat-l">Usuarios activos (7 días)</div></div>
-            <div class="stat"><div class="stat-n" id="an-s2">—</div><div class="stat-l">Sesiones (28 días)</div></div>
-            <div class="stat"><div class="stat-n" id="an-s3">—</div><div class="stat-l">Reservas confirmadas (8 sem.)</div></div>
-            <div class="stat"><div class="stat-n" id="an-s4">—</div><div class="stat-l">Compras guías (8 sem.)</div></div>
-          </div>
+          <div class="stats" id="an-kpis"></div>
+
           <div class="tcard" style="margin-bottom:1.1rem;">
-            <div class="tcard-hd"><span class="tcard-title">Usuarios activos por semana</span></div>
-            <div style="padding:1rem 1.2rem 1.2rem;display:flex;align-items:flex-end;gap:6px;height:90px;" id="an-chart-users"></div>
+            <div class="tcard-hd"><span class="tcard-title">Usuarios activos por semana</span><span class="tcard-right" style="font-size:.68rem;color:var(--text-muted);">últimos 90 días</span></div>
+            <div style="padding:1rem 1.2rem 1.4rem;" id="an-chart-users"></div>
           </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-bottom:1.1rem;">
+            <div class="tcard">
+              <div class="tcard-hd"><span class="tcard-title">Embudo de conversión</span><span class="tcard-right" style="font-size:.68rem;color:var(--text-muted);">últimos 7 días</span></div>
+              <div style="padding:1rem 1.2rem 1.2rem;" id="an-funnel"></div>
+            </div>
+            <div class="tcard">
+              <div class="tcard-hd"><span class="tcard-title">Dispositivo</span><span class="tcard-right" style="font-size:.68rem;color:var(--text-muted);">últimos 28 días</span></div>
+              <div style="padding:1rem 1.2rem 1.2rem;" id="an-chart-device"></div>
+            </div>
+          </div>
+
           <div class="tcard" style="margin-bottom:1.1rem;">
-            <div class="tcard-hd"><span class="tcard-title">Sesiones por canal — últimos 28 días</span></div>
+            <div class="tcard-hd"><span class="tcard-title">Sesiones por canal</span><span class="tcard-right" style="font-size:.68rem;color:var(--text-muted);">últimos 28 días</span></div>
             <div style="padding:1rem 1.2rem 1.2rem;" id="an-chart-channel"></div>
           </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-bottom:1.1rem;">
+            <div class="tcard">
+              <div class="tcard-hd"><span class="tcard-title">Reservas confirmadas por semana</span></div>
+              <div style="padding:1rem 1.2rem 1.4rem;" id="an-chart-reservas"></div>
+            </div>
+            <div class="tcard">
+              <div class="tcard-hd"><span class="tcard-title">Compras por semana</span></div>
+              <div style="padding:1rem 1.2rem 1.4rem;" id="an-chart-purchases"></div>
+            </div>
+          </div>
+
           <div class="tcard">
-            <div class="tcard-hd"><span class="tcard-title">Páginas más visitadas — últimos 28 días</span></div>
+            <div class="tcard-hd"><span class="tcard-title">Páginas más visitadas</span><span class="tcard-right" style="font-size:.68rem;color:var(--text-muted);">últimos 28 días</span></div>
             <div class="tw"><table>
-              <thead><tr><th>Página</th><th>Vistas</th></tr></thead>
+              <thead><tr><th>Página</th><th>Vistas</th><th></th></tr></thead>
               <tbody id="an-pages-rows"></tbody>
             </table></div>
           </div>
@@ -1094,9 +1114,10 @@ async function loadDashboard(){
 
 // ── ANALÍTICA WEB (GA4) ──
 // Paleta categórica validada para contraste/daltonismo (dataviz skill) — se usa
-// solo en el gráfico de canales (varias series); el resto usa el rose-dark de marca
-// porque son series únicas, sin necesidad de distinguir por color.
+// en gráficos con varias series (canal, dispositivo); el resto usa el rose-dark
+// de marca porque son series únicas, sin necesidad de distinguir por color.
 const AN_CHANNEL_COLORS=['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#898781'];
+const AN_STATUS_GOOD='#0ca30c', AN_STATUS_CRITICAL='#d03b3b', AN_MUTED='#8C7E78';
 let _anLoaded=false;
 async function loadAnalitica(){
   if(_anLoaded) return;
@@ -1118,59 +1139,123 @@ async function loadAnalitica(){
   }
 }
 
+function anTrendBadge(pct){
+  if(!isFinite(pct)) return '';
+  const up=pct>=0;
+  const color=up?AN_STATUS_GOOD:AN_STATUS_CRITICAL;
+  const arrow=up?'▲':'▼';
+  return `<span style="font-size:.68rem;font-weight:600;color:${color};margin-left:.4rem;">${arrow} ${Math.abs(pct)}%</span>`;
+}
+
+function anWeekLabel(dims){ return 'sem '+dims[1]; }
+
+// Línea SVG simple: 2px, extremos redondeados, área sutil, puntos + etiqueta directa
+// en el último valor (siguiendo las specs de marcas de la skill dataviz).
+function anLineChart(points, color, height=90){
+  if(!points.length) return '<div style="font-size:.78rem;color:var(--text-muted);">Sin datos en este período.</div>';
+  const w=600, h=height, pad=24;
+  const max=Math.max(...points.map(p=>p.v),1);
+  const stepX=points.length>1 ? (w-pad*2)/(points.length-1) : 0;
+  const coords=points.map((p,i)=>({
+    x: pad + i*stepX,
+    y: h-pad - (p.v/max)*(h-pad*2),
+    v: p.v, label: p.label
+  }));
+  const linePath=coords.map((c,i)=>(i===0?'M':'L')+c.x.toFixed(1)+','+c.y.toFixed(1)).join(' ');
+  const areaPath=linePath+` L${coords[coords.length-1].x.toFixed(1)},${h-pad} L${coords[0].x.toFixed(1)},${h-pad} Z`;
+  const last=coords[coords.length-1];
+  const dots=coords.map(c=>`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.5" fill="${color}"><title>${c.label}: ${c.v}</title></circle>`).join('');
+  const xLabels=coords.filter((_,i)=>i===0||i===coords.length-1||i%Math.ceil(coords.length/6)===0)
+    .map(c=>`<text x="${c.x.toFixed(1)}" y="${h-4}" font-size="9" fill="${AN_MUTED}" text-anchor="middle">${c.label}</text>`).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:${h}px;overflow:visible;">
+    <path d="${areaPath}" fill="${color}" opacity="0.08"></path>
+    <path d="${linePath}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    ${dots}
+    <text x="${last.x.toFixed(1)}" y="${(last.y-8).toFixed(1)}" font-size="11" font-weight="600" fill="${color}" text-anchor="middle">${last.v}</text>
+    ${xLabels}
+  </svg>`;
+}
+
+function anBarRow(label, n, pct, color){
+  return `<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;">
+    <div style="width:110px;font-size:.72rem;color:var(--text);flex-shrink:0;">${label}</div>
+    <div style="flex:1;background:var(--border);border-radius:4px;height:18px;overflow:hidden;">
+      <div style="width:${pct}%;height:100%;background:${color};border-radius:4px;"></div>
+    </div>
+    <div style="width:36px;text-align:right;font-size:.72rem;color:var(--text-muted);flex-shrink:0;">${n}</div>
+  </div>`;
+}
+
 function renderAnalitica(data){
-  // Semana ISO como clave ordenable "2026-40"
   const weekKey=row=>row.dims[0]+'-'+row.dims[1].padStart(2,'0');
+  const k=data.kpis||{};
 
-  const usersByWeek=data.usersByWeek||[];
-  const totalActiveUsers=usersByWeek.reduce((s,r)=>s+r.metrics[0],0);
-  document.getElementById('an-s1').textContent=totalActiveUsers;
+  // KPIs con tendencia vs. período anterior
+  const kpiDefs=[
+    { label:`Usuarios activos (${data.trendDays} días)`, v:k.activeUsers },
+    { label:`Sesiones (${data.trendDays} días)`, v:k.sessions },
+    { label:`Reservas confirmadas (${data.trendDays} días)`, v:k.reservaConfirmada },
+    { label:`Compras (${data.trendDays} días)`, v:k.purchases },
+    { label:`Ingresos (${data.trendDays} días)`, v:k.revenue, isCurrency:true }
+  ];
+  document.getElementById('an-kpis').innerHTML = kpiDefs.map(d=>{
+    const val = d.isCurrency ? '$'+Math.round(d.v?.current||0).toLocaleString('es') : (d.v?.current ?? 0);
+    return `<div class="stat"><div class="stat-n">${val}${anTrendBadge(d.v?.pct||0)}</div><div class="stat-l">${d.label}</div></div>`;
+  }).join('');
 
+  // Usuarios activos por semana — línea
+  const sortedWeeks=[...(data.usersByWeek||[])].sort((a,b)=>weekKey(a).localeCompare(weekKey(b)));
+  document.getElementById('an-chart-users').innerHTML = anLineChart(
+    sortedWeeks.map(r=>({v:r.metrics[0], label:anWeekLabel(r.dims)})), '#A8706A'
+  );
+
+  // Embudo: Sesiones → Reservas confirmadas → Compras
+  const f=data.funnel||{sessions:0,reservaConfirmada:0,purchases:0};
+  const stages=[
+    {label:'Sesiones', n:f.sessions},
+    {label:'Reservas confirmadas', n:f.reservaConfirmada},
+    {label:'Compras', n:f.purchases}
+  ];
+  const maxStage=Math.max(stages[0].n,1);
+  document.getElementById('an-funnel').innerHTML = stages.map((s,i)=>{
+    const pct=Math.max(Math.round((s.n/maxStage)*100),s.n>0?4:0);
+    const drop = i>0 && stages[i-1].n>0 ? Math.round((1-s.n/stages[i-1].n)*100) : null;
+    const dropTxt = drop!==null ? `<span style="font-size:.65rem;color:var(--text-muted);margin-left:.4rem;">(-${drop}% vs. etapa anterior)</span>` : '';
+    return anBarRow(s.label, s.n, pct, '#A8706A') + (dropTxt?`<div style="margin:-.3rem 0 .5rem 110px;">${dropTxt}</div>`:'');
+  }).join('');
+
+  // Dispositivo
+  const deviceCategory=data.deviceCategory||[];
+  const maxDevice=Math.max(...deviceCategory.map(r=>r.metrics[0]),1);
+  document.getElementById('an-chart-device').innerHTML = deviceCategory.length ? deviceCategory.map((r,i)=>
+    anBarRow(r.dims[0], r.metrics[0], Math.max(Math.round((r.metrics[0]/maxDevice)*100),4), AN_CHANNEL_COLORS[i%AN_CHANNEL_COLORS.length])
+  ).join('') : '<div style="font-size:.78rem;color:var(--text-muted);">Sin datos en este período.</div>';
+
+  // Sesiones por canal
   const sessionsByChannel=data.sessionsByChannel||[];
-  const totalSessions=sessionsByChannel.reduce((s,r)=>s+r.metrics[0],0);
-  document.getElementById('an-s2').textContent=totalSessions;
-
-  const reservaConfirmada=data.reservaConfirmada||[];
-  const totalReservas=reservaConfirmada.reduce((s,r)=>s+r.metrics[0],0);
-  document.getElementById('an-s3').textContent=totalReservas;
-
-  const purchases=data.purchases||[];
-  const totalPurchases=purchases.reduce((s,r)=>s+r.metrics[0],0);
-  document.getElementById('an-s4').textContent=totalPurchases;
-
-  // Gráfico: usuarios activos por semana (serie única → color de marca)
-  const sortedWeeks=[...usersByWeek].sort((a,b)=>weekKey(a).localeCompare(weekKey(b)));
-  const maxUsers=Math.max(...sortedWeeks.map(r=>r.metrics[0]),1);
-  document.getElementById('an-chart-users').innerHTML = sortedWeeks.length ? sortedWeeks.map(r=>{
-    const n=r.metrics[0];
-    const pct=Math.round((n/maxUsers)*100);
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
-      <div style="font-size:.65rem;color:var(--text-muted);">${n}</div>
-      <div style="width:100%;height:${pct||2}%;background:var(--rose-dark);border-radius:3px 3px 0 0;transition:height .6s ease;min-height:2px;"></div>
-      <div style="font-size:.6rem;color:var(--text-muted);">sem ${r.dims[1]}</div>
-    </div>`;
-  }).join('') : '<div style="font-size:.78rem;color:var(--text-muted);">Sin datos en este período.</div>';
-
-  // Gráfico: sesiones por canal (varias series → paleta categórica validada, con etiqueta directa)
   const maxSessions=Math.max(...sessionsByChannel.map(r=>r.metrics[0]),1);
-  document.getElementById('an-chart-channel').innerHTML = sessionsByChannel.length ? sessionsByChannel.map((r,i)=>{
-    const [channel]=r.dims; const n=r.metrics[0];
-    const pct=Math.max(Math.round((n/maxSessions)*100),4);
-    const color=AN_CHANNEL_COLORS[i%AN_CHANNEL_COLORS.length];
-    return `<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;">
-      <div style="width:120px;font-size:.72rem;color:var(--text);flex-shrink:0;">${channel}</div>
-      <div style="flex:1;background:var(--border);border-radius:4px;height:18px;overflow:hidden;">
-        <div style="width:${pct}%;height:100%;background:${color};border-radius:4px;"></div>
-      </div>
-      <div style="width:36px;text-align:right;font-size:.72rem;color:var(--text-muted);flex-shrink:0;">${n}</div>
-    </div>`;
-  }).join('') : '<div style="font-size:.78rem;color:var(--text-muted);">Sin datos en este período.</div>';
+  document.getElementById('an-chart-channel').innerHTML = sessionsByChannel.length ? sessionsByChannel.map((r,i)=>
+    anBarRow(r.dims[0], r.metrics[0], Math.max(Math.round((r.metrics[0]/maxSessions)*100),4), AN_CHANNEL_COLORS[i%AN_CHANNEL_COLORS.length])
+  ).join('') : '<div style="font-size:.78rem;color:var(--text-muted);">Sin datos en este período.</div>';
 
-  // Top páginas
+  // Reservas y compras por semana — líneas
+  const sortedReservas=[...(data.reservaConfirmada||[])].sort((a,b)=>weekKey(a).localeCompare(weekKey(b)));
+  document.getElementById('an-chart-reservas').innerHTML = anLineChart(
+    sortedReservas.map(r=>({v:r.metrics[0], label:anWeekLabel(r.dims)})), '#1baf7a'
+  );
+  const sortedPurchases=[...(data.purchases||[])].sort((a,b)=>weekKey(a).localeCompare(weekKey(b)));
+  document.getElementById('an-chart-purchases').innerHTML = anLineChart(
+    sortedPurchases.map(r=>({v:r.metrics[0], label:anWeekLabel(r.dims)})), '#eda100'
+  );
+
+  // Top páginas (con barra de % del total, en la misma fila)
   const topPages=data.topPages||[];
-  document.getElementById('an-pages-rows').innerHTML = topPages.length ? topPages.map(r=>
-    `<tr><td>${r.dims[0]}</td><td>${r.metrics[0]}</td></tr>`
-  ).join('') : '<tr class="empty"><td colspan="2">Sin datos en este período.</td></tr>';
+  const maxViews=Math.max(...topPages.map(r=>r.metrics[0]),1);
+  document.getElementById('an-pages-rows').innerHTML = topPages.length ? topPages.map(r=>{
+    const pct=Math.round((r.metrics[0]/maxViews)*100);
+    return `<tr><td>${r.dims[0]}</td><td>${r.metrics[0]}</td>
+      <td style="width:140px;"><div style="background:var(--border);border-radius:4px;height:10px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:#A8706A;border-radius:4px;"></div></div></td></tr>`;
+  }).join('') : '<tr class="empty"><td colspan="3">Sin datos en este período.</td></tr>';
 
   const d=new Date(data.generatedAt||Date.now());
   document.getElementById('an-updated').textContent='Actualizado: '+d.toLocaleString('es-UY');
