@@ -38,6 +38,7 @@ h1 em{color:var(--rose-dark);font-style:italic;}
 .state-pending .icon{color:var(--yellow);}
 .state-approved .icon{color:var(--green);}
 </style>
+<script src="/ga4.js"></script>
 </head>
 <body>
 
@@ -132,6 +133,14 @@ h1 em{color:var(--rose-dark);font-style:italic;}
       const email = params.get('payer_email') || '';
       document.getElementById('email-approved').textContent = email || 'tu correo registrado';
       show('content-approved', 'state-approved');
+      if (typeof gtag === 'function' && !d.alreadyProcessed) {
+        gtag('event', 'purchase', {
+          transaction_id: d.purchaseId || paymentId,
+          value: Number(d.amount) || 0,
+          currency: d.currency || 'UYU',
+          items: [{ item_name: d.productName || 'Guía para runners' }]
+        });
+      }
     } else if (d.status === 'in_process' || d.status === 'pending') {
       show('content-pending', 'state-pending');
     } else {

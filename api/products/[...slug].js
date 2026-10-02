@@ -283,7 +283,10 @@ export default async function handler(req, res) {
         status: 'approved',
         purchaseId: result.purchaseId,
         emailSent: result.emailSent,
-        alreadyProcessed: !!result.alreadyProcessed
+        alreadyProcessed: !!result.alreadyProcessed,
+        amount: Number(payment.transaction_amount) || Number(product.price) || 0,
+        currency: payment.currency_id || product.currency || 'UYU',
+        productName: product.title || product.slug
       });
     }
 

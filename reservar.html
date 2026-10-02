@@ -107,6 +107,7 @@
 </style>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("eF8R0hxnnAPWRxx6i");</script>
+<script src="/ga4.js"></script>
 </head>
 <body class="rb">
 <div id="rbProg"></div>
@@ -446,6 +447,14 @@ window.addEventListener('DOMContentLoaded', async () => {
              <p><strong>Fecha:</strong> ${b.dateStr || ''}</p>
              <p><strong>Horario:</strong> ${b.time || ''}</p>
              <p><strong>Paciente:</strong> ${b.name || ''}</p>`;
+          if (typeof gtag === 'function') {
+            gtag('event', 'reserva_confirmada', {
+              service: b.svc || '',
+              modality: b.modality || '',
+              value: Number(b.paymentAmount) || 0,
+              currency: 'UYU'
+            });
+          }
           goStep(4);
         } else {
           document.getElementById('s4-icon').textContent = '⏳';
