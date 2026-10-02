@@ -109,6 +109,23 @@ h1 em{color:var(--rose-dark);font-style:italic;}
     if (extraClass) cardEl.classList.add(extraClass);
   };
 
+  // ── Pago vía PayPal: ya se confirmó y entregó del lado del servidor
+  // (capture-paypal), acá solo mostramos el éxito y mandamos el evento de GA4. ──
+  if (params.get('pp') === '1') {
+    const email = params.get('payer_email') || '';
+    document.getElementById('email-approved').textContent = email || 'tu correo registrado';
+    show('content-approved', 'state-approved');
+    if (typeof gtag === 'function') {
+      gtag('event', 'purchase', {
+        transaction_id: params.get('purchase_id') || '',
+        value: Number(params.get('amount')) || 0,
+        currency: params.get('currency') || 'USD',
+        items: [{ item_name: params.get('product') || 'Guía para runners' }]
+      });
+    }
+    return;
+  }
+
   // Si MP nos dice directamente que no fue aprobado, mostramos ese estado
   if (status === 'rejected' || status === 'cancelled') {
     document.getElementById('failed-subtitle').textContent =

@@ -19,6 +19,7 @@ import {
   sendGuideDeliveryEmail,
   getCoupons, applyCoupon, incrementCouponUse
 } from '../../lib/auth.js';
+import { createPaypalOrder, capturePaypalOrder } from '../../lib/paypal.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -238,6 +239,98 @@ export default async function handler(req, res) {
       }
       const initPoint = IS_TEST ? data.sandbox_init_point : data.init_point;
       return res.status(200).json({ id: data.id, init_point: initPoint, finalPrice, basePrice, discount: basePrice - finalPrice });
+    }
+
+    // POST /api/products/checkout-paypal  body { name, email, slug, couponCode }
+    // Crea una orden de PayPal (alternativa a Mercado Pago para tarjetas del exterior).
+    if (path === 'checkout-paypal' && method === 'POST') {
+      const body = await readJsonBody(req) || {};
+      const name = String(body.name || '').trim();
+      const email = String(body.email || '').trim().toLowerCase();
+      const slug = String(body.slug || 'runner-principiantes').trim();
+      const couponCode = body.couponCode ? String(body.couponCode).trim().toUpperCase() : '';
+      if (!name || !email) return res.status(400).json({ error: 'Faltan name/email' });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email inválido' });
+
+      const product = await ensureProduct(slug);
+      if (!product || !product.active) return res.status(404).json({ error: 'Producto no encontrado' });
+
+      const basePrice = Number(product.price) || 0;
+      if (basePrice <= 0) return res.status(400).json({ error: 'Precio del producto inválido' });
+
+      let finalPrice = basePrice;
+      let appliedCoupon = null;
+      if (couponCode) {
+        const all = await getCoupons();
+        const coupon = all[couponCode];
+        const cResult = applyCoupon(coupon, basePrice);
+        if (!cResult.ok) return res.status(400).json({ error: 'Cupón inválido: ' + cResult.error });
+        finalPrice = cResult.finalPrice;
+        appliedCoupon = couponCode;
+      }
+
+      if (finalPrice === 0) {
+        const result = await finalizePurchase({ product, name, email, source: 'coupon:' + couponCode, paymentId: null });
+        if (appliedCoupon) { try { await incrementCouponUse(appliedCoupon); } catch (e) {} }
+        return res.status(200).json({ freeCoupon: true, ...result });
+      }
+
+      try {
+        const referenceId = JSON.stringify({ type: 'guide', slug: product.slug, email, name, coupon: appliedCoupon }).slice(0, 255);
+        const { orderId, amountUsd } = await createPaypalOrder({
+          amountUyu: finalPrice,
+          description: product.title,
+          referenceId
+        });
+        return res.status(200).json({ orderId, amountUsd });
+      } catch (err) {
+        console.error('[products/checkout-paypal]', err);
+        return res.status(500).json({ error: err.message });
+      }
+    }
+
+    // POST /api/products/capture-paypal  body { orderId }
+    // Captura el pago de PayPal y entrega la guía (misma lógica que confirm, vía finalizePurchase).
+    if (path === 'capture-paypal' && method === 'POST') {
+      const body = await readJsonBody(req) || {};
+      const orderId = String(body.orderId || '').trim();
+      if (!orderId) return res.status(400).json({ error: 'Falta orderId' });
+
+      try {
+        const capture = await capturePaypalOrder(orderId);
+        if (capture.status !== 'COMPLETED') {
+          return res.status(200).json({ status: capture.status, message: `Pago en estado: ${capture.status}` });
+        }
+        const unit = capture.purchase_units?.[0];
+        let ref = {};
+        try { ref = JSON.parse(unit?.reference_id || '{}'); } catch {}
+        if (ref.type !== 'guide' || !ref.slug || !ref.email) {
+          return res.status(400).json({ error: 'reference_id inválido' });
+        }
+        const product = await ensureProduct(ref.slug);
+        if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+
+        const captureId = unit?.payments?.captures?.[0]?.id || orderId;
+        const result = await finalizePurchase({
+          product, name: ref.name || 'Runner', email: ref.email,
+          source: 'paypal', paymentId: 'pp_' + captureId
+        });
+        if (ref.coupon && !result.alreadyProcessed) {
+          try { await incrementCouponUse(ref.coupon); } catch (e) {}
+        }
+        return res.status(200).json({
+          status: 'approved',
+          purchaseId: result.purchaseId,
+          emailSent: result.emailSent,
+          alreadyProcessed: !!result.alreadyProcessed,
+          amount: Number(unit?.payments?.captures?.[0]?.amount?.value) || 0,
+          currency: unit?.payments?.captures?.[0]?.amount?.currency_code || 'USD',
+          productName: product.title
+        });
+      } catch (err) {
+        console.error('[products/capture-paypal]', err);
+        return res.status(500).json({ error: err.message });
+      }
     }
 
     // GET /api/products/confirm?payment_id=xxx

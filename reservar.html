@@ -252,6 +252,8 @@
         </div>
         <div id="coupon-msg" style="font-size:.78rem;margin-top:.4rem;display:none;"></div>
       </div>
+      <div id="paypal-divider" style="display:none;text-align:center;color:var(--text-muted);font-size:.78rem;margin:1rem 0 .5rem">— o pagá en dólares con PayPal —</div>
+      <div id="paypal-button-container" style="display:none"></div>
       <div style="font-size:.78rem;color:var(--text-muted);margin-top:1rem;text-align:center;">🌎 ¿Tu tarjeta es del exterior y Mercado Pago no te deja pagar? Escribinos por <a href="https://wa.me/59899712691" target="_blank" rel="noopener">WhatsApp</a> y coordinamos otra forma de pago.</div>
     </div>
     <div class="nav-btns">
@@ -584,7 +586,101 @@ function goStep(n){
     document.getElementById('cs-time').textContent=sel.time;
     document.getElementById('cs-dur').textContent=sel.dur+' minutos';
     document.getElementById('cs-price').textContent=sel.price;
+    initPaypalButton();
   }
+}
+
+// ── Botón de PayPal (alternativa a MercadoPago para tarjetas del exterior) ──
+let _paypalInitStarted = false;
+async function initPaypalButton() {
+  if (_paypalInitStarted) return;
+  // No ofrecer PayPal si el paciente va a pagar con un crédito ya comprado
+  if (window._loggedUser && (window._loggedUser.credits || 0) > 0) return;
+  _paypalInitStarted = true;
+  try {
+    const r = await fetch('/api/paypal-config', { cache: 'no-store' });
+    const cfg = await r.json();
+    if (!cfg.clientId) { _paypalInitStarted = false; return; }
+    if (window.paypal) { renderPaypalButton(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(cfg.clientId) + '&currency=USD&intent=capture';
+    s.onload = renderPaypalButton;
+    s.onerror = () => { _paypalInitStarted = false; };
+    document.body.appendChild(s);
+  } catch (e) {
+    console.warn('[paypal] config fetch failed', e);
+    _paypalInitStarted = false;
+  }
+}
+
+function renderPaypalButton() {
+  if (!window.paypal) return;
+  document.getElementById('paypal-divider').style.display = '';
+  document.getElementById('paypal-button-container').style.display = '';
+  window.paypal.Buttons({
+    style: { layout: 'horizontal', color: 'gold', label: 'paypal', height: 40 },
+    createOrder: async function () {
+      const name = document.getElementById('f-name').value.trim();
+      const last = document.getElementById('f-last').value.trim();
+      const email = document.getElementById('f-email').value.trim();
+      if (!name || !last || !email) {
+        alert('Completá nombre, apellido y email antes de pagar con PayPal.');
+        throw new Error('missing fields');
+      }
+      const phone = (document.getElementById('f-phone') || { value: '' }).value.trim();
+      const notes = (document.getElementById('f-notes') || { value: '' }).value.trim();
+      const dateKey = sel.date.toISOString().split('T')[0];
+      const modLabel = sel.type === 'masaje' ? 'Presencial' : (sel.modality === 'online' ? 'Online' : 'Presencial');
+      const priceNum = (appliedCoupon && appliedCoupon._finalPrice !== undefined)
+        ? appliedCoupon._finalPrice
+        : (parseInt((sel.price || '0').replace(/[^0-9]/g, ''), 10) || 1);
+
+      const r = await fetch('/api/bookings/checkout-paypal', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dateKey, time: sel.time, dateStr: sel.dateStr,
+          svc: sel.svc, dur: sel.dur, type: sel.type, modality: sel.modality,
+          name: name + ' ' + last, email, phone, notes,
+          amount: priceNum
+        })
+      });
+      const data = await r.json();
+      if (!r.ok || !data.orderId) throw new Error(data.error || 'No se pudo iniciar el pago con PayPal');
+      window._paypalBookingId = data.bookingId;
+      return data.orderId;
+    },
+    onApprove: async function (data) {
+      const r = await fetch('/api/bookings/confirm-paypal', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: data.orderID, bookingId: window._paypalBookingId })
+      });
+      const result = await r.json();
+      if (!r.ok || result.status !== 'confirmed') {
+        alert('Hubo un problema confirmando el pago. Escribinos por WhatsApp y lo resolvemos.');
+        return;
+      }
+      const b = result.booking || {};
+      document.getElementById('s4-icon').textContent = '✅';
+      document.getElementById('s4-title').innerHTML = '¡Pago <em>confirmado!</em>';
+      document.getElementById('s4-msg').textContent = 'Tu turno quedó reservado y el pago fue procesado. Te enviamos un email de confirmación.';
+      document.getElementById('success-detail').innerHTML =
+        `<p><strong>Servicio:</strong> ${b.svc || ''}</p>
+         <p><strong>Fecha:</strong> ${b.dateStr || ''}</p>
+         <p><strong>Horario:</strong> ${b.time || sel.time || ''}</p>
+         <p><strong>Paciente:</strong> ${b.name || ''}</p>`;
+      if (typeof gtag === 'function') {
+        gtag('event', 'reserva_confirmada', {
+          service: b.svc || '', modality: b.modality || '',
+          value: Number(b.paymentAmount) || 0, currency: 'UYU', payment_method: 'paypal'
+        });
+      }
+      goStep(4);
+    },
+    onError: function (err) {
+      console.error('[paypal]', err);
+      alert('Hubo un error con PayPal. Probá de nuevo o escribinos por WhatsApp.');
+    }
+  }).render('#paypal-button-container');
 }
 
 function setModality(m){

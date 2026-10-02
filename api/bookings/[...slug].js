@@ -3,6 +3,8 @@
 // PÚBLICOS (paciente):
 //   POST /api/bookings/checkout            → crea booking pendiente en KV + preferencia MP
 //   GET  /api/bookings/confirm?payment_id  → verifica con MP, marca paid, envía emails
+//   POST /api/bookings/checkout-paypal     → crea booking pendiente en KV + orden de PayPal
+//   POST /api/bookings/confirm-paypal      → captura el pago de PayPal, marca paid, envía emails
 //
 // WEBHOOK (MercadoPago):
 //   POST /api/bookings/webhook             → MP notifica cambios de estado del pago
@@ -19,6 +21,7 @@ import {
   getBookings, saveBookings, generateBookingId, sendBookingEmail,
   getAdminFromRequest, readJsonBody, getUsers, saveUsers
 } from '../../lib/auth.js';
+import { createPaypalOrder, capturePaypalOrder } from '../../lib/paypal.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -38,6 +41,8 @@ export default async function handler(req, res) {
     // === PÚBLICOS (paciente) ===
     if (path === 'checkout' && method === 'POST') return await handleCheckout(req, res);
     if (path === 'confirm'  && method === 'GET')  return await handleConfirm(req, res);
+    if (path === 'checkout-paypal' && method === 'POST') return await handleCheckoutPaypal(req, res);
+    if (path === 'confirm-paypal'  && method === 'POST') return await handleConfirmPaypal(req, res);
 
     // === WEBHOOK MP ===
     if (path === 'webhook' && (method === 'POST' || method === 'GET')) return await handleWebhook(req, res);
@@ -158,6 +163,125 @@ async function handleCheckout(req, res) {
     await saveBookings(bookings);
     return res.status(500).json({ error: err.message });
   }
+}
+
+// Busca un booking por bookingId recorriendo todas las fechas/horarios.
+function findBookingById(bookings, bookingId) {
+  for (const [d, slots] of Object.entries(bookings)) {
+    for (const [t, b] of Object.entries(slots)) {
+      if (b && b.bookingId === bookingId) return { date: d, time: t, booking: b };
+    }
+  }
+  return null;
+}
+
+// Igual que handleCheckout pero crea una orden de PayPal en vez de una preferencia de MP
+// (alternativa para pacientes con tarjetas del exterior que Mercado Pago rechaza).
+async function handleCheckoutPaypal(req, res) {
+  const body = await readJsonBody(req);
+  if (!body) return res.status(400).json({ error: 'Body inválido' });
+
+  const { dateKey, time, dateStr, svc, dur, type, modality, name, email, phone, notes, amount } = body;
+  if (!dateKey || !time || !svc || !name || !email || !amount) {
+    return res.status(400).json({ error: 'Faltan datos obligatorios.' });
+  }
+
+  const bookings = await getBookings();
+  if (bookings[dateKey] && bookings[dateKey][time]) {
+    return res.status(409).json({ error: 'Ese horario ya fue reservado por otro paciente.' });
+  }
+
+  if (!bookings[dateKey]) bookings[dateKey] = {};
+  const bookingId = generateBookingId();
+  const modLabel = type === 'masaje' ? 'Presencial' : (modality === 'online' ? 'Online (videollamada)' : 'Presencial');
+  bookings[dateKey][time] = {
+    bookingId,
+    dur: Number(dur) || 60,
+    svc, name, email,
+    phone: phone || '',
+    notes: notes || '',
+    modality: modLabel,
+    paid: false,
+    status: 'pending_payment',
+    paymentAmount: Number(amount),
+    paymentId: null,
+    emailsSent: false,
+    createdAt: new Date().toISOString(),
+    paidAt: null,
+    source: 'web_paypal',
+    dateStr: dateStr || dateKey
+  };
+  await saveBookings(bookings);
+
+  try {
+    const { orderId, amountUsd } = await createPaypalOrder({
+      amountUyu: Number(amount),
+      description: `${svc} — ${modLabel} · ${dateStr || dateKey} ${time}`,
+      referenceId: bookingId
+    });
+    return res.status(200).json({ orderId, bookingId, amountUsd });
+  } catch (err) {
+    // Liberar el slot si PayPal falló
+    delete bookings[dateKey][time];
+    if (Object.keys(bookings[dateKey]).length === 0) delete bookings[dateKey];
+    await saveBookings(bookings);
+    console.error('[checkout-paypal] error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+}
+
+// Captura la orden de PayPal, marca el booking como pagado y envía emails.
+// Idempotente igual que handleConfirm.
+async function handleConfirmPaypal(req, res) {
+  const body = await readJsonBody(req) || {};
+  const orderId = String(body.orderId || '').trim();
+  const bookingId = String(body.bookingId || '').trim();
+  if (!orderId || !bookingId) return res.status(400).json({ error: 'Faltan orderId/bookingId' });
+
+  const bookings = await getBookings();
+  const found = findBookingById(bookings, bookingId);
+  if (!found) return res.status(404).json({ error: 'Booking no encontrado' });
+  const { date: foundDate, time: foundTime, booking: foundBooking } = found;
+
+  if (foundBooking.paid && foundBooking.emailsSent) {
+    return res.status(200).json({ status: 'already_processed', booking: foundBooking });
+  }
+
+  let capture;
+  try {
+    capture = await capturePaypalOrder(orderId);
+  } catch (err) {
+    return res.status(502).json({ error: err.message });
+  }
+  if (capture.status !== 'COMPLETED') {
+    return res.status(200).json({ status: capture.status, message: `Pago en estado: ${capture.status}` });
+  }
+
+  const captureId = capture.purchase_units?.[0]?.payments?.captures?.[0]?.id || orderId;
+  foundBooking.paid = true;
+  foundBooking.status = 'confirmed';
+  foundBooking.paymentId = 'pp_' + captureId;
+  foundBooking.paidAt = new Date().toISOString();
+
+  let emailResult = { ok: false };
+  if (!foundBooking.emailsSent) {
+    emailResult = await sendBookingEmail({
+      kind: 'confirmation',
+      patient_name: foundBooking.name,
+      patient_email: foundBooking.email,
+      service: foundBooking.svc,
+      date: foundBooking.dateStr,
+      time: foundBooking.time || foundTime,
+      modality: foundBooking.modality,
+      payment_type: 'Pago vía PayPal'
+    });
+    if (emailResult.ok) foundBooking.emailsSent = true;
+  }
+
+  bookings[foundDate][foundTime] = foundBooking;
+  await saveBookings(bookings);
+
+  return res.status(200).json({ status: 'confirmed', emails_sent: foundBooking.emailsSent, booking: foundBooking });
 }
 
 // Confirma un pago: consulta MP, marca booking como paid, envía emails.

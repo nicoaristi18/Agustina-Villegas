@@ -326,6 +326,8 @@
       <button class="confirm" id="btn-submit-purchase" onclick="submitPurchase()">Ir a pagar →</button>
     </div>
     <div class="rn-modal-note">💳 Pago 100% seguro con MercadoPago. Aceptamos tarjeta de crédito y débito.</div>
+    <div id="paypal-divider" style="display:none;text-align:center;color:var(--text-muted);font-size:.78rem;margin:.9rem 0 .5rem">— o pagá en dólares con PayPal —</div>
+    <div id="paypal-button-container" style="display:none"></div>
     <div class="rn-modal-note">🌎 ¿Tu tarjeta es del exterior y Mercado Pago no te deja pagar? Escribinos por <a href="https://wa.me/59899712691" target="_blank" rel="noopener">WhatsApp</a> y te mandamos la guía por otra vía.</div>
   </div>
 </div>
@@ -357,9 +359,81 @@ window.addEventListener('DOMContentLoaded', async () => {
 function openPurchaseModal() {
   document.getElementById('purchaseModal').classList.add('open');
   setTimeout(() => document.getElementById('buyer-name').focus(), 100);
+  initPaypalButton();
 }
 function closePurchaseModal() {
   document.getElementById('purchaseModal').classList.remove('open');
+}
+
+// ── Botón de PayPal (alternativa a MercadoPago para tarjetas del exterior) ──
+let _paypalInitStarted = false;
+async function initPaypalButton() {
+  if (_paypalInitStarted) return;
+  _paypalInitStarted = true;
+  try {
+    const r = await fetch('/api/paypal-config', { cache: 'no-store' });
+    const cfg = await r.json();
+    if (!cfg.clientId) { _paypalInitStarted = false; return; } // todavía no configurado, no mostrar nada
+    if (window.paypal) { renderPaypalButton(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(cfg.clientId) + '&currency=USD&intent=capture';
+    s.onload = renderPaypalButton;
+    s.onerror = () => { _paypalInitStarted = false; };
+    document.body.appendChild(s);
+  } catch (e) {
+    console.warn('[paypal] config fetch failed', e);
+    _paypalInitStarted = false;
+  }
+}
+
+function renderPaypalButton() {
+  if (!window.paypal) return;
+  document.getElementById('paypal-divider').style.display = '';
+  document.getElementById('paypal-button-container').style.display = '';
+  window.paypal.Buttons({
+    style: { layout: 'horizontal', color: 'gold', label: 'paypal', height: 40 },
+    createOrder: async function () {
+      const name = document.getElementById('buyer-name').value.trim();
+      const email = document.getElementById('buyer-email').value.trim();
+      if (!name || !email) {
+        alert('Completá tu nombre y email antes de pagar con PayPal.');
+        throw new Error('missing fields');
+      }
+      const couponCode = document.getElementById('coupon-code').value.trim();
+      const r = await fetch('/api/products/checkout-paypal', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, slug: 'runner-principiantes', couponCode })
+      });
+      const data = await r.json();
+      if (!r.ok || !data.orderId) throw new Error(data.error || 'No se pudo iniciar el pago con PayPal');
+      return data.orderId;
+    },
+    onApprove: async function (data) {
+      const r = await fetch('/api/products/capture-paypal', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: data.orderID })
+      });
+      const result = await r.json();
+      if (!r.ok || result.status !== 'approved') {
+        alert('Hubo un problema confirmando el pago. Escribinos por WhatsApp y lo resolvemos.');
+        return;
+      }
+      const email = document.getElementById('buyer-email').value.trim();
+      const qs = new URLSearchParams({
+        pp: '1',
+        payer_email: email,
+        purchase_id: result.purchaseId || '',
+        amount: result.amount || '',
+        currency: result.currency || 'USD',
+        product: result.productName || 'Guía para runners'
+      });
+      window.location.href = 'comprado.html?' + qs.toString();
+    },
+    onError: function (err) {
+      console.error('[paypal]', err);
+      alert('Hubo un error con PayPal. Probá de nuevo o escribinos por WhatsApp.');
+    }
+  }).render('#paypal-button-container');
 }
 
 // Estado del cupón validado (si hay uno aplicado)
