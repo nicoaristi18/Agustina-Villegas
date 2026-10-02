@@ -1,4 +1,12 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "nutricionistaagustinavillegas.com" }],
+      "destination": "https://www.nutricionistaagustinavillegas.com/:path*",
+      "permanent": true
+    }
+  ]
 }

@@ -178,8 +178,8 @@ body.rb::after{
 .rb-section{ padding:clamp(4rem,8vw,7rem) 0; }
 .rb-section-head{ max-width:38rem; margin-bottom:clamp(2.4rem,5vw,3.6rem); }
 .rb-section-head .rb-eyebrow{ margin-bottom:1rem; }
-.rb-section-head h2{ font-family:var(--font-display); font-weight:400; font-size:clamp(1.9rem,4vw,3rem); line-height:1.1; color:var(--forest2); }
-.rb-section-head h2 em{ font-style:italic; color:var(--sage); }
+.rb-section-head h1,.rb-section-head h2{ font-family:var(--font-display); font-weight:400; font-size:clamp(1.9rem,4vw,3rem); line-height:1.1; color:var(--forest2); }
+.rb-section-head h1 em,.rb-section-head h2 em{ font-style:italic; color:var(--sage); }
 .rb-section-head p{ margin-top:1rem; color:var(--text-mid); font-size:1.02rem; line-height:1.6; }
 .rb-section.on-forest{ background:var(--forest2); color:var(--cream); }
 .rb-section.on-forest .rb-section-head h2{ color:var(--paper); }
