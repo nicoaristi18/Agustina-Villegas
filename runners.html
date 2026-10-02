@@ -90,8 +90,8 @@
 .rn-modal-buttons .confirm:hover{ background:var(--forest2); transform:translateY(-2px); }
 .rn-pay-options{ display:flex; gap:.8rem; margin-top:1.6rem; align-items:stretch; }
 .rn-pay-options > *{ flex:1; min-width:0; }
-.rn-pay-options .pay-opt{ padding:.95rem; border-radius:99px; border:none; background:var(--clay-deep); color:var(--paper); font-family:var(--font-body); font-size:.86rem; font-weight:500; cursor:pointer; transition:transform .35s var(--spring), background .35s; }
-.rn-pay-options .pay-opt:hover{ background:var(--forest2); transform:translateY(-2px); }
+.rn-pay-options .pay-opt{ padding:.95rem; border-radius:99px; border:none; background:#3483FA; color:#fff; font-family:var(--font-body); font-size:.86rem; font-weight:600; cursor:pointer; transition:transform .35s var(--spring), background .35s; }
+.rn-pay-options .pay-opt:hover{ background:#2968C8; transform:translateY(-2px); }
 .rn-pay-options .pay-opt:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
 #paypal-button-container{ min-height:48px; }
 .cancel-link{ background:none; border:none; color:var(--text-muted); font-size:.8rem; text-decoration:underline; cursor:pointer; padding:.4rem; font-family:var(--font-body); }
@@ -330,7 +330,7 @@
       <div style="display:flex;justify-content:space-between;font-weight:600;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border2);color:var(--forest2)"><span>Total a pagar</span><span id="ps-final">—</span></div>
     </div>
     <div class="rn-pay-options">
-      <button class="pay-opt" id="btn-submit-purchase" onclick="submitPurchase()">💳 Mercado Pago</button>
+      <button class="pay-opt" id="btn-submit-purchase" onclick="submitPurchase()">Mercado Pago</button>
       <div id="paypal-button-container" style="display:none"></div>
     </div>
     <div class="rn-modal-note">💳 Mercado Pago: tarjeta de crédito/débito en pesos uruguayos. &nbsp;·&nbsp; 🌎 PayPal: para pagar en dólares desde cualquier país.</div>

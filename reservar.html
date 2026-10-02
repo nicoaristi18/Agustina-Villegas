@@ -101,6 +101,8 @@
 .pay-options-row{display:flex;gap:.8rem;align-items:stretch;margin-top:2.2rem;}
 .pay-options-row>*{flex:1;min-width:0;}
 #paypal-button-container{min-height:48px;}
+.mp-pay-btn{background:#3483FA !important;font-weight:600;}
+.mp-pay-btn:hover{background:#2968C8 !important;}
 
 @media(max-width:800px){
   .res-wrap{padding:6.5rem 1.25rem 4rem;}
@@ -257,7 +259,7 @@
       </div>
     </div>
     <div class="pay-options-row">
-      <button class="btn-primary" id="btnConfirm" onclick="confirmBooking()">💳 Mercado Pago</button>
+      <button class="btn-primary mp-pay-btn" id="btnConfirm" onclick="confirmBooking()">Mercado Pago</button>
       <div id="paypal-button-container" style="display:none"></div>
     </div>
     <div style="font-size:.78rem;color:var(--text-muted);margin-top:.8rem;text-align:center;">💳 Mercado Pago: tarjeta en pesos uruguayos. &nbsp;·&nbsp; 🌎 PayPal: en dólares desde cualquier país.</div>
@@ -540,7 +542,7 @@ async function detectLoggedUser() {
 
       // Cambiar el texto del botón confirmar
       const btnConfirm = document.getElementById('btnConfirm');
-      if (btnConfirm) btnConfirm.textContent = `Usar 1 crédito y reservar ✓`;
+      if (btnConfirm) { btnConfirm.textContent = `Usar 1 crédito y reservar ✓`; btnConfirm.classList.remove('mp-pay-btn'); }
     }
   } catch(e) {
     console.warn('[detectLoggedUser]', e);
