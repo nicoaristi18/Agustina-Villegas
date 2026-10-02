@@ -88,6 +88,14 @@
 .rn-modal-buttons .cancel:hover{ background:var(--cream-deep); }
 .rn-modal-buttons .confirm{ background:var(--clay-deep); color:var(--paper); }
 .rn-modal-buttons .confirm:hover{ background:var(--forest2); transform:translateY(-2px); }
+.rn-pay-options{ display:flex; gap:.8rem; margin-top:1.6rem; align-items:stretch; }
+.rn-pay-options > *{ flex:1; min-width:0; }
+.rn-pay-options .pay-opt{ padding:.95rem; border-radius:99px; border:none; background:var(--clay-deep); color:var(--paper); font-family:var(--font-body); font-size:.86rem; font-weight:500; cursor:pointer; transition:transform .35s var(--spring), background .35s; }
+.rn-pay-options .pay-opt:hover{ background:var(--forest2); transform:translateY(-2px); }
+.rn-pay-options .pay-opt:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
+#paypal-button-container{ min-height:48px; }
+.cancel-link{ background:none; border:none; color:var(--text-muted); font-size:.8rem; text-decoration:underline; cursor:pointer; padding:.4rem; font-family:var(--font-body); }
+.cancel-link:hover{ color:var(--text); }
 .rn-modal-note{ font-size:.78rem; color:var(--text-mid); text-align:center; margin-top:1.3rem; padding:.9rem 1rem; background:var(--sage-pale); border-radius:12px; line-height:1.5; }
 
 /* ---- Responsive ---- */
@@ -321,14 +329,13 @@
       <div style="display:flex;justify-content:space-between;color:var(--sage);margin-top:.3rem" id="ps-discount-row"><span>Descuento</span><span id="ps-discount">—</span></div>
       <div style="display:flex;justify-content:space-between;font-weight:600;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border2);color:var(--forest2)"><span>Total a pagar</span><span id="ps-final">—</span></div>
     </div>
-    <div class="rn-modal-buttons">
-      <button class="cancel" onclick="closePurchaseModal()">Cancelar</button>
-      <button class="confirm" id="btn-submit-purchase" onclick="submitPurchase()">Ir a pagar →</button>
+    <div class="rn-pay-options">
+      <button class="pay-opt" id="btn-submit-purchase" onclick="submitPurchase()">💳 Mercado Pago</button>
+      <div id="paypal-button-container" style="display:none"></div>
     </div>
-    <div class="rn-modal-note">💳 Pago 100% seguro con MercadoPago. Aceptamos tarjeta de crédito y débito.</div>
-    <div id="paypal-divider" style="display:none;text-align:center;color:var(--text-muted);font-size:.78rem;margin:.9rem 0 .5rem">— o pagá en dólares con PayPal —</div>
-    <div id="paypal-button-container" style="display:none"></div>
-    <div class="rn-modal-note">🌎 ¿Tu tarjeta es del exterior y Mercado Pago no te deja pagar? Escribinos por <a href="https://wa.me/59899712691" target="_blank" rel="noopener">WhatsApp</a> y te mandamos la guía por otra vía.</div>
+    <div class="rn-modal-note">💳 Mercado Pago: tarjeta de crédito/débito en pesos uruguayos. &nbsp;·&nbsp; 🌎 PayPal: para pagar en dólares desde cualquier país.</div>
+    <div class="rn-modal-note">¿Ninguna de las dos te funciona? Escribinos por <a href="https://wa.me/59899712691" target="_blank" rel="noopener">WhatsApp</a> y te mandamos la guía por otra vía.</div>
+    <div style="text-align:center;margin-top:.5rem"><button class="cancel-link" onclick="closePurchaseModal()">Cancelar</button></div>
   </div>
 </div>
 
@@ -388,10 +395,9 @@ async function initPaypalButton() {
 
 function renderPaypalButton() {
   if (!window.paypal) return;
-  document.getElementById('paypal-divider').style.display = '';
   document.getElementById('paypal-button-container').style.display = '';
   window.paypal.Buttons({
-    style: { layout: 'horizontal', color: 'gold', label: 'paypal', height: 40 },
+    style: { layout: 'horizontal', color: 'black', shape: 'pill', label: 'pay', height: 48 },
     createOrder: async function () {
       const name = document.getElementById('buyer-name').value.trim();
       const email = document.getElementById('buyer-email').value.trim();

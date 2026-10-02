@@ -98,6 +98,9 @@
 .success-detail p{font-size:.85rem;margin-bottom:.4rem;color:var(--text);}
 
 .nav-btns{display:flex;justify-content:space-between;align-items:center;margin-top:2.2rem;flex-wrap:wrap;gap:1rem;}
+.pay-options-row{display:flex;gap:.8rem;align-items:stretch;margin-top:2.2rem;}
+.pay-options-row>*{flex:1;min-width:0;}
+#paypal-button-container{min-height:48px;}
 
 @media(max-width:800px){
   .res-wrap{padding:6.5rem 1.25rem 4rem;}
@@ -252,13 +255,15 @@
         </div>
         <div id="coupon-msg" style="font-size:.78rem;margin-top:.4rem;display:none;"></div>
       </div>
-      <div id="paypal-divider" style="display:none;text-align:center;color:var(--text-muted);font-size:.78rem;margin:1rem 0 .5rem">— o pagá en dólares con PayPal —</div>
-      <div id="paypal-button-container" style="display:none"></div>
-      <div style="font-size:.78rem;color:var(--text-muted);margin-top:1rem;text-align:center;">🌎 ¿Tu tarjeta es del exterior y Mercado Pago no te deja pagar? Escribinos por <a href="https://wa.me/59899712691" target="_blank" rel="noopener">WhatsApp</a> y coordinamos otra forma de pago.</div>
     </div>
+    <div class="pay-options-row">
+      <button class="btn-primary" id="btnConfirm" onclick="confirmBooking()">💳 Mercado Pago</button>
+      <div id="paypal-button-container" style="display:none"></div>
+    </div>
+    <div style="font-size:.78rem;color:var(--text-muted);margin-top:.8rem;text-align:center;">💳 Mercado Pago: tarjeta en pesos uruguayos. &nbsp;·&nbsp; 🌎 PayPal: en dólares desde cualquier país.</div>
+    <div style="font-size:.78rem;color:var(--text-muted);margin-top:.3rem;text-align:center;">¿Ninguna te funciona? Escribinos por <a href="https://wa.me/59899712691" target="_blank" rel="noopener">WhatsApp</a> y coordinamos otra forma de pago.</div>
     <div class="nav-btns">
       <button class="btn-back" onclick="goStep(2)">← Volver</button>
-      <button class="btn-primary" id="btnConfirm" onclick="confirmBooking()">Ir a pagar →</button>
     </div>
   </div>
 
@@ -615,10 +620,9 @@ async function initPaypalButton() {
 
 function renderPaypalButton() {
   if (!window.paypal) return;
-  document.getElementById('paypal-divider').style.display = '';
   document.getElementById('paypal-button-container').style.display = '';
   window.paypal.Buttons({
-    style: { layout: 'horizontal', color: 'gold', label: 'paypal', height: 40 },
+    style: { layout: 'horizontal', color: 'black', shape: 'pill', label: 'pay', height: 48 },
     createOrder: async function () {
       const name = document.getElementById('f-name').value.trim();
       const last = document.getElementById('f-last').value.trim();
