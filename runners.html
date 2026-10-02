@@ -397,7 +397,7 @@ function renderPaypalButton() {
   if (!window.paypal) return;
   document.getElementById('paypal-button-container').style.display = '';
   window.paypal.Buttons({
-    style: { layout: 'horizontal', color: 'black', shape: 'pill', label: 'pay', height: 48 },
+    style: { layout: 'horizontal', color: 'black', shape: 'pill', label: 'pay', height: 48, tagline: false },
     createOrder: async function () {
       const name = document.getElementById('buyer-name').value.trim();
       const email = document.getElementById('buyer-email').value.trim();
