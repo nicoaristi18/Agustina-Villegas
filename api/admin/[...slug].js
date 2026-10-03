@@ -9,6 +9,7 @@ import {
 } from '../../lib/auth.js';
 import { getDashboardData, ga4Configured } from '../../lib/ga4.js';
 import { getInstagramDashboardData, instagramConfigured } from '../../lib/instagram.js';
+import { getTiktokEntries, addTiktokEntry, deleteTiktokEntry } from '../../lib/social.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -36,6 +37,11 @@ export default async function handler(req, res) {
     }
     if (path === 'send-survey' && method === 'POST') return await handleSendSurvey(req, res);
     if (path === 'analytics' && method === 'GET') return await handleAnalytics(req, res);
+    if (path === 'social-tiktok') {
+      if (method === 'GET')    return await handleTiktokList(req, res);
+      if (method === 'POST')   return await handleTiktokAdd(req, res);
+      if (method === 'DELETE') return await handleTiktokDelete(req, res);
+    }
     return res.status(404).json({ error: 'Endpoint no encontrado', path, method });
   } catch (err) {
     console.error('[admin dispatcher]', path, err);
@@ -123,6 +129,31 @@ async function handleAnalytics(req, res) {
     console.error('[admin analytics]', err);
     return res.status(500).json({ error: err.message || 'Error consultando GA4' });
   }
+}
+
+async function handleTiktokList(req, res) {
+  const session = getAdminFromRequest(req);
+  if (!session?.admin) return res.status(401).json({ error: 'No autenticado' });
+  const entries = await getTiktokEntries();
+  return res.status(200).json({ entries });
+}
+
+async function handleTiktokAdd(req, res) {
+  const session = getAdminFromRequest(req);
+  if (!session?.admin) return res.status(401).json({ error: 'No autenticado' });
+  const body = await readJsonBody(req);
+  if (!body?.weekOf) return res.status(400).json({ error: 'Falta la semana (weekOf)' });
+  const entry = await addTiktokEntry(body);
+  return res.status(200).json({ entry });
+}
+
+async function handleTiktokDelete(req, res) {
+  const session = getAdminFromRequest(req);
+  if (!session?.admin) return res.status(401).json({ error: 'No autenticado' });
+  const id = String(req.query.id || '');
+  if (!id) return res.status(400).json({ error: 'Falta id' });
+  await deleteTiktokEntry(id);
+  return res.status(200).json({ ok: true });
 }
 
 // Envía la encuesta inicial (Google Form) a una paciente nueva.

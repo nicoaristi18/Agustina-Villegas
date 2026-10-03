@@ -460,6 +460,35 @@ tbody tr:hover td{background:var(--cream);}
           </div>
           <div id="an-ig-error" class="banner banner-amber" style="display:none;margin-bottom:1rem;"></div>
 
+          <div class="ph" style="padding:1.1rem 0 .8rem;border:none;background:none;"><h1 style="font-size:1.15rem;">TikTok</h1><p style="font-size:.75rem;">Carga manual semanal — su API de analítica no está disponible para esta cuenta</p></div>
+          <div class="tcard" style="margin-bottom:1.1rem;">
+            <div class="tcard-hd"><span class="tcard-title">Cargar semana</span></div>
+            <div style="padding:1rem 1.2rem 1.2rem;">
+              <div class="fg-row">
+                <div class="fg"><label>Semana del</label><input type="date" id="tt-weekOf"></div>
+                <div class="fg"><label>Alcance</label><input type="number" id="tt-reach" placeholder="ej. 3200"></div>
+              </div>
+              <div class="fg-row">
+                <div class="fg"><label>Seguidores nuevos</label><input type="number" id="tt-newFollowers" placeholder="ej. 25"></div>
+                <div class="fg"><label>Vistas del video top</label><input type="number" id="tt-topVideoViews" placeholder="ej. 1800"></div>
+              </div>
+              <div class="fg"><label>Video con más tracción (descripción breve)</label><input type="text" id="tt-topVideo" placeholder="ej. Receta de barritas proteicas"></div>
+              <button class="cl-gen-btn" style="margin-top:.6rem;background:var(--rose-dark);color:white" onclick="addTiktokWeek()">+ Guardar semana</button>
+              <span id="tt-save-msg" style="font-size:.72rem;color:var(--text-muted);margin-left:.6rem;"></span>
+            </div>
+          </div>
+          <div class="tcard" style="margin-bottom:1.1rem;">
+            <div class="tcard-hd"><span class="tcard-title">Alcance por semana</span></div>
+            <div style="padding:1rem 1.2rem 1.4rem;" id="tt-chart-reach"></div>
+          </div>
+          <div class="tcard">
+            <div class="tcard-hd"><span class="tcard-title">Historial cargado</span></div>
+            <div class="tw"><table>
+              <thead><tr><th>Semana</th><th>Alcance</th><th>Seg. nuevos</th><th>Video top</th><th>Vistas</th><th></th></tr></thead>
+              <tbody id="tt-rows"></tbody>
+            </table></div>
+          </div>
+
           <p style="font-size:.68rem;color:var(--text-muted);margin-top:.8rem;" id="an-updated"></p>
         </div>
       </div>
@@ -1150,6 +1179,7 @@ async function loadAnalitica(){
     _anLoaded=true;
     renderAnalitica(data);
     loadingEl.style.display='none'; contentEl.style.display='block';
+    loadTiktok();
   }catch(err){
     loadingEl.style.display='none';
     errEl.style.display='block';
@@ -1318,6 +1348,53 @@ function renderInstagram(ig, igError){
     return `<tr><td><a href="${m.permalink}" target="_blank" rel="noopener" style="color:var(--rose-dark);">${caption}</a></td>
       <td>${m.like_count??'—'}</td><td>${m.comments_count??'—'}</td><td>${date}</td></tr>`;
   }).join('') : '<tr class="empty"><td colspan="4">Sin publicaciones en este período.</td></tr>';
+}
+
+// ── TIKTOK (carga manual) ──
+async function loadTiktok(){
+  try{
+    const r=await authFetch('/api/admin/social-tiktok');
+    if(!r.ok) return;
+    renderTiktok(r.data?.entries||[]);
+  }catch(e){ console.error('[tiktok]', e); }
+}
+
+function renderTiktok(entries){
+  const sorted=[...entries].sort((a,b)=>a.weekOf.localeCompare(b.weekOf));
+  document.getElementById('tt-chart-reach').innerHTML = anLineChart(
+    sorted.map(e=>({v:e.reach, label:e.weekOf.slice(5)})), '#010101'
+  );
+  document.getElementById('tt-rows').innerHTML = sorted.length ? [...sorted].reverse().map(e=>`
+    <tr>
+      <td>${fmtD(e.weekOf)}</td><td>${e.reach}</td><td>${e.newFollowers}</td>
+      <td>${e.topVideo||'—'}</td><td>${e.topVideoViews||'—'}</td>
+      <td><button class="btn-sm-x" onclick="deleteTiktokWeek('${e.id}')" title="Eliminar" style="background:none;border:none;color:var(--text-muted);cursor:pointer;">✕</button></td>
+    </tr>`).join('') : '<tr class="empty"><td colspan="6">Todavía no se cargó ninguna semana.</td></tr>';
+}
+
+async function addTiktokWeek(){
+  const weekOf=document.getElementById('tt-weekOf').value;
+  const msgEl=document.getElementById('tt-save-msg');
+  if(!weekOf){ msgEl.textContent='Elegí una fecha.'; msgEl.style.color='var(--red)'; return; }
+  const body={
+    weekOf,
+    reach: document.getElementById('tt-reach').value,
+    newFollowers: document.getElementById('tt-newFollowers').value,
+    topVideo: document.getElementById('tt-topVideo').value,
+    topVideoViews: document.getElementById('tt-topVideoViews').value
+  };
+  msgEl.textContent='Guardando...'; msgEl.style.color='var(--text-muted)';
+  const r=await authFetch('/api/admin/social-tiktok', { method:'POST', body: JSON.stringify(body) });
+  if(!r.ok){ msgEl.textContent=r.data?.error||'Error al guardar.'; msgEl.style.color='var(--red)'; return; }
+  msgEl.textContent='✓ Guardado'; msgEl.style.color='var(--sage, #7A9E7E)';
+  ['tt-weekOf','tt-reach','tt-newFollowers','tt-topVideo','tt-topVideoViews'].forEach(id=>document.getElementById(id).value='');
+  loadTiktok();
+}
+
+async function deleteTiktokWeek(id){
+  if(!confirm('¿Eliminar esta semana cargada?')) return;
+  await authFetch('/api/admin/social-tiktok?id='+encodeURIComponent(id), { method:'DELETE' });
+  loadTiktok();
 }
 
 // ── RESERVAS ──
