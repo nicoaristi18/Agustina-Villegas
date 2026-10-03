@@ -1,7 +1,15 @@
 // Catch-all dispatcher para /api/plans/*
 // Maneja /api/plans/checkout (POST) y /api/plans/confirm (GET).
 
-import { getUserFromRequest, getUserByEmail, getUsers, saveUsers, scrubUser } from '../../lib/auth.js';
+import {
+  getUserFromRequest, getUserByEmail, getUsers, saveUsers, scrubUser,
+  getProductBySlug, getGuidePurchases, saveGuidePurchases,
+  generateGuideDownloadToken, sendGuideDeliveryEmail
+} from '../../lib/auth.js';
+
+// Nombre exacto del plan combo (ver botón en runners.html) — si coincide,
+// además de activar los créditos se entrega la guía por mail.
+const COMBO_GUIDE_PLAN_NAME = 'Guía + Plan 4 meses';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -128,5 +136,34 @@ async function handleConfirm(req, res) {
   user.paidPayments.push(String(paymentId));
   await saveUsers(users);
 
-  return res.status(200).json({ status: 'activated', added_credits: creditsToAdd, user: scrubUser(user) });
+  // Combo guía + plan: además de los créditos, entregar la guía por mail.
+  let guideDelivered = false;
+  if (ref.plan === COMBO_GUIDE_PLAN_NAME) {
+    try {
+      const product = await getProductBySlug('runner-principiantes');
+      if (product) {
+        const purchases = await getGuidePurchases();
+        const purchaseId = 'pur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+        const token = generateGuideDownloadToken({ slug: product.slug, email: user.email });
+        purchases.unshift({
+          id: purchaseId, slug: product.slug, name: user.name, email: user.email,
+          ts: new Date().toISOString(), source: 'combo:plan', paymentId: String(paymentId)
+        });
+        if (purchases.length > 500) purchases.length = 500;
+        await saveGuidePurchases(purchases);
+
+        const host = req.headers['x-forwarded-host'] || req.headers.host;
+        const proto = req.headers['x-forwarded-proto'] || 'https';
+        const downloadUrl = `${proto}://${host}/descarga-guia.html?token=${encodeURIComponent(token)}`;
+        const emailResult = await sendGuideDeliveryEmail({
+          name: user.name, email: user.email, downloadUrl, productTitle: product.title
+        });
+        guideDelivered = !!emailResult.ok;
+      }
+    } catch (err) {
+      console.error('[plans/confirm] no se pudo entregar la guía del combo', err);
+    }
+  }
+
+  return res.status(200).json({ status: 'activated', added_credits: creditsToAdd, guideDelivered, user: scrubUser(user) });
 }
