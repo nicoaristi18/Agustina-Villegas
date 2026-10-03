@@ -8,6 +8,7 @@ import {
   sendSurveyEmail
 } from '../../lib/auth.js';
 import { getDashboardData, ga4Configured } from '../../lib/ga4.js';
+import { getInstagramDashboardData, instagramConfigured } from '../../lib/instagram.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -107,6 +108,16 @@ async function handleAnalytics(req, res) {
   if (!ga4Configured()) return res.status(503).json({ error: 'GA4 no configurado' });
   try {
     const data = await getDashboardData();
+    // Instagram es un agregado opcional — si falla (token vencido, no configurado),
+    // no tiene que tirar abajo el resto del dashboard de GA4.
+    if (instagramConfigured()) {
+      try {
+        data.instagram = await getInstagramDashboardData();
+      } catch (igErr) {
+        console.error('[admin analytics] instagram', igErr);
+        data.instagramError = igErr.message || 'Error consultando Instagram';
+      }
+    }
     return res.status(200).json(data);
   } catch (err) {
     console.error('[admin analytics]', err);

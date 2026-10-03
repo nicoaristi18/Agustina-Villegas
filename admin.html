@@ -435,13 +435,31 @@ tbody tr:hover td{background:var(--cream);}
             </div>
           </div>
 
-          <div class="tcard">
+          <div class="tcard" style="margin-bottom:1.1rem;">
             <div class="tcard-hd"><span class="tcard-title">Páginas más visitadas</span><span class="tcard-right" style="font-size:.68rem;color:var(--text-muted);">últimos 28 días</span></div>
             <div class="tw"><table>
               <thead><tr><th>Página</th><th>Vistas</th><th></th></tr></thead>
               <tbody id="an-pages-rows"></tbody>
             </table></div>
           </div>
+
+          <div id="an-ig-section" style="display:none;">
+            <div class="ph" style="padding:0 0 .8rem;border:none;background:none;"><h1 style="font-size:1.15rem;">Instagram — <span id="an-ig-username"></span></h1></div>
+            <div class="stats" id="an-ig-kpis"></div>
+            <div class="tcard" style="margin:1.1rem 0;">
+              <div class="tcard-hd"><span class="tcard-title">Seguidores ganados por semana</span><span class="tcard-right" style="font-size:.68rem;color:var(--text-muted);">últimas 8 semanas</span></div>
+              <div style="padding:1rem 1.2rem 1.4rem;" id="an-ig-chart-followers"></div>
+            </div>
+            <div class="tcard">
+              <div class="tcard-hd"><span class="tcard-title">Publicaciones con más interacción</span><span class="tcard-right" style="font-size:.68rem;color:var(--text-muted);">últimos 28 días</span></div>
+              <div class="tw"><table>
+                <thead><tr><th>Publicación</th><th>❤ Likes</th><th>💬 Comentarios</th><th>Fecha</th></tr></thead>
+                <tbody id="an-ig-media-rows"></tbody>
+              </table></div>
+            </div>
+          </div>
+          <div id="an-ig-error" class="banner banner-amber" style="display:none;margin-bottom:1rem;"></div>
+
           <p style="font-size:.68rem;color:var(--text-muted);margin-top:.8rem;" id="an-updated"></p>
         </div>
       </div>
@@ -1257,8 +1275,49 @@ function renderAnalitica(data){
       <td style="width:140px;"><div style="background:var(--border);border-radius:4px;height:10px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:#A8706A;border-radius:4px;"></div></div></td></tr>`;
   }).join('') : '<tr class="empty"><td colspan="3">Sin datos en este período.</td></tr>';
 
+  renderInstagram(data.instagram, data.instagramError);
+
   const d=new Date(data.generatedAt||Date.now());
   document.getElementById('an-updated').textContent='Actualizado: '+d.toLocaleString('es-UY');
+}
+
+function renderInstagram(ig, igError){
+  const section=document.getElementById('an-ig-section');
+  const errEl=document.getElementById('an-ig-error');
+  if(!ig){
+    section.style.display='none';
+    if(igError){ errEl.style.display='block'; errEl.textContent='⚠️ Instagram: '+igError; }
+    else errEl.style.display='none';
+    return;
+  }
+  errEl.style.display='none';
+  section.style.display='block';
+  document.getElementById('an-ig-username').textContent='@'+(ig.profile?.username||'');
+
+  const k=ig.kpis||{};
+  const kpiDefs=[
+    { label:`Seguidores`, v:{current:ig.profile?.followersCount||0, pct:null} },
+    { label:`Alcance (${ig.trendDays} días)`, v:k.reach },
+    { label:`Visitas al perfil (${ig.trendDays} días)`, v:k.profileViews },
+    { label:`Cuentas con interacción (${ig.trendDays} días)`, v:k.accountsEngaged },
+    { label:`Clics al sitio web (${ig.trendDays} días)`, v:k.websiteClicks }
+  ];
+  document.getElementById('an-ig-kpis').innerHTML = kpiDefs.map(d=>
+    `<div class="stat"><div class="stat-n">${d.v?.current ?? 0}${d.v?.pct!==null?anTrendBadge(d.v?.pct||0):''}</div><div class="stat-l">${d.label}</div></div>`
+  ).join('');
+
+  const followersByWeek=ig.followersByWeek||[];
+  document.getElementById('an-ig-chart-followers').innerHTML = anLineChart(
+    followersByWeek.map(r=>({v:r.delta, label:'sem '+r.week})), '#E4405F'
+  );
+
+  const topMedia=ig.topMedia||[];
+  document.getElementById('an-ig-media-rows').innerHTML = topMedia.length ? topMedia.map(m=>{
+    const caption=(m.caption||'Sin descripción').slice(0,60)+((m.caption||'').length>60?'…':'');
+    const date=new Date(m.timestamp).toLocaleDateString('es-UY');
+    return `<tr><td><a href="${m.permalink}" target="_blank" rel="noopener" style="color:var(--rose-dark);">${caption}</a></td>
+      <td>${m.like_count??'—'}</td><td>${m.comments_count??'—'}</td><td>${date}</td></tr>`;
+  }).join('') : '<tr class="empty"><td colspan="4">Sin publicaciones en este período.</td></tr>';
 }
 
 // ── RESERVAS ──
