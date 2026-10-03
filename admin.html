@@ -583,7 +583,7 @@ tbody tr:hover td{background:var(--cream);}
       <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;margin:0">Agregar reserva manual</h3>
       <button onclick="closeManualBookingModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted)">×</button>
     </div>
-    <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:1.2rem">Para cargar una reserva que no se registró automáticamente (ej: pago confirmado en MercadoPago pero el sistema no la capturó).</p>
+    <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:1.2rem">Para una reserva que coordinaste por WhatsApp, o que no se registró automáticamente (ej: pago confirmado en MercadoPago pero el sistema no la capturó). Con nombre y email alcanza para que entre al seguimiento automático.</p>
     <div class="fg-row">
       <div class="fg"><label>Nombre completo</label><input id="mb-name" type="text" placeholder="Natalia Peña"></div>
       <div class="fg"><label>Email</label><input id="mb-email" type="email" placeholder="email@ejemplo.com"></div>
@@ -591,6 +591,16 @@ tbody tr:hover td{background:var(--cream);}
     <div class="fg-row">
       <div class="fg"><label>Teléfono (opcional)</label><input id="mb-phone" type="text" placeholder="099 712 691"></div>
       <div class="fg"><label>Servicio</label><input id="mb-svc" type="text" placeholder="Consulta de nutrición" value="Consulta de nutrición"></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Tipo</label>
+        <select id="mb-type">
+          <option value="nutricion">Nutrición</option>
+          <option value="masaje">Masaje</option>
+        </select>
+        <span style="font-size:.68rem;color:var(--text-muted);display:block;margin-top:.3rem">Define el seguimiento automático post-consulta (reseña, reagendar, cupón)</span>
+      </div>
+      <div></div>
     </div>
     <div class="fg-row">
       <div class="fg"><label>Fecha</label><input id="mb-date" type="date"></div>
@@ -1745,6 +1755,7 @@ async function submitManualBooking(){
   const email = document.getElementById('mb-email').value.trim();
   const phone = document.getElementById('mb-phone').value.trim();
   const svc = document.getElementById('mb-svc').value.trim() || 'Consulta de nutrición';
+  const type = document.getElementById('mb-type').value;
   const dateKey = document.getElementById('mb-date').value;
   const time = document.getElementById('mb-time').value;
   const modality = document.getElementById('mb-modality').value;
@@ -1773,7 +1784,7 @@ async function submitManualBooking(){
       body: JSON.stringify({
         dateKey, time,
         booking: {
-          svc, dur, name, email, phone, notes, modality,
+          svc, type, dur, name, email, phone, notes, modality,
           paid, paymentAmount: amount,
           dateStr,
           source: 'admin',

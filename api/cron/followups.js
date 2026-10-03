@@ -11,20 +11,23 @@ import { createOneTimeCoupon } from '../../lib/coupons.js';
 
 const DISCOUNT_VALUE = 15; // % del cupón de reactivación
 
-function daysSince(dateStr) {
-  if (!dateStr) return null;
-  const then = new Date(dateStr + 'T00:00:00Z').getTime();
+// dateKey = la clave ISO "YYYY-MM-DD" que indexa bookings[dateKey][time] —
+// NUNCA usar b.dateStr para esto: es un texto en español ("miércoles 15 de
+// octubre") pensado solo para mostrar, no para calcular fechas.
+function daysSince(dateKey) {
+  if (!dateKey) return null;
+  const then = new Date(dateKey + 'T00:00:00Z').getTime();
   if (Number.isNaN(then)) return null;
   const now = new Date();
   const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   return Math.round((todayUTC - then) / 86400000);
 }
 
-// ¿Esta paciente (por email) ya tiene otra reserva con fecha posterior a `afterDateStr`?
-function hasLaterBooking(bookings, email, afterDateStr) {
-  for (const slots of Object.values(bookings)) {
+// ¿Esta paciente (por email) ya tiene otra reserva con dateKey posterior a `afterDateKey`?
+function hasLaterBooking(bookings, email, afterDateKey) {
+  for (const [dateKey, slots] of Object.entries(bookings)) {
     for (const b of Object.values(slots)) {
-      if (b && b.email === email && b.dateStr && b.dateStr > afterDateStr) return true;
+      if (b && b.email === email && dateKey > afterDateKey) return true;
     }
   }
   return false;
@@ -42,10 +45,10 @@ export default async function handler(req, res) {
   const counts = { review: 0, checkin: 0, discount: 0, discountSkipped: 0 };
   const errors = [];
 
-  for (const slots of Object.values(bookings)) {
+  for (const [dateKey, slots] of Object.entries(bookings)) {
     for (const b of Object.values(slots)) {
-      if (!b || !b.paid || b.status !== 'confirmed' || !b.email || !b.dateStr) continue;
-      const d = daysSince(b.dateStr);
+      if (!b || !b.paid || b.status !== 'confirmed' || !b.email) continue;
+      const d = daysSince(dateKey);
       if (d === null) continue;
 
       try {
@@ -76,7 +79,7 @@ export default async function handler(req, res) {
 
           // Día +30 — cupón de reactivación, solo si no volvió a reservar
           if (d === 30 && !b.massageDiscountSent) {
-            if (hasLaterBooking(bookings, b.email, b.dateStr)) {
+            if (hasLaterBooking(bookings, b.email, dateKey)) {
               b.massageDiscountSent = true;
               b.massageDiscountSkipped = true;
               counts.discountSkipped++;
