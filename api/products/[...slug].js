@@ -17,7 +17,8 @@ import {
   getGuidePurchases, saveGuidePurchases,
   generateGuideDownloadToken, verifyGuideDownloadToken,
   sendGuideDeliveryEmail,
-  getCoupons, applyCoupon, incrementCouponUse
+  getCoupons, applyCoupon, incrementCouponUse,
+  getUsers, saveUsers
 } from '../../lib/auth.js';
 import { createPaypalOrder, capturePaypalOrder } from '../../lib/paypal.js';
 
@@ -117,6 +118,23 @@ export default async function handler(req, res) {
       purchases.unshift({ id: purchaseId, slug: product.slug, name, email, ts: now, source, paymentId: paymentId || null });
       if (purchases.length > 500) purchases.length = 500;
       await saveGuidePurchases(purchases);
+
+      // Combo guía + consulta: cada compra de la guía suma 1 crédito, canjeable
+      // por una consulta (vía "Agregar reserva manual" → "Descontar 1 crédito")
+      // para despejar dudas sobre cómo seguirla. Reusa el mismo sistema de
+      // créditos que ya usan las pacientes con plan — nada nuevo que mantener.
+      try {
+        const users = await getUsers();
+        const emailLower = String(email).toLowerCase();
+        const existing = users[emailLower] || { name, email, hasPass: false, credits: 0, bookings: [] };
+        existing.credits = (existing.credits || 0) + 1;
+        existing.name = existing.name || name;
+        existing.email = existing.email || email;
+        users[emailLower] = existing;
+        await saveUsers(users);
+      } catch (err) {
+        console.error('[finalizePurchase] no se pudo sumar crédito', err);
+      }
 
       const host = req.headers['x-forwarded-host'] || req.headers.host;
       const proto = req.headers['x-forwarded-proto'] || 'https';
