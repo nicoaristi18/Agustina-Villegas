@@ -42,7 +42,7 @@
 .rn-photo-badge img{ width:100%; height:100%; object-fit:cover; }
 
 /* ---- Tiers: guía vs. guía+plan ---- */
-.rn-tiers{ display:grid; grid-template-columns:1fr 1fr; gap:1.6rem; max-width:860px; margin:0 auto; align-items:stretch; }
+.rn-tiers{ display:grid; grid-template-columns:repeat(3,1fr); gap:1.4rem; max-width:1140px; margin:0 auto; align-items:stretch; }
 .rn-tier{
   background:var(--paper); border:1px solid var(--border); border-radius:24px;
   padding:2.2rem 2rem; display:flex; flex-direction:column;
@@ -242,19 +242,32 @@
     </div>
     <div class="rn-tiers">
       <div class="rn-tier rb-reveal d1">
-        <div class="rn-tier-name">Guía para runners</div>
+        <div class="rn-tier-name">Guía sola</div>
         <p class="rn-tier-sub">Para arrancar por tu cuenta, a tu ritmo</p>
         <div class="rn-tier-price"><span class="amt">$1.500</span><span class="cur">UYU</span></div>
         <ul class="rn-tier-list">
           <li>✓ PDF descargable de inmediato</li>
           <li>✓ Acceso de por vida, sin suscripción</li>
           <li>✓ Hecho por una nutricionista runner</li>
-          <li class="highlight">🎁 Incluye 1 consulta de regalo, para cuando te queden dudas de cómo aplicarla</li>
+          <li class="highlight">🎁 Incluye un cupón de 15% para tu próximo plan de seguimiento</li>
         </ul>
         <button class="rb-btn rb-btn-ghost" onclick="openPurchaseModal()" style="width:100%;justify-content:center;">Quiero la guía <span class="arr">→</span></button>
       </div>
 
-      <div class="rn-tier featured rb-reveal d2">
+      <div class="rn-tier rb-reveal d2">
+        <div class="rn-tier-name">Guía + consulta</div>
+        <p class="rn-tier-sub">Para despejar dudas de cómo aplicarla a tu caso</p>
+        <div class="rn-tier-price"><span class="amt">$2.000</span><span class="cur">UYU</span></div>
+        <div class="rn-tier-save">Ahorrás $300 vs. comprarlo por separado ($2.300)</div>
+        <ul class="rn-tier-list">
+          <li>✓ Todo lo de la guía</li>
+          <li>✓ Consulta de control con Agustina (45 min)</li>
+          <li>✓ Resolvés tus dudas puntuales</li>
+        </ul>
+        <a href="mi-cuenta.html?plan=Gu%C3%ADa%20%2B%20Consulta%20de%20control&credits=1&price=2000" class="rb-btn rb-btn-ghost" style="width:100%;justify-content:center;">Quiero este <span class="arr">→</span></a>
+      </div>
+
+      <div class="rn-tier featured rb-reveal d3">
         <div class="rn-tier-badge">Recomendado</div>
         <div class="rn-tier-name">Guía + seguimiento 4 meses</div>
         <p class="rn-tier-sub">Para ir en serio: plan armado 100% para vos</p>

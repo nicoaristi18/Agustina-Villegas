@@ -7,9 +7,11 @@ import {
   generateGuideDownloadToken, sendGuideDeliveryEmail
 } from '../../lib/auth.js';
 
-// Nombre exacto del plan combo (ver botón en runners.html) — si coincide,
-// además de activar los créditos se entrega la guía por mail.
-const COMBO_GUIDE_PLAN_NAME = 'Guía + Plan 4 meses';
+// Cualquier plan cuyo nombre empiece así es un combo "guía + algo" (ver
+// botones en runners.html) — además de activar los créditos, se entrega
+// la guía por mail. Prefijo, no nombre exacto, para no tocar este archivo
+// cada vez que se agregue un combo nuevo.
+const COMBO_GUIDE_PREFIX = 'Guía + ';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -138,7 +140,7 @@ async function handleConfirm(req, res) {
 
   // Combo guía + plan: además de los créditos, entregar la guía por mail.
   let guideDelivered = false;
-  if (ref.plan === COMBO_GUIDE_PLAN_NAME) {
+  if (String(ref.plan || '').startsWith(COMBO_GUIDE_PREFIX)) {
     try {
       const product = await getProductBySlug('runner-principiantes');
       if (product) {

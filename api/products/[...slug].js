@@ -17,10 +17,10 @@ import {
   getGuidePurchases, saveGuidePurchases,
   generateGuideDownloadToken, verifyGuideDownloadToken,
   sendGuideDeliveryEmail,
-  getCoupons, applyCoupon, incrementCouponUse,
-  getUsers, saveUsers
+  getCoupons, applyCoupon, incrementCouponUse
 } from '../../lib/auth.js';
 import { createPaypalOrder, capturePaypalOrder } from '../../lib/paypal.js';
+import { createOneTimeCoupon } from '../../lib/coupons.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -119,21 +119,14 @@ export default async function handler(req, res) {
       if (purchases.length > 500) purchases.length = 500;
       await saveGuidePurchases(purchases);
 
-      // Combo guía + consulta: cada compra de la guía suma 1 crédito, canjeable
-      // por una consulta (vía "Agregar reserva manual" → "Descontar 1 crédito")
-      // para despejar dudas sobre cómo seguirla. Reusa el mismo sistema de
-      // créditos que ya usan las pacientes con plan — nada nuevo que mantener.
+      // Regalo silencioso: cada compra de la guía sola suma un cupón de 15%
+      // para su próximo plan de seguimiento. Un solo uso, mismo sistema de
+      // cupones que ya usa el admin (ag:coupons).
+      let giftCouponCode = null;
       try {
-        const users = await getUsers();
-        const emailLower = String(email).toLowerCase();
-        const existing = users[emailLower] || { name, email, hasPass: false, credits: 0, bookings: [] };
-        existing.credits = (existing.credits || 0) + 1;
-        existing.name = existing.name || name;
-        existing.email = existing.email || email;
-        users[emailLower] = existing;
-        await saveUsers(users);
+        giftCouponCode = await createOneTimeCoupon({ prefix: 'GUIA', type: 'percent', value: 15, expiresInDays: 30 });
       } catch (err) {
-        console.error('[finalizePurchase] no se pudo sumar crédito', err);
+        console.error('[finalizePurchase] no se pudo generar el cupón de regalo', err);
       }
 
       const host = req.headers['x-forwarded-host'] || req.headers.host;
@@ -141,7 +134,7 @@ export default async function handler(req, res) {
       const downloadUrl = `${proto}://${host}/descarga-guia.html?token=${encodeURIComponent(token)}`;
 
       const emailResult = await sendGuideDeliveryEmail({
-        name, email, downloadUrl, productTitle: product.title
+        name, email, downloadUrl, productTitle: product.title, giftCouponCode
       });
       if (!emailResult.ok) console.error('[finalizePurchase] email fail', emailResult.error);
       return { ok: true, purchaseId, emailSent: emailResult.ok, downloadUrl };
