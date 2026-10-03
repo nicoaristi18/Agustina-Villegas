@@ -41,6 +41,33 @@
 .rn-photo-badge{ position:absolute; z-index:2; top:6%; right:-8%; width:96px; height:96px; border-radius:50%; overflow:hidden; border:4px solid var(--paper); box-shadow:var(--sh-md); animation:float 5s ease-in-out infinite; animation-delay:1.4s; pointer-events:none; }
 .rn-photo-badge img{ width:100%; height:100%; object-fit:cover; }
 
+/* ---- Tiers: guía vs. guía+plan ---- */
+.rn-tiers{ display:grid; grid-template-columns:1fr 1fr; gap:1.6rem; max-width:860px; margin:0 auto; align-items:stretch; }
+.rn-tier{
+  background:var(--paper); border:1px solid var(--border); border-radius:24px;
+  padding:2.2rem 2rem; display:flex; flex-direction:column;
+  box-shadow:var(--sh-sm); transition:transform .4s var(--spring), box-shadow .4s var(--smooth);
+}
+.rn-tier:hover{ transform:translateY(-4px); box-shadow:var(--sh-md); }
+.rn-tier.featured{ background:linear-gradient(165deg,var(--cream),var(--cream-deep)); border:1.5px solid var(--clay-deep); position:relative; }
+.rn-tier-badge{
+  position:absolute; top:-.8rem; left:50%; transform:translateX(-50%);
+  background:var(--clay-deep); color:var(--paper); font-size:.68rem; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase; padding:.4rem 1.1rem; border-radius:99px;
+  box-shadow:var(--sh-sm);
+}
+.rn-tier-name{ font-family:var(--font-display); font-size:1.3rem; font-weight:500; color:var(--forest2); margin-top:.4rem; }
+.rn-tier-sub{ font-size:.82rem; color:var(--text-muted); margin:.3rem 0 1.2rem; min-height:2.4em; }
+.rn-tier-price{ display:flex; align-items:baseline; gap:.35rem; margin-bottom:.2rem; }
+.rn-tier-price .amt{ font-family:var(--font-display); font-size:2.1rem; font-weight:400; color:var(--text); }
+.rn-tier-price .cur{ font-size:.78rem; color:var(--text-muted); }
+.rn-tier-save{ font-size:.76rem; color:var(--sage); font-weight:500; margin-bottom:1.3rem; }
+.rn-tier.featured .rn-tier-price{ margin-top:0; }
+.rn-tier:not(.featured) .rn-tier-price{ margin-bottom:1.5rem; }
+.rn-tier-list{ list-style:none; display:flex; flex-direction:column; gap:.65rem; margin-bottom:1.6rem; flex:1; }
+.rn-tier-list li{ font-size:.85rem; color:var(--text-mid); line-height:1.45; }
+.rn-tier-list li.highlight{ background:var(--sage-pale); border-radius:10px; padding:.6rem .7rem; margin-top:.2rem; color:var(--text); }
+
 /* ---- Para quién ---- */
 .rn-forwho-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1.8rem; }
 .rn-forwho-card{ border-radius:22px; padding:2.2rem 2rem; border:1px solid var(--border); background:var(--paper); transition:transform .5s var(--spring), box-shadow .5s var(--smooth); }
@@ -102,6 +129,7 @@
 @media (max-width:980px){
   .rn-hero-grid{ grid-template-columns:1fr; }
   .rn-hero{ padding-top:6.5rem; }
+  .rn-tiers{ grid-template-columns:1fr; max-width:26rem; }
   .rb-hero-media{ max-width:22rem; margin:2.5rem auto 3rem; }
   .rn-forwho-grid{ grid-template-columns:1fr; }
   .rn-author-card{ grid-template-columns:1fr; text-align:center; padding:2.6rem 1.8rem; }
@@ -186,7 +214,6 @@
           Hecho por una nutricionista runner
         </div>
       </div>
-      <p style="font-size:.78rem;color:var(--text-muted);margin-top:.9rem;">🎁 Tu compra incluye un crédito para una consulta, por si te quedan dudas de cómo aplicarla.</p>
     </div>
 
     <div class="rb-hero-media rb-reveal in d2">
@@ -206,17 +233,40 @@
   </div>
 </section>
 
-<!-- ===== COMBO GUÍA + PLAN ===== -->
+<!-- ===== TIERS: GUÍA vs. GUÍA + PLAN ===== -->
 <section class="rb-section" style="padding-top:0;">
   <div class="wrap">
-    <div class="rn-author-card rb-reveal" style="grid-template-columns:1fr;text-align:center;max-width:640px;">
-      <div class="rn-author-content">
-        <small>Para quien quiere ir más a fondo</small>
-        <h3>Guía + seguimiento personalizado</h3>
-        <p>Si además de la guía querés un plan armado 100% para vos, con primera consulta y seguimiento, llevate las dos cosas juntas: <strong>guía + Plan de 4 meses por $6.000</strong> (por separado salen $6.800).</p>
-        <div class="rb-hero-actions" style="justify-content:center;margin-top:1.2rem;">
-          <a href="mi-cuenta.html?plan=Gu%C3%ADa%20%2B%20Plan%204%20meses&credits=5&price=6000" class="rb-btn rb-btn-primary">Quiero el combo <span class="arr">→</span></a>
-        </div>
+    <div class="rb-section-head rb-reveal" style="max-width:34rem;margin:0 auto 2.4rem;text-align:center;">
+      <span class="rb-eyebrow" style="justify-content:center;">Elegí tu punto de partida</span>
+      <h2>¿Vas por tu cuenta <em>o con seguimiento?</em></h2>
+    </div>
+    <div class="rn-tiers">
+      <div class="rn-tier rb-reveal d1">
+        <div class="rn-tier-name">Guía para runners</div>
+        <p class="rn-tier-sub">Para arrancar por tu cuenta, a tu ritmo</p>
+        <div class="rn-tier-price"><span class="amt">$1.500</span><span class="cur">UYU</span></div>
+        <ul class="rn-tier-list">
+          <li>✓ PDF descargable de inmediato</li>
+          <li>✓ Acceso de por vida, sin suscripción</li>
+          <li>✓ Hecho por una nutricionista runner</li>
+          <li class="highlight">🎁 Incluye 1 consulta de regalo, para cuando te queden dudas de cómo aplicarla</li>
+        </ul>
+        <button class="rb-btn rb-btn-ghost" onclick="openPurchaseModal()" style="width:100%;justify-content:center;">Quiero la guía <span class="arr">→</span></button>
+      </div>
+
+      <div class="rn-tier featured rb-reveal d2">
+        <div class="rn-tier-badge">Recomendado</div>
+        <div class="rn-tier-name">Guía + seguimiento 4 meses</div>
+        <p class="rn-tier-sub">Para ir en serio: plan armado 100% para vos</p>
+        <div class="rn-tier-price"><span class="amt">$6.000</span><span class="cur">UYU</span></div>
+        <div class="rn-tier-save">Ahorrás $800 vs. comprarlo por separado ($6.800)</div>
+        <ul class="rn-tier-list">
+          <li>✓ Todo lo de la guía</li>
+          <li>✓ Primera consulta nutricional</li>
+          <li>✓ Plan de alimentación de 4 meses</li>
+          <li>✓ 5 créditos de consulta de control</li>
+        </ul>
+        <a href="mi-cuenta.html?plan=Gu%C3%ADa%20%2B%20Plan%204%20meses&credits=5&price=6000" class="rb-btn rb-btn-primary" style="width:100%;justify-content:center;">Quiero el combo <span class="arr">→</span></a>
       </div>
     </div>
   </div>
