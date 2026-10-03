@@ -8,5 +8,8 @@
       "destination": "https://www.nutricionistaagustinavillegas.com/:path*",
       "permanent": true
     }
+  ],
+  "crons": [
+    { "path": "/api/cron/followups", "schedule": "0 13 * * *" }
   ]
 }
