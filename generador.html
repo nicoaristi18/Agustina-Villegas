@@ -2538,6 +2538,31 @@ setInterval(function() {
   if (val('plan-nombre')) _autoSaveLocal();
 }, 90000);
 
+/* Auto-save de "Sin plan" — misma lógica que el plan de alimentación */
+function _autoSaveSpLocal() {
+  try {
+    if (!val('sp-nombre')) return;
+    var snap = collectSpData();
+    var now = new Date();
+    snap._name = (val('sp-nombre')||'Sin nombre') + ' — autoguardado ' + now.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' + now.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'});
+    snap._ts = now.toISOString(); snap._auto = true;
+    snap._id = 'auto_sp_' + (val('sp-nombre')||'noname').replace(/\s+/g,'_');
+    var arr = JSON.parse(localStorage.getItem('ag_plan_saves')||'[]');
+    // Reemplazar el autoguardado anterior del mismo paciente (no acumular)
+    arr = arr.filter(function(s){ return !(s._auto && s._id === snap._id); });
+    arr.unshift(snap);
+    arr = capSavesByType(arr);
+    localStorage.setItem('ag_plan_saves', JSON.stringify(arr));
+  } catch(e) {}
+}
+window.addEventListener('beforeunload', _autoSaveSpLocal);
+window.addEventListener('pagehide', _autoSaveSpLocal); // iOS Safari: pagehide es más confiable que beforeunload
+
+/* Auto-save periódico cada 90s → protege contra cierres bruscos en iPad */
+setInterval(function() {
+  if (val('sp-nombre')) _autoSaveSpLocal();
+}, 90000);
+
 function collectPlanData() {
   return {
     nombre:val('plan-nombre'), fecha:val('plan-fecha'),
