@@ -224,6 +224,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 .porc-card{border:1px solid var(--border);border-radius:9px;margin-bottom:.55rem;overflow:hidden;}
 .porc-head{background:var(--cream);padding:.4rem .7rem;display:flex;align-items:center;gap:.4rem;}
 .porc-name-inp{flex:1;border:none;background:transparent;font-size:.77rem;font-weight:500;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;}
+.ord-row{display:flex;align-items:center;gap:.5rem;padding:.42rem .65rem;border:1px solid var(--border);border-radius:8px;margin-bottom:.35rem;background:#fff;}
+.ord-label{flex:1;min-width:0;font-size:.76rem;color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ord-badge{font-size:.6rem;color:var(--text-muted);background:var(--blush);padding:.1rem .4rem;border-radius:20px;flex:none;}
+.ord-btns{display:flex;gap:.2rem;flex:none;}
+.ord-btn{background:none;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;font-size:.68rem;padding:.14rem .42rem;border-radius:5px;line-height:1.3;transition:all .18s;}
+.ord-btn:hover:not(:disabled){background:var(--blush);color:var(--rose-dark);border-color:var(--rose);}
+.ord-btn:disabled{opacity:.3;cursor:not-allowed;}
 
 /* CRUDO ROW */
 .crudo-row{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:.38rem;align-items:center;margin-bottom:.38rem;}
@@ -324,6 +331,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
 .plate-quarter.plate-prot{background:#E0B9B4;}
 .plate-quarter.plate-prot span{color:#7A342C;}
 .plate-caption{text-align:center;font-size:9px;color:#8C7E78;letter-spacing:.04em;margin-bottom:26px;}
+.macro-pie-wrap{display:flex;align-items:center;justify-content:center;gap:26px;margin:6px auto 26px;}
+.macro-pie{width:170px;height:170px;min-width:170px;border-radius:50%;box-shadow:0 2px 10px rgba(0,0,0,.14);border:1px solid rgba(169,138,130,.25);}
+.macro-pie-legend{display:flex;flex-direction:column;gap:7px;}
+.macro-pie-legend .pl-item{display:flex;align-items:center;gap:8px;font-size:9.5px;font-weight:500;letter-spacing:.03em;text-transform:uppercase;color:#2A2118;}
+.macro-pie-legend .pl-dot{width:10px;height:10px;border-radius:50%;flex:none;}
+.macro-pie-legend .pl-pct{font-weight:700;margin-left:auto;padding-left:14px;color:#8C7E78;}
 .plato-ejemplos{display:flex;flex-direction:column;gap:8px;}
 .plato-ejemplo-card{background:#fff;border:1px solid rgba(169,138,130,.18);border-radius:8px;padding:11px 14px;display:flex;align-items:baseline;gap:10px;}
 .plato-ejemplo-title{font-family:'Cormorant Garamond',serif;font-size:13px;color:#A8706A;font-weight:500;flex-shrink:0;min-width:56px;}
@@ -586,6 +599,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream2);color:var(--text)
         <button class="sb-btn danger" onclick="deleteSpSnapshot()">Borrar</button>
       </div>
       <div id="sp-save-status" style="font-size:.75rem;font-weight:500;color:var(--rose-dark);display:none;padding:.3rem .5rem;background:rgba(168,112,106,.1);border-radius:6px;text-align:center"></div>
+    </div>
+    <div class="fsec">
+      <div class="fsec-title">Orden de p&aacute;ginas</div>
+      <p style="font-size:.7rem;color:var(--text-muted);margin-bottom:.7rem">Las secciones fijas (Devoluci&oacute;n, Macronutrientes, Plato completo, Organizaci&oacute;n semanal, Hidrataci&oacute;n, Ejercicio) se pueden reordenar. Los bloques adicionales tambi&eacute;n se pueden ubicar donde quieras o eliminar. Las secciones vac&iacute;as no aparecen en el PDF aunque sigan en la lista.</p>
+      <div id="sp-order-list"></div>
     </div>
     <div class="fsec">
       <div class="fsec-title">Datos del documento</div>
@@ -1766,27 +1784,34 @@ var MACRO_DEFAULT_IMGS = {
 
 /* MACRONUTRIENTES 4 PAGES */
 var DEF_MACROS4 = [
-  { key:'prot', label:'PROTEÍNAS', s2on:true, imgs:['','','',''],
+  { key:'prot', label:'PROTEÍNAS', s2on:true, imgs:['','','',''], pct:20,
     desc:'Las proteínas son esenciales para la construcción y reparación de tejidos, síntesis de enzimas y hormonas, y mantenimiento del sistema inmune.',
     s1t:'Proteínas animales', s1s:'Carnes magras, pollo sin piel, pescado, huevos, lácteos descremados', s1i:'',
     s2t:'Proteínas vegetales', s2s:'Legumbres, tofu, tempeh, semillas, frutos secos', s2i:'' },
-  { key:'gras', label:'GRASAS', s2on:true, imgs:['','','',''],
+  { key:'gras', label:'GRASAS', s2on:true, imgs:['','','',''], pct:20,
     desc:'Las grasas son fuente de energía concentrada, forman parte de las membranas celulares y permiten la absorción de vitaminas liposolubles A, D, E y K.',
     s1t:'Grasas saludables', s1s:'Palta, aceite de oliva, frutos secos, semillas, pescados grasos', s1i:'',
     s2t:'Grasas a limitar', s2s:'Grasas trans, frituras, productos ultraprocesados, embutidos grasos', s2i:'' },
-  { key:'carb', label:'CARBOHIDRATOS', s2on:true, imgs:['','','',''],
+  { key:'carb', label:'CARBOHIDRATOS', s2on:true, imgs:['','','',''], pct:45,
     desc:'Los carbohidratos son la principal fuente de energía del organismo, especialmente para el cerebro y el sistema nervioso.',
     s1t:'Carbohidratos complejos', s1s:'Arroz integral, avena, legumbres, pan integral, papa, batata', s1i:'',
     s2t:'Carbohidratos simples', s2s:'Frutas, miel (con moderación), azúcar natural de la fruta', s2i:'' },
-  { key:'fibr', label:'FIBRA', s2on:true, imgs:['','','',''],
+  { key:'fibr', label:'FIBRA', s2on:true, imgs:['','','',''], pct:15,
     desc:'La fibra regula el tránsito intestinal, controla el colesterol y la glucemia, y favorece la saciedad prolongada.',
     s1t:'Fibra soluble', s1s:'Avena, manzana, pera, legumbres, zanahoria, semillas de chía', s1i:'',
     s2t:'Fibra insoluble', s2s:'Salvado de trigo, vegetales de hoja, semillas de lino, nueces', s2i:'' }
 ];
-var macros4 = DEF_MACROS4.map(function(m){ return {key:m.key,label:m.label,s2on:m.s2on,imgs:m.imgs.slice(),desc:m.desc,s1t:m.s1t,s1s:m.s1s,s1i:m.s1i,s2t:m.s2t,s2s:m.s2s,s2i:m.s2i}; });
+/* Colores del gráfico de torta de macros (Sin plan), uno por macro key */
+var MACRO_PIE_COLORS = {
+  prot: { bg:'#E0B9B4', text:'#7A342C' },
+  gras: { bg:'#E6D2A8', text:'#6B4F1E' },
+  carb: { bg:'#E8D5C4', text:'#7A5A34' },
+  fibr: { bg:'#C9DFC0', text:'#3A5A34' }
+};
+var macros4 = DEF_MACROS4.map(function(m){ return {key:m.key,label:m.label,s2on:m.s2on,imgs:m.imgs.slice(),pct:m.pct,desc:m.desc,s1t:m.s1t,s1s:m.s1s,s1i:m.s1i,s2t:m.s2t,s2s:m.s2s,s2i:m.s2i}; });
 
 /* MACRONUTRIENTES — copia independiente para la solapa "Sin plan" */
-var spMacros4 = DEF_MACROS4.map(function(m){ return {key:m.key,label:m.label,s2on:m.s2on,imgs:m.imgs.slice(),desc:m.desc,s1t:m.s1t,s1s:m.s1s,s1i:m.s1i,s2t:m.s2t,s2s:m.s2s,s2i:m.s2i}; });
+var spMacros4 = DEF_MACROS4.map(function(m){ return {key:m.key,label:m.label,s2on:m.s2on,imgs:m.imgs.slice(),pct:m.pct,desc:m.desc,s1t:m.s1t,s1s:m.s1s,s1i:m.s1i,s2t:m.s2t,s2s:m.s2s,s2i:m.s2i}; });
 
 function renderMacros4Form() {
   var el = $('macros4-list');
@@ -1878,9 +1903,10 @@ function renderMacros4FormSp() {
     return '<div class="rcard" style="margin-bottom:.65rem">' +
       '<div class="rcard-head" onclick="toggleCard(\'mc4sp-' + i + '\')">' +
       '<span class="rcard-title">' + m.label + '</span>' +
-      '<span class="rcard-badge">Página ' + (i+1) + '</span>' +
+      '<span class="rcard-badge">Página ' + (i+1) + ' · ' + (m.pct!=null?m.pct:0) + '%</span>' +
       '</div>' +
       '<div class="rcard-body" id="mc4sp-' + i + '" style="display:none">' +
+      '<div class="fg"><label>Porcentaje en el gr&aacute;fico de plato completo</label><input type="number" min="0" max="100" step="1" value="' + (m.pct!=null?m.pct:0) + '" oninput="syncMacro4Sp(' + i + ',\'pct\',Math.max(0,Math.min(100,parseFloat(this.value)||0)))"></div>' +
       '<div class="fg"><label>Descripción</label><textarea rows="3" oninput="syncMacro4Sp(' + i + ',\'desc\',this.value)">' + esc(m.desc) + '</textarea></div>' +
       '<div style="border:1px solid var(--border);border-radius:8px;padding:.6rem .7rem;margin-bottom:.6rem">' +
       '<div style="font-size:.6rem;letter-spacing:.07em;text-transform:uppercase;color:var(--rose-dark);margin-bottom:.4rem">Bloque 1</div>' +
@@ -1934,26 +1960,82 @@ function setMacroImgSp(mi, ji, inp) {
   r.readAsDataURL(f);
 }
 
+/* ORDEN DE PÁGINAS ("Sin plan") — lista única que define en qué orden se arma el
+   documento. Las claves fijas nunca se borran (si están vacías, simplemente no
+   aparecen en el PDF); los bloques adicionales sí se pueden borrar y se pueden
+   ubicar en cualquier posición de la lista. */
+var SP_FIXED_ORDER_LABELS = {
+  devolucion: 'Devolución de consulta',
+  macros: 'Macronutrientes (4 páginas)',
+  plato: 'Cómo armar un plato completo',
+  orgsem: 'Organización semanal',
+  hidratacion: 'Hidratación',
+  ejercicio: 'Ejercicio físico'
+};
+var spOrder = ['devolucion', 'macros', 'plato', 'orgsem', 'hidratacion', 'ejercicio'];
+
+function spOrderLabel(key) {
+  if (SP_FIXED_ORDER_LABELS[key]) return SP_FIXED_ORDER_LABELS[key];
+  if (key.indexOf('bloque-') === 0) {
+    var id = parseInt(key.slice(7), 10);
+    var b = spBloques.find(function(b){ return b.id === id; });
+    return b && b.titulo && b.titulo.trim() ? b.titulo.trim() : 'Bloque adicional sin título';
+  }
+  return key;
+}
+
+function moveSpOrder(key, dir) {
+  var i = spOrder.indexOf(key);
+  if (i < 0) return;
+  var j = i + dir;
+  if (j < 0 || j >= spOrder.length) return;
+  var tmp = spOrder[i]; spOrder[i] = spOrder[j]; spOrder[j] = tmp;
+  renderSpOrderList();
+  upSp();
+}
+
+function renderSpOrderList() {
+  var el = $('sp-order-list');
+  if (!el) return;
+  el.innerHTML = spOrder.map(function(key, i) {
+    var isBloque = key.indexOf('bloque-') === 0;
+    return '<div class="ord-row">' +
+      '<span class="ord-label">' + esc(spOrderLabel(key)) + '</span>' +
+      '<span class="ord-badge">' + (isBloque ? 'bloque' : 'fija') + '</span>' +
+      '<div class="ord-btns">' +
+      '<button class="ord-btn" title="Subir" onclick="moveSpOrder(\'' + key + '\',-1)"' + (i===0?' disabled':'') + '>&#8593;</button>' +
+      '<button class="ord-btn" title="Bajar" onclick="moveSpOrder(\'' + key + '\',1)"' + (i===spOrder.length-1?' disabled':'') + '>&#8595;</button>' +
+      (isBloque ? '<button class="ord-btn" title="Eliminar" onclick="removeSpBloque(' + key.slice(7) + ')">&#x2715;</button>' : '') +
+      '</div></div>';
+  }).join('');
+}
+
 /* BLOQUES ADICIONALES ("Sin plan") — cada uno ocupa una página propia (título + texto),
-   se pueden agregar tantos como se necesite */
+   se pueden agregar tantos como se necesite, en cualquier posición del documento */
 var spBloques = [];
 var spBloqueCtr = 0;
 
 function addSpBloque() {
-  spBloques.push({id: ++spBloqueCtr, titulo: '', texto: ''});
+  var id = ++spBloqueCtr;
+  spBloques.push({id: id, titulo: '', texto: ''});
+  spOrder.push('bloque-' + id);
   renderSpBloquesForm();
+  renderSpOrderList();
   upSp();
 }
 
 function removeSpBloque(id) {
   spBloques = spBloques.filter(function(b){ return b.id !== id; });
+  spOrder = spOrder.filter(function(k){ return k !== 'bloque-' + id; });
   renderSpBloquesForm();
+  renderSpOrderList();
   upSp();
 }
 
 function syncSpBloque(id, f, v) {
   var b = spBloques.find(function(b){ return b.id === id; });
   if (b) b[f] = v;
+  if (f === 'titulo') renderSpOrderList();
   upSp();
 }
 
@@ -2829,13 +2911,20 @@ function buildSinPlanDoc() {
       '</div>';
   }).join('');
 
+  var SIG = '{{SP_SIG}}';
+  var logo = getLogo();
+  var sigBlock = logo
+    ? '<div class="doc-sig"><img class="sig-logo-img" src="'+logo+'" alt="Agustina Villegas"></div>'
+    : '<div class="doc-sig"><div class="sig-name">Lic. Agustina Villegas</div><div class="sig-role">Nutricionista</div></div>';
+
   var devolucionPg = devolucion ? '<div class="doc-page" style="background:#FAF8F4">'+
     pgHdr('Devolución de consulta', nombre)+
     '<div class="sec-label first">Devolución de consulta</div>'+
     '<div class="recs-text">'+esc(devolucion)+'</div>'+
+    SIG+
     '</div>' : '';
 
-  /* Plato completo */
+  /* Plato completo — gráfico de torta armado con el % que Agustina carga en cada macro */
   var platoIntro = val('sp-plato-intro');
   var platos = [
     {t:'Plato 1', d: val('sp-plato1')},
@@ -2844,14 +2933,28 @@ function buildSinPlanDoc() {
   ].filter(function(p){ return p.d && p.d.trim(); });
   var platosNota = val('sp-platos-nota');
 
-  var plateDiagram = '<div class="plate-diagram">' +
-      '<div class="plate-half"><span>Verduras y vegetales</span></div>' +
-      '<div class="plate-quarters">' +
-        '<div class="plate-quarter plate-carb"><span>Carbohidratos</span></div>' +
-        '<div class="plate-quarter plate-prot"><span>Proteínas</span></div>' +
-      '</div>' +
-    '</div>' +
-    '<div class="plate-caption">¼ carbohidratos &middot; ¼ proteínas &middot; ½ verduras y vegetales</div>';
+  var pieTotal = spMacros4.reduce(function(s,m){ return s + (parseFloat(m.pct)||0); }, 0);
+  var pieAcc = 0;
+  var pieStops = spMacros4.map(function(m) {
+    var pct = parseFloat(m.pct) || 0;
+    var color = (MACRO_PIE_COLORS[m.key] || {}).bg || '#E8D5C4';
+    var from = pieTotal > 0 ? (pieAcc / pieTotal * 360) : 0;
+    pieAcc += pct;
+    var to = pieTotal > 0 ? (pieAcc / pieTotal * 360) : 0;
+    return color + ' ' + from.toFixed(2) + 'deg ' + to.toFixed(2) + 'deg';
+  }).join(', ');
+  var pieLegend = spMacros4.map(function(m) {
+    var color = (MACRO_PIE_COLORS[m.key] || {}).bg || '#E8D5C4';
+    var pct = parseFloat(m.pct) || 0;
+    return '<div class="pl-item"><span class="pl-dot" style="background:'+color+'"></span>'+esc(m.label)+'<span class="pl-pct">'+pct+'%</span></div>';
+  }).join('');
+
+  var plateDiagram = pieTotal > 0
+    ? '<div class="macro-pie-wrap">' +
+        '<div class="macro-pie" style="background:conic-gradient(' + pieStops + ')"></div>' +
+        '<div class="macro-pie-legend">' + pieLegend + '</div>' +
+      '</div>'
+    : '';
 
   var platoPg = '<div class="doc-page" style="background:#FAF8F4">' +
     pgHdr('Cómo armar un plato completo', nombre) +
@@ -2870,6 +2973,7 @@ function buildSinPlanDoc() {
     pgHdr('Organización semanal', nombre)+
     '<div class="sec-label first">Organización semanal</div>'+
     '<div class="recs-text">'+esc(orgSemText)+'</div>'+
+    SIG+
     '</div>' : '';
 
   var hidratacionText = val('sp-hidratacion');
@@ -2877,44 +2981,54 @@ function buildSinPlanDoc() {
     pgHdr('Hidratación', nombre)+
     '<div class="sec-label first">Hidratación</div>'+
     '<div class="recs-text">'+esc(hidratacionText)+'</div>'+
+    SIG+
     '</div>' : '';
 
   var ejercicioText = val('sp-ejercicio');
-  var logo = getLogo();
-  var sigBlock = logo
-    ? '<div class="doc-sig"><img class="sig-logo-img" src="'+logo+'" alt="Agustina Villegas"></div>'
-    : '<div class="doc-sig"><div class="sig-name">Lic. Agustina Villegas</div><div class="sig-role">Nutricionista</div></div>';
-
-  /* Bloques adicionales — título + texto libre, uno por página, cantidad variable */
-  var bloquesArr = spBloques.filter(function(b){ return (b.titulo && b.titulo.trim()) || (b.texto && b.texto.trim()); });
-  var hasBloques = bloquesArr.length > 0;
-
   var ejercicioPg = ejercicioText ? '<div class="doc-page" style="background:#FAF8F4">'+
     pgHdr('Ejercicio físico', nombre)+
     '<div class="sec-label first">Ejercicio físico</div>'+
     '<div class="recs-text">'+esc(ejercicioText)+'</div>'+
-    (hasBloques ? '' : sigBlock)+
+    SIG+
     '</div>' : '';
 
-  var bloquesPgs = bloquesArr.map(function(b, i) {
-    var isLast = i === bloquesArr.length - 1;
-    return '<div class="doc-page" style="background:#FAF8F4">'+
+  /* Bloques adicionales — título + texto libre, uno por página, cantidad variable,
+     ubicables en cualquier posición del documento vía spOrder */
+  var bloquesArr = spBloques.filter(function(b){ return (b.titulo && b.titulo.trim()) || (b.texto && b.texto.trim()); });
+  var bloquesMap = {};
+  bloquesArr.forEach(function(b) {
+    bloquesMap['bloque-' + b.id] = '<div class="doc-page" style="background:#FAF8F4">'+
       pgHdr('Información adicional', nombre)+
       '<div class="sec-label first">'+esc(b.titulo||'Información adicional')+'</div>'+
       '<div class="recs-text">'+esc(b.texto)+'</div>'+
-      (isLast ? sigBlock : '')+
+      SIG+
       '</div>';
+  });
+
+  /* Ensamblado según el orden definido en spOrder (reordenable desde la UI) */
+  var pagesMap = {
+    devolucion: devolucionPg,
+    macros: macrosPgs,
+    plato: platoPg,
+    orgsem: orgSemPg,
+    hidratacion: hidratacionPg,
+    ejercicio: ejercicioPg
+  };
+  Object.keys(bloquesMap).forEach(function(k){ pagesMap[k] = bloquesMap[k]; });
+
+  var orderedKeys = spOrder.filter(function(k){ return pagesMap[k]; });
+  /* La firma va en la última página "de texto libre" del documento, sea cual sea su orden */
+  var sigTarget = null;
+  for (var i = orderedKeys.length - 1; i >= 0; i--) {
+    if (pagesMap[orderedKeys[i]].indexOf(SIG) !== -1) { sigTarget = orderedKeys[i]; break; }
+  }
+  var bodyHtml = orderedKeys.map(function(k) {
+    return pagesMap[k].split(SIG).join(k === sigTarget ? sigBlock : '');
   }).join('');
 
   return '<div class="ag-doc" id="doc-sinplan">' +
     buildCover('Devolución de\nconsulta', nombre, fecha, 'gen_cv_sp', '') +
-    devolucionPg +
-    macrosPgs +
-    platoPg +
-    orgSemPg +
-    hidratacionPg +
-    ejercicioPg +
-    bloquesPgs +
+    bodyHtml +
     '</div>';
 }
 
@@ -2951,7 +3065,8 @@ function collectSpData() {
     orgsem: val('sp-orgsem'),
     hidratacion: val('sp-hidratacion'),
     ejercicio: val('sp-ejercicio'),
-    bloques: JSON.parse(JSON.stringify(spBloques))
+    bloques: JSON.parse(JSON.stringify(spBloques)),
+    order: spOrder.slice()
   };
 }
 
@@ -2976,6 +3091,20 @@ function applySpData(d) {
   var maxBloqueId = spBloques.reduce(function(m,b){ return Math.max(m, b.id||0); }, 0);
   spBloqueCtr = Math.max(spBloqueCtr, maxBloqueId);
   renderSpBloquesForm();
+
+  /* Orden de páginas: si el guardado es viejo (sin "order"), arma el orden por
+     defecto + los bloques al final, igual que el comportamiento anterior */
+  if (Array.isArray(d.order) && d.order.length) {
+    var bloqueIds = spBloques.map(function(b){ return 'bloque-' + b.id; });
+    var fixedKeys = Object.keys(SP_FIXED_ORDER_LABELS);
+    spOrder = d.order.filter(function(k){ return fixedKeys.indexOf(k) !== -1 || bloqueIds.indexOf(k) !== -1; });
+    fixedKeys.forEach(function(k){ if (spOrder.indexOf(k) === -1) spOrder.push(k); });
+    bloqueIds.forEach(function(k){ if (spOrder.indexOf(k) === -1) spOrder.push(k); });
+  } else {
+    spOrder = ['devolucion', 'macros', 'plato', 'orgsem', 'hidratacion', 'ejercicio']
+      .concat(spBloques.map(function(b){ return 'bloque-' + b.id; }));
+  }
+  renderSpOrderList();
 }
 
 function showSpSaveStatus(msg, isErr) {
@@ -4216,6 +4345,7 @@ document.addEventListener('DOMContentLoaded', function() {
   renderMacros4Form();
   renderMacros4FormSp();
   renderSpBloquesForm();
+  renderSpOrderList();
   initPorcs();
   initCrudos();
   renderIdeasForm();
