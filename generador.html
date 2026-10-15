@@ -1808,6 +1808,19 @@ var MACRO_PIE_COLORS = {
   carb: { bg:'#E8D5C4', text:'#7A5A34' },
   fibr: { bg:'#C9DFC0', text:'#3A5A34' }
 };
+/* Arcos de torta como SVG (no CSS conic-gradient): html2canvas no soporta
+   conic-gradient y deja el círculo vacío al exportar el PDF. */
+function piePolarToXY(cx, cy, r, angleDeg) {
+  var rad = (angleDeg - 90) * Math.PI / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+function pieSliceArcPath(cx, cy, r, startAngle, endAngle) {
+  var start = piePolarToXY(cx, cy, r, endAngle);
+  var end = piePolarToXY(cx, cy, r, startAngle);
+  var largeArcFlag = (endAngle - startAngle) <= 180 ? '0' : '1';
+  return ['M', cx, cy, 'L', start.x.toFixed(2), start.y.toFixed(2),
+    'A', r, r, 0, largeArcFlag, 0, end.x.toFixed(2), end.y.toFixed(2), 'Z'].join(' ');
+}
 var macros4 = DEF_MACROS4.map(function(m){ return {key:m.key,label:m.label,s2on:m.s2on,imgs:m.imgs.slice(),pct:m.pct,desc:m.desc,s1t:m.s1t,s1s:m.s1s,s1i:m.s1i,s2t:m.s2t,s2s:m.s2s,s2i:m.s2i}; });
 
 /* MACRONUTRIENTES — copia independiente para la solapa "Sin plan" */
@@ -2959,15 +2972,24 @@ function buildSinPlanDoc() {
   var platosNota = val('sp-platos-nota');
 
   var pieTotal = spMacros4.reduce(function(s,m){ return s + (parseFloat(m.pct)||0); }, 0);
-  var pieAcc = 0;
-  var pieStops = spMacros4.map(function(m) {
-    var pct = parseFloat(m.pct) || 0;
-    var color = (MACRO_PIE_COLORS[m.key] || {}).bg || '#E8D5C4';
-    var from = pieTotal > 0 ? (pieAcc / pieTotal * 360) : 0;
-    pieAcc += pct;
-    var to = pieTotal > 0 ? (pieAcc / pieTotal * 360) : 0;
-    return color + ' ' + from.toFixed(2) + 'deg ' + to.toFixed(2) + 'deg';
-  }).join(', ');
+  var pieNonZero = spMacros4.filter(function(m){ return (parseFloat(m.pct)||0) > 0; });
+  var PIE_CX = 85, PIE_CY = 85, PIE_R = 85;
+  var pieSlicesSvg = '';
+  if (pieTotal > 0 && pieNonZero.length === 1) {
+    var onlyColor = (MACRO_PIE_COLORS[pieNonZero[0].key] || {}).bg || '#E8D5C4';
+    pieSlicesSvg = '<circle cx="'+PIE_CX+'" cy="'+PIE_CY+'" r="'+PIE_R+'" fill="'+onlyColor+'"/>';
+  } else if (pieTotal > 0) {
+    var pieAcc = 0;
+    pieSlicesSvg = spMacros4.map(function(m) {
+      var pct = parseFloat(m.pct) || 0;
+      if (pct <= 0) return '';
+      var color = (MACRO_PIE_COLORS[m.key] || {}).bg || '#E8D5C4';
+      var from = pieAcc / pieTotal * 360;
+      pieAcc += pct;
+      var to = pieAcc / pieTotal * 360;
+      return '<path d="'+pieSliceArcPath(PIE_CX, PIE_CY, PIE_R, from, to)+'" fill="'+color+'"/>';
+    }).join('');
+  }
   var pieLegend = spMacros4.map(function(m) {
     var color = (MACRO_PIE_COLORS[m.key] || {}).bg || '#E8D5C4';
     var pct = parseFloat(m.pct) || 0;
@@ -2976,7 +2998,7 @@ function buildSinPlanDoc() {
 
   var plateDiagram = pieTotal > 0
     ? '<div class="macro-pie-wrap">' +
-        '<div class="macro-pie" style="background:conic-gradient(' + pieStops + ')"></div>' +
+        '<svg class="macro-pie" width="170" height="170" viewBox="0 0 170 170">' + pieSlicesSvg + '</svg>' +
         '<div class="macro-pie-legend">' + pieLegend + '</div>' +
       '</div>'
     : '';
@@ -3367,10 +3389,11 @@ async function dlPDF(docId, filename, btnId) {
 
     var pdfPageCount = 0;
     var isRunDoc = (docId === 'doc-run');
-    // Aplicamos la compresión tolerante también a Recomendados del súper
-    // para que la página de categorías no se corte a mitad de contenido
-    // cuando hay muchos productos.
-    var isCompressibleDoc = isRunDoc || (docId === 'doc-sup');
+    // Aplicamos la compresión tolerante también a Recomendados del súper y a
+    // Sin plan, para que una sección de texto libre (devolución, ejercicio,
+    // bloques adicionales, etc.) que se pasa un poco de una página no corte
+    // el texto a mitad de línea.
+    var isCompressibleDoc = isRunDoc || docId === 'doc-sup' || docId === 'doc-sinplan';
     for (var i = 0; i < pageEls.length; i++) {
       var pageEl = pageEls[i];
       var isMacroPg = pageEl.classList.contains('macro-pg');
