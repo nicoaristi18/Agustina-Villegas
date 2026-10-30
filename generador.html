@@ -3444,9 +3444,17 @@ async function dlPDF(docId, filename, btnId) {
       // hasta 35% de la altura de página, lo aplastamos en 1 página en vez
       // de dividir (evita páginas casi vacías y cortes a mitad de contenido).
       var COMPRESS_MAX = 1.35;
+      // Para el resto de los docs (plan, recetario): si la página se pasa
+      // apenas (hasta 10%), también la aplastamos en 1 hoja. Evita que unos
+      // pocos px sobrantes (ej. Porciones e intercambios) generen una página
+      // casi en blanco.
+      var SMALL_OVERFLOW_MAX = 1.10;
       var numSlices;
+      var squeezeOne = false;
       if (isCompressibleDoc && canvasH <= pageHpx * COMPRESS_MAX) {
-        numSlices = 1;
+        numSlices = 1; squeezeOne = true;
+      } else if (canvasH <= pageHpx * SMALL_OVERFLOW_MAX) {
+        numSlices = 1; squeezeOne = true;
       } else {
         numSlices = Math.ceil(canvasH / pageHpx);
       }
@@ -3458,7 +3466,7 @@ async function dlPDF(docId, filename, btnId) {
         var srcY = s * pageHpx;
         var sliceH = Math.min(pageHpx, canvasH - srcY);
 
-        if (isCompressibleDoc && numSlices === 1) {
+        if (squeezeOne) {
           // Path especial: comprimimos verticalmente si hace falta
           var sub0 = document.createElement('canvas');
           sub0.width = canvasW; sub0.height = pageHpx;
