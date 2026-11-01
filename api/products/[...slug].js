@@ -14,13 +14,13 @@
 import {
   getProducts, saveProducts, getProductBySlug, scrubProductForPublic,
   getAdminFromRequest, readJsonBody,
-  getGuidePurchases, saveGuidePurchases,
-  generateGuideDownloadToken, verifyGuideDownloadToken,
-  sendGuideDeliveryEmail,
-  getCoupons, applyCoupon, incrementCouponUse
+  getGuidePurchases, verifyGuideDownloadToken,
+  getCoupons, applyCoupon
 } from '../../lib/auth.js';
 import { createPaypalOrder, capturePaypalOrder } from '../../lib/paypal.js';
-import { createOneTimeCoupon } from '../../lib/coupons.js';
+import {
+  siteUrl, fetchMpPayment, listMpGuidePayments, deliverGuide, deliverGuideFromMpPayment
+} from '../../lib/guide-sales.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -104,40 +104,13 @@ export default async function handler(req, res) {
       return product;
     }
 
-    // Registra la compra en KV + genera token + manda email de entrega.
-    // Idempotente por paymentId (si ya se procesó, no reenvía).
-    async function finalizePurchase({ product, name, email, source, paymentId }) {
-      const purchases = await getGuidePurchases();
-      if (paymentId) {
-        const already = purchases.find(p => p.paymentId === String(paymentId));
-        if (already) return { ok: true, purchaseId: already.id, alreadyProcessed: true };
-      }
-      const now = new Date().toISOString();
-      const purchaseId = 'pur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-      const token = generateGuideDownloadToken({ slug: product.slug, email });
-      purchases.unshift({ id: purchaseId, slug: product.slug, name, email, ts: now, source, paymentId: paymentId || null });
-      if (purchases.length > 500) purchases.length = 500;
-      await saveGuidePurchases(purchases);
-
-      // Regalo silencioso: cada compra de la guía sola suma un cupón de 15%
-      // para su próximo plan de seguimiento. Un solo uso, mismo sistema de
-      // cupones que ya usa el admin (ag:coupons).
-      let giftCouponCode = null;
-      try {
-        giftCouponCode = await createOneTimeCoupon({ prefix: 'GUIA', type: 'percent', value: 15, expiresInDays: 30 });
-      } catch (err) {
-        console.error('[finalizePurchase] no se pudo generar el cupón de regalo', err);
-      }
-
-      const host = req.headers['x-forwarded-host'] || req.headers.host;
-      const proto = req.headers['x-forwarded-proto'] || 'https';
-      const downloadUrl = `${proto}://${host}/descarga-guia.html?token=${encodeURIComponent(token)}`;
-
-      const emailResult = await sendGuideDeliveryEmail({
-        name, email, downloadUrl, productTitle: product.title, giftCouponCode
+    // Registra la compra + manda el email de entrega (ver lib/guide-sales.js).
+    // Idempotente por paymentId; el uso del cupón se cuenta adentro.
+    async function finalizePurchase({ product, name, email, source, paymentId, coupon, amount, currency }) {
+      return deliverGuide({
+        slug: product.slug, name, email, source, paymentId,
+        coupon: coupon || null, amount: amount ?? null, currency: currency || product.currency || 'UYU'
       });
-      if (!emailResult.ok) console.error('[finalizePurchase] email fail', emailResult.error);
-      return { ok: true, purchaseId, emailSent: emailResult.ok, downloadUrl };
     }
 
     // === VALIDAR CUPÓN ===
@@ -199,15 +172,14 @@ export default async function handler(req, res) {
       // Cupón 100% descuento → entregar directamente sin pasar por MP
       if (finalPrice === 0) {
         const result = await finalizePurchase({
-          product, name, email, source: 'coupon:' + couponCode, paymentId: null
+          product, name, email, source: 'coupon:' + couponCode, paymentId: null, coupon: appliedCoupon, amount: 0
         });
-        if (appliedCoupon) { try { await incrementCouponUse(appliedCoupon); } catch(e) {} }
         return res.status(200).json({ freeCoupon: true, ...result });
       }
 
       const MP_TOKEN = process.env.MP_ACCESS_TOKEN;
       const IS_TEST = process.env.MP_TEST === 'true';
-      const SITE_URL = (process.env.SITE_URL || 'https://nutricionistaagustinavillegas.com').replace(/\/$/, '');
+      const SITE_URL = siteUrl();
       if (!MP_TOKEN) return res.status(500).json({ error: 'MercadoPago no configurado' });
 
       const externalRef = JSON.stringify({
@@ -231,6 +203,8 @@ export default async function handler(req, res) {
           pending: `${SITE_URL}/comprado.html`
         },
         auto_return: 'approved',
+        // Sin esto la entrega dependía de que el comprador volviera a comprado.html.
+        notification_url: `${SITE_URL}/api/products/webhook?source_news=webhooks`,
         external_reference: externalRef,
         statement_descriptor: 'Agustina Villegas',
         expires: true,
@@ -281,8 +255,7 @@ export default async function handler(req, res) {
       }
 
       if (finalPrice === 0) {
-        const result = await finalizePurchase({ product, name, email, source: 'coupon:' + couponCode, paymentId: null });
-        if (appliedCoupon) { try { await incrementCouponUse(appliedCoupon); } catch (e) {} }
+        const result = await finalizePurchase({ product, name, email, source: 'coupon:' + couponCode, paymentId: null, coupon: appliedCoupon, amount: 0 });
         return res.status(200).json({ freeCoupon: true, ...result });
       }
 
@@ -322,13 +295,12 @@ export default async function handler(req, res) {
         if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
 
         const captureId = unit?.payments?.captures?.[0]?.id || orderId;
+        const capAmount = unit?.payments?.captures?.[0]?.amount;
         const result = await finalizePurchase({
           product, name: ref.name || 'Runner', email: ref.email,
-          source: 'paypal', paymentId: 'pp_' + captureId
+          source: 'paypal', paymentId: 'pp_' + captureId, coupon: ref.coupon,
+          amount: Number(capAmount?.value) || null, currency: capAmount?.currency_code || 'USD'
         });
-        if (ref.coupon && !result.alreadyProcessed) {
-          try { await incrementCouponUse(ref.coupon); } catch (e) {}
-        }
         return res.status(200).json({
           status: 'approved',
           purchaseId: result.purchaseId,
@@ -350,48 +322,49 @@ export default async function handler(req, res) {
       const paymentId = req.query.payment_id;
       if (!paymentId) return res.status(400).json({ error: 'Falta payment_id' });
 
-      const MP_TOKEN = process.env.MP_ACCESS_TOKEN;
-      if (!MP_TOKEN) return res.status(500).json({ error: 'MercadoPago no configurado' });
-
-      const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(paymentId)}`, {
-        headers: { Authorization: `Bearer ${MP_TOKEN}` }
-      });
-      const payment = await mpRes.json();
-      if (!mpRes.ok) return res.status(502).json({ error: 'Error consultando MercadoPago', detail: payment });
+      let payment;
+      try { payment = await fetchMpPayment(paymentId); }
+      catch (err) { return res.status(502).json({ error: 'Error consultando MercadoPago', detail: err.message }); }
       if (payment.status !== 'approved') {
         return res.status(200).json({ status: payment.status, status_detail: payment.status_detail, message: `Pago en estado: ${payment.status}` });
       }
 
-      let ref;
-      try { ref = JSON.parse(payment.external_reference || '{}'); }
-      catch { return res.status(400).json({ error: 'external_reference inválido' }); }
-      if (ref.type !== 'guide' || !ref.slug || !ref.email) {
-        return res.status(400).json({ error: 'El pago no corresponde a una guía' });
-      }
-
-      const product = await ensureProduct(ref.slug);
-      if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
-
-      const result = await finalizePurchase({
-        product, name: ref.name || 'Runner', email: ref.email,
-        source: 'mercadopago', paymentId: String(paymentId)
-      });
-
-      // Contabilizar uso del cupón (solo si es la primera vez que se procesa)
-      if (ref.coupon && !result.alreadyProcessed) {
-        try { await incrementCouponUse(ref.coupon); }
-        catch(e) { console.warn('[confirm] increment coupon fail', e); }
-      }
+      const result = await deliverGuideFromMpPayment(payment, { source: 'mercadopago' });
+      if (result.notGuide) return res.status(400).json({ error: 'El pago no corresponde a una guía' });
+      const product = await ensureProduct(result.ref.slug);
 
       return res.status(200).json({
         status: 'approved',
         purchaseId: result.purchaseId,
         emailSent: result.emailSent,
         alreadyProcessed: !!result.alreadyProcessed,
-        amount: Number(payment.transaction_amount) || Number(product.price) || 0,
-        currency: payment.currency_id || product.currency || 'UYU',
-        productName: product.title || product.slug
+        amount: Number(payment.transaction_amount) || Number(product?.price) || 0,
+        currency: payment.currency_id || product?.currency || 'UYU',
+        productName: product?.title || result.ref.slug
       });
+    }
+
+    // POST|GET /api/products/webhook — notificación de MercadoPago.
+    // No se confía en el body: se re-consulta el pago en MP con nuestro token.
+    if (path === 'webhook' && (method === 'POST' || method === 'GET')) {
+      let body = null;
+      if (method === 'POST') { try { body = await readJsonBody(req); } catch {} }
+      const topic = req.query.topic || req.query.type || body?.type || body?.topic;
+      const paymentId = req.query['data.id'] || body?.data?.id || (topic === 'payment' ? req.query.id : null);
+      console.log('[products/webhook] topic:', topic, 'paymentId:', paymentId);
+      if (!paymentId || (topic && topic !== 'payment')) {
+        return res.status(200).json({ ok: true, message: 'Notif ignorada' });
+      }
+      try {
+        const payment = await fetchMpPayment(paymentId);
+        const r = await deliverGuideFromMpPayment(payment, { source: 'mercadopago:webhook' });
+        console.log('[products/webhook] resultado', paymentId, JSON.stringify(r));
+        return res.status(200).json({ ok: true });
+      } catch (err) {
+        console.error('[products/webhook]', paymentId, err);
+        // 500 → MP reintenta más tarde (útil si KV/Resend estaban caídos).
+        return res.status(500).json({ error: err.message });
+      }
     }
 
     // === PURCHASE DIRECTA (sin pago — para tests o entrega manual futura) ===
@@ -432,6 +405,76 @@ export default async function handler(req, res) {
         return res.status(200).json({ products });
       }
 
+      // GET /api/products/admin/purchases → lista de compras de guías
+      // (antes quedaba tapada por admin/:slug y nunca respondía)
+      if (path === 'admin/purchases' && method === 'GET') {
+        const purchases = await getGuidePurchases();
+        return res.status(200).json({ purchases });
+      }
+
+      // GET /api/products/admin/sales?days=60 → ventas registradas + pagos de
+      // guía en MP que NO tienen entrega registrada (los "perdidos").
+      if (path === 'admin/sales' && method === 'GET') {
+        const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 60));
+        const purchases = await getGuidePurchases();
+        let mpPayments = [];
+        let mpError = null;
+        try { mpPayments = await listMpGuidePayments(days); }
+        catch (err) { mpError = err.message; }
+        const byPaymentId = new Set(purchases.map(p => p.paymentId).filter(Boolean));
+        const missing = mpPayments
+          .filter(({ payment }) => !byPaymentId.has(String(payment.id)))
+          .map(({ payment, ref }) => ({
+            paymentId: String(payment.id),
+            status: payment.status,
+            statusDetail: payment.status_detail,
+            ts: payment.date_approved || payment.date_created,
+            name: ref.name || '',
+            email: ref.email,
+            slug: ref.slug,
+            amount: Number(payment.transaction_amount) || 0,
+            currency: payment.currency_id || 'UYU',
+            payerEmail: payment.payer?.email || null
+          }));
+        return res.status(200).json({ purchases, missing, mpError, days });
+      }
+
+      // POST /api/products/admin/sales/send
+      //   body { purchaseId } → reenvía una venta registrada
+      //   body { paymentId }  → entrega un pago de MP (aunque no esté registrado)
+      //   body { name, email } (sin ids) → venta manual (transferencia, etc.)
+      //   opcional { toEmail } → mandar a otro email (si el comprador lo escribió mal)
+      if (path === 'admin/sales/send' && method === 'POST') {
+        const body = await readJsonBody(req) || {};
+        const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const toEmail = body.toEmail ? String(body.toEmail).trim().toLowerCase() : null;
+        if (toEmail && !EMAIL_RE.test(toEmail)) return res.status(400).json({ error: 'Email inválido' });
+
+        if (body.paymentId) {
+          const payment = await fetchMpPayment(String(body.paymentId));
+          if (payment.status !== 'approved') return res.status(400).json({ error: 'El pago no está aprobado en MP (estado: ' + payment.status + ')' });
+          const r = await deliverGuideFromMpPayment(payment, { source: 'mercadopago:admin', force: true, toEmail });
+          if (r.notGuide) return res.status(400).json({ error: 'El pago no corresponde a una guía' });
+          return res.status(200).json(r);
+        }
+        if (body.purchaseId) {
+          const purchases = await getGuidePurchases();
+          const rec = purchases.find(p => p.id === body.purchaseId);
+          if (!rec) return res.status(404).json({ error: 'Venta no encontrada' });
+          const r = await deliverGuide({ ...rec, purchaseId: rec.id, force: true, toEmail });
+          return res.status(200).json(r);
+        }
+        const name = String(body.name || '').trim();
+        const email = String(body.email || '').trim().toLowerCase();
+        if (!name || !EMAIL_RE.test(email)) return res.status(400).json({ error: 'Faltan nombre y email válidos' });
+        const product = await ensureProduct(String(body.slug || 'runner-principiantes'));
+        const r = await deliverGuide({
+          slug: product.slug, name, email, source: 'manual',
+          amount: Number(body.amount) || null, currency: product.currency || 'UYU'
+        });
+        return res.status(200).json(r);
+      }
+
       // GET /api/products/admin/:slug → producto completo
       if (path.startsWith('admin/') && method === 'GET') {
         const productSlug = path.replace('admin/', '');
@@ -461,12 +504,6 @@ export default async function handler(req, res) {
         }
         await saveProducts(products);
         return res.status(200).json({ product: products.find(p => p.slug === body.product.slug) });
-      }
-
-      // GET /api/products/admin/purchases → lista de compras de guías
-      if (path === 'admin/purchases' && method === 'GET') {
-        const purchases = await getGuidePurchases();
-        return res.status(200).json({ purchases });
       }
 
       // DELETE /api/products/admin?slug=...

@@ -384,6 +384,7 @@ tbody tr:hover td{background:var(--cream);}
     <button class="sb-btn on" onclick="go('dashboard',this)"><span class="ic">📊</span>Dashboard</button>
     <button class="sb-btn" onclick="go('analitica',this)"><span class="ic">📈</span>Analítica web</button>
     <button class="sb-btn" onclick="go('reservas',this)"><span class="ic">📅</span>Reservas</button>
+    <button class="sb-btn" onclick="go('ventasguia',this)"><span class="ic">🏃</span>Ventas guía</button>
     <div class="sb-div"></div>
     <div class="sb-sec">Gestión</div>
     <button class="sb-btn" onclick="go('creditos',this)"><span class="ic">🎟</span>Créditos</button>
@@ -943,6 +944,43 @@ tbody tr:hover td{background:var(--cream);}
       </div>
     </div>
 
+    <!-- VENTAS GUÍA -->
+    <div id="p-ventasguia" class="panel">
+      <div class="ph"><h1>Ventas guía</h1><p>Cada compra de la guía runners, si le llegó el email y botón para reenviarla</p></div>
+      <div class="pb">
+        <div class="tcard" id="vg-alert-card" style="display:none;border-color:var(--amber);">
+          <div class="tcard-hd"><span class="tcard-title">⚠️ Pagos en Mercado Pago sin entrega registrada</span><span class="badge b-amber" id="vg-missing-cnt">0</span></div>
+          <div class="tw"><table>
+            <thead><tr><th>Fecha</th><th>Nombre</th><th>Email</th><th>Monto</th><th>Estado MP</th><th>Acciones</th></tr></thead>
+            <tbody id="vg-missing-rows"></tbody>
+          </table></div>
+        </div>
+        <div style="display:flex;gap:.7rem;margin-bottom:1rem;align-items:center;flex-wrap:wrap;">
+          <button class="btn-act" onclick="loadVentasGuia()">↻ Actualizar</button>
+          <button class="btn-act" style="background:var(--rose-deep);" onclick="document.getElementById('vg-form').classList.toggle('on')">＋ Registrar venta manual</button>
+          <span class="td-sm" id="vg-status"></span>
+        </div>
+        <div class="cup-form" id="vg-form">
+          <h3>Venta manual (transferencia, efectivo, etc.)</h3>
+          <div class="cup-grid">
+            <div class="fi"><label>Nombre</label><input id="vg-name" placeholder="Nombre del comprador"></div>
+            <div class="fi"><label>Email</label><input id="vg-email" type="email" placeholder="correo@ejemplo.com"></div>
+            <div class="fi"><label>Monto (opcional)</label><input id="vg-amount" type="number" placeholder="1500"></div>
+          </div>
+          <div style="display:flex;gap:.5rem;margin-top:.8rem;">
+            <button class="btn-act" onclick="vgManual()">Registrar y enviar guía</button>
+          </div>
+        </div>
+        <div class="tcard">
+          <div class="tcard-hd"><span class="tcard-title">Ventas registradas</span><span class="badge b-rose" id="vg-cnt">0</span></div>
+          <div class="tw"><table>
+            <thead><tr><th>Fecha</th><th>Nombre</th><th>Email</th><th>Monto</th><th>Medio</th><th>Email guía</th><th>Acciones</th></tr></thead>
+            <tbody id="vg-rows"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
     <!-- NEWSLETTER -->
     <div id="p-newsletter" class="panel">
       <div class="ph"><h1>Newsletter</h1><p>Suscriptores y envío de emails masivos</p></div>
@@ -1066,7 +1104,7 @@ function go(name,btn){
     agenda:loadAgenda,encuesta:loadEncuesta,clientes:renderClientes,portafolio:renderPortfolio,
     precios:loadPrecios,cupones:loadCupones,newsletter:loadNewsletter,analitica:loadAnalitica,
     historia:()=>{ document.getElementById('hist-result').innerHTML=''; document.getElementById('hist-search').value=''; },
-    resenas:loadResenas
+    resenas:loadResenas, ventasguia:loadVentasGuia
   }[name]||function(){})();
 }
 
@@ -2435,6 +2473,123 @@ async function savePrecios(){
     });
   } catch(e) {}
   toast('Precios guardados correctamente');
+}
+
+// ── VENTAS GUÍA ──
+function vgEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function vgDate(ts){
+  if(!ts)return '—';
+  const d=new Date(ts);
+  return d.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '+d.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'});
+}
+function vgMoney(a,c){return a?((c==='USD'?'US$ ':'$ ')+Number(a).toLocaleString('es-UY')):'—';}
+function vgSource(s){
+  s=s||'';
+  if(s.startsWith('mercadopago'))return 'Mercado Pago';
+  if(s==='paypal')return 'PayPal';
+  if(s.startsWith('coupon:'))return 'Cupón '+vgEsc(s.slice(7));
+  if(s==='manual')return 'Manual';
+  return vgEsc(s||'—');
+}
+let _vgData={purchases:[],missing:[]};
+
+async function loadVentasGuia(){
+  const st=document.getElementById('vg-status');
+  st.textContent='Cargando…';
+  try{
+    const r=await fetch('/api/products/admin/sales?days=90',{credentials:'same-origin',cache:'no-store'});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||('HTTP '+r.status));
+    _vgData=d;
+    st.textContent=d.mpError?('No se pudo consultar Mercado Pago: '+d.mpError):'Revisado contra Mercado Pago (últimos '+d.days+' días)';
+    renderVentasGuia();
+  }catch(e){
+    st.textContent='Error: '+e.message;
+  }
+}
+
+function renderVentasGuia(){
+  const {purchases=[],missing=[]}=_vgData;
+  const approvedMissing=missing.filter(m=>m.status==='approved');
+  const otherMissing=missing.filter(m=>m.status!=='approved'&&m.status!=='rejected'&&m.status!=='cancelled');
+  const shown=[...approvedMissing,...otherMissing];
+  document.getElementById('vg-alert-card').style.display=shown.length?'':'none';
+  document.getElementById('vg-missing-cnt').textContent=approvedMissing.length;
+  document.getElementById('vg-missing-rows').innerHTML=shown.map(m=>{
+    const ok=m.status==='approved';
+    return `<tr>
+      <td class="td-sm">${vgDate(m.ts)}</td>
+      <td class="td-bold">${vgEsc(m.name)}</td>
+      <td class="td-sm">${vgEsc(m.email)}${m.payerEmail&&m.payerEmail!==m.email?'<br>MP: '+vgEsc(m.payerEmail):''}</td>
+      <td>${vgMoney(m.amount,m.currency)}</td>
+      <td>${ok?'<span class="badge b-green">Aprobado</span>':'<span class="badge b-gray">'+vgEsc(m.status)+'</span>'}</td>
+      <td>${ok?`<button class="btn-xs btn-ok" onclick="vgSend({paymentId:'${vgEsc(m.paymentId)}'},'${vgEsc(m.email)}')">Enviar guía</button>`:'<span class="td-sm">Sin aprobar</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('vg-cnt').textContent=purchases.length;
+  if(!purchases.length){
+    document.getElementById('vg-rows').innerHTML='<tr class="empty"><td colspan="7">Todavía no hay ventas registradas</td></tr>';
+    return;
+  }
+  document.getElementById('vg-rows').innerHTML=purchases.map(p=>{
+    let badge;
+    if(p.emailSent===false) badge=`<span class="badge b-rose" title="${vgEsc(p.emailError||'')}">No enviado</span>`;
+    else if(p.emailSent===true) badge=`<span class="badge b-green">Enviado${p.sendCount>1?' ×'+p.sendCount:''}</span>`;
+    else badge='<span class="badge b-gray" title="Venta anterior al registro de envíos">Sin dato</span>';
+    return `<tr>
+      <td class="td-sm">${vgDate(p.ts)}</td>
+      <td class="td-bold">${vgEsc(p.name)}</td>
+      <td class="td-sm">${vgEsc(p.email)}</td>
+      <td>${vgMoney(p.amount,p.currency)}</td>
+      <td class="td-sm">${vgSource(p.source)}</td>
+      <td>${badge}${p.lastSendAt?'<div class="td-sm">'+vgDate(p.lastSendAt)+'</div>':''}</td>
+      <td><button class="btn-xs btn-ok" onclick="vgSend({purchaseId:'${vgEsc(p.id)}'},'${vgEsc(p.email)}')">Reenviar guía</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function vgSend(ids,currentEmail){
+  const to=prompt('Se va a enviar la guía a este email. Si el comprador lo escribió mal, corregilo acá:',currentEmail||'');
+  if(to===null)return;
+  const body={...ids};
+  if(to.trim()&&to.trim().toLowerCase()!==String(currentEmail||'').toLowerCase())body.toEmail=to.trim();
+  await vgPost(body);
+}
+
+async function vgManual(){
+  const name=document.getElementById('vg-name').value.trim();
+  const email=document.getElementById('vg-email').value.trim();
+  const amount=document.getElementById('vg-amount').value;
+  if(!name||!email){alert('Completá nombre y email.');return;}
+  if(!confirm('¿Registrar la venta y enviar la guía a '+email+'?'))return;
+  const ok=await vgPost({name,email,amount});
+  if(ok){
+    ['vg-name','vg-email','vg-amount'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('vg-form').classList.remove('on');
+  }
+}
+
+async function vgPost(body){
+  const st=document.getElementById('vg-status');
+  st.textContent='Enviando…';
+  try{
+    const r=await fetch('/api/products/admin/sales/send',{
+      method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
+    });
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||('HTTP '+r.status));
+    if(d.inProgress){toast('Ya se está enviando, actualizá en unos segundos');}
+    else if(d.emailSent){toast('Guía enviada ✓');}
+    else{alert('No se pudo enviar el email: '+(d.emailError||'error desconocido'));}
+    await loadVentasGuia();
+    return !!d.emailSent;
+  }catch(e){
+    st.textContent='Error: '+e.message;
+    alert('Error: '+e.message);
+    return false;
+  }
 }
 
 // ── CUPONES ──

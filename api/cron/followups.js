@@ -8,6 +8,7 @@
 
 import { getBookings, saveBookings, sendBookingEmail } from '../../lib/auth.js';
 import { createOneTimeCoupon } from '../../lib/coupons.js';
+import { reconcileGuideSales } from '../../lib/guide-sales.js';
 
 const DISCOUNT_VALUE = 15; // % del cupón de reactivación
 
@@ -104,5 +105,12 @@ export default async function handler(req, res) {
   }
 
   await saveBookings(bookings);
-  return res.status(200).json({ ok: true, reviewUrlConfigured: !!reviewUrl, counts, errors });
+
+  // Red de seguridad: entregar cualquier guía pagada en MP que no tenga un
+  // envío OK registrado (si fallaron el redirect y el webhook).
+  let guideReconcile = [];
+  try { guideReconcile = await reconcileGuideSales(30); }
+  catch (err) { errors.push({ step: 'guide_reconcile', error: err.message }); }
+
+  return res.status(200).json({ ok: true, reviewUrlConfigured: !!reviewUrl, counts, guideReconcile, errors });
 }

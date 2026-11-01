@@ -22,6 +22,7 @@ import {
   getAdminFromRequest, readJsonBody, getUsers, saveUsers
 } from '../../lib/auth.js';
 import { createPaypalOrder, capturePaypalOrder } from '../../lib/paypal.js';
+import { siteUrl, parseGuideRef, deliverGuideFromMpPayment } from '../../lib/guide-sales.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -113,7 +114,7 @@ async function handleCheckout(req, res) {
   // 3. Crear preferencia de MercadoPago
   const MP_TOKEN = process.env.MP_ACCESS_TOKEN;
   const IS_TEST  = process.env.MP_TEST === 'true';
-  const SITE_URL = (process.env.SITE_URL || 'https://nutricionistaagustinavillegas.com').replace(/\/$/, '');
+  const SITE_URL = siteUrl(); // con www: MP no sigue el redirect del dominio sin www
   if (!MP_TOKEN) return res.status(500).json({ error: 'MP no configurado' });
 
   const preference = {
@@ -390,6 +391,14 @@ async function handleWebhook(req, res) {
       return res.status(200).json({ ok: true, message: 'Pago no verificable' });
     }
 
+    // Si es un pago de guía (llega acá si MP tiene un webhook general de la
+    // cuenta apuntando a este endpoint), entregarla en vez de ignorarlo.
+    if (parseGuideRef(payment.external_reference)) {
+      const r = await deliverGuideFromMpPayment(payment, { source: 'mercadopago:webhook' });
+      console.log('[webhook] pago de guía', paymentId, JSON.stringify(r));
+      return res.status(200).json({ ok: true, guide: true });
+    }
+
     if (payment.status !== 'approved') {
       console.log('[webhook] pago no aprobado, estado:', payment.status);
       return res.status(200).json({ ok: true, status: payment.status });
@@ -594,7 +603,7 @@ async function handleAdminRemind(req, res) {
 
   const MP_TOKEN = process.env.MP_ACCESS_TOKEN;
   const IS_TEST  = process.env.MP_TEST === 'true';
-  const SITE_URL = (process.env.SITE_URL || 'https://nutricionistaagustinavillegas.com').replace(/\/$/, '');
+  const SITE_URL = siteUrl(); // con www: MP no sigue el redirect del dominio sin www
   if (!MP_TOKEN) return res.status(500).json({ error: 'MP no configurado' });
 
   // 1. Generar NUEVA preferencia MP (la original ya expiró)
