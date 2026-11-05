@@ -9,6 +9,12 @@
       "permanent": true
     }
   ],
+  "rewrites": [
+    {
+      "source": "/api/:fn(products|bookings|auth|admin|plans)/:first/:rest+",
+      "destination": "/api/:fn/__r?__p=:first/:rest"
+    }
+  ],
   "crons": [
     { "path": "/api/cron/followups", "schedule": "0 13 * * *" }
   ]

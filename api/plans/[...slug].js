@@ -16,7 +16,8 @@ const COMBO_GUIDE_PREFIX = 'Guía + ';
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   let path = '';
-  const slug = req.query?.slug;
+  // __p viene de la reescritura de vercel.json (rutas de 2+ niveles)
+  const slug = req.query?.__p || req.query?.slug;
   if (slug) {
     path = Array.isArray(slug) ? slug.join('/') : String(slug);
   } else if (req.url) {
