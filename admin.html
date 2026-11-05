@@ -860,15 +860,15 @@ tbody tr:hover td{background:var(--cream);}
     <div id="p-precios" class="panel">
       <div class="ph"><h1>Precios</h1><p>Modificá los precios — se actualizan en toda la web automáticamente</p></div>
       <div class="pb">
-        <div class="banner banner-amber">💡 Los precios se guardan en la nube (Vercel KV). Al guardar, la página de reservas los lee automáticamente.</div>
+        <div class="banner banner-amber">💡 Estos precios son los que se cobran de verdad: reservas, guía y combos los toma el servidor de acá. Al guardar se actualizan en la web.</div>
         <div class="price-grid">
           <div class="price-card">
             <div class="price-card-hd"><span class="price-card-title">Nutrición</span></div>
             <div class="price-card-body">
-              <div class="pf-row"><label>Primera consulta</label><input id="pr-consulta" placeholder="1200"></div>
+              <div class="pf-row"><label>Primera consulta</label><input id="pr-consulta" placeholder="1500"></div>
               <div class="pf-row"><label>Consulta de control</label><input id="pr-control" placeholder="800"></div>
-              <div class="pf-row"><label>Plan de alimentación</label><input id="pr-plan" placeholder="2500"></div>
-              <div class="pf-row"><label>Medición ISAK</label><input id="pr-isak" placeholder="1100"></div>
+              <div class="pf-row"><label>Plan de alimentación</label><input id="pr-plan" placeholder="2800"></div>
+              <div class="pf-row"><label>Medición ISAK</label><input id="pr-isak" placeholder="1500"></div>
             </div>
           </div>
           <div class="price-card">
@@ -888,6 +888,14 @@ tbody tr:hover td{background:var(--cream);}
               <div class="pf-row"><label>Plan 2 meses</label><input id="pr-plan2" placeholder="4100"></div>
               <div class="pf-row"><label>Plan 4 meses</label><input id="pr-plan3" placeholder="5300"></div>
               <div class="pf-row"><label>Plan 6 meses</label><input id="pr-plan6" placeholder="9700"></div>
+            </div>
+          </div>
+          <div class="price-card">
+            <div class="price-card-hd"><span class="price-card-title">Guía runners</span></div>
+            <div class="price-card-body">
+              <div class="pf-row"><label>Guía sola</label><input id="pr-guia" placeholder="1500"></div>
+              <div class="pf-row"><label>Guía + consulta de control</label><input id="pr-guia_consulta" placeholder="2000"></div>
+              <div class="pf-row"><label>Guía + seguimiento 4 meses</label><input id="pr-guia_plan4" placeholder="6000"></div>
             </div>
           </div>
           <div class="price-card">
@@ -2445,7 +2453,7 @@ async function deleteSave(planId) {
 }
 
 // ── PRECIOS ──
-const PR_FIELDS=['consulta','control','plan','isak','cuerpo','descontrac','relajante','drenaje','deportivo','embarazo','plan2','plan3','plan6','hab-ener1','hab-ener12','hab-prot1','hab-prot12'];
+const PR_FIELDS=['consulta','control','plan','isak','cuerpo','descontrac','relajante','drenaje','deportivo','embarazo','plan2','plan3','plan6','guia','guia_consulta','guia_plan4','hab-ener1','hab-ener12','hab-prot1','hab-prot12'];
 async function loadPrecios(){
   // Intentar KV primero, luego Edge Config como fallback
   let p = await st('ag:prices') || null;
@@ -2456,6 +2464,11 @@ async function loadPrecios(){
     } catch(e) {}
   }
   p = p || {};
+  // Completar con los precios vigentes del servidor (incluye los por defecto de negocio.md)
+  try {
+    const r = await fetch('/api/products/prices', {cache:'no-store'});
+    if (r.ok) { const d = await r.json(); p = { ...(d.prices||{}), ...p }; }
+  } catch(e) {}
   PR_FIELDS.forEach(k=>{const el=document.getElementById('pr-'+k);if(el&&p[k])el.value=p[k];});
 }
 async function savePrecios(){

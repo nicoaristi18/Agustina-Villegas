@@ -21,6 +21,7 @@ import { createPaypalOrder, capturePaypalOrder } from '../../lib/paypal.js';
 import {
   siteUrl, fetchMpPayment, listMpGuidePayments, deliverGuide, deliverGuideFromMpPayment
 } from '../../lib/guide-sales.js';
+import { getPrices, guidePrice } from '../../lib/pricing.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -49,7 +50,9 @@ export default async function handler(req, res) {
       const productSlug = path.replace('by-slug/', '');
       const product = await getProductBySlug(productSlug);
       if (!product || !product.active) return res.status(404).json({ error: 'Producto no encontrado' });
-      return res.status(200).json({ product: scrubProductForPublic(product) });
+      const pub = scrubProductForPublic(product);
+      if (pub.slug === 'runner-principiantes') pub.price = await guidePrice(pub.price);
+      return res.status(200).json({ product: pub });
     }
 
     if (path.startsWith('by-category/') && method === 'GET') {
@@ -57,6 +60,11 @@ export default async function handler(req, res) {
       const products = await getProducts();
       const filtered = products.filter(p => p.active && p.category === category).map(scrubProductForPublic);
       return res.status(200).json({ products: filtered });
+    }
+
+    // GET /api/products/prices → precios vigentes (públicos) del catálogo
+    if (path === 'prices' && method === 'GET') {
+      return res.status(200).json({ prices: await getPrices() });
     }
 
     // === SEED (one-shot, idempotente) ===
@@ -123,7 +131,7 @@ export default async function handler(req, res) {
       if (!code) return res.status(400).json({ error: 'Falta code' });
       const product = await ensureProduct(slug);
       if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
-      const basePrice = Number(product.price) || 0;
+      const basePrice = product.slug === 'runner-principiantes' ? await guidePrice(product.price) : (Number(product.price) || 0);
       const all = await getCoupons();
       const coupon = all[code];
       const result = applyCoupon(coupon, basePrice);
@@ -155,7 +163,7 @@ export default async function handler(req, res) {
       const product = await ensureProduct(slug);
       if (!product || !product.active) return res.status(404).json({ error: 'Producto no encontrado' });
 
-      const basePrice = Number(product.price) || 0;
+      const basePrice = product.slug === 'runner-principiantes' ? await guidePrice(product.price) : (Number(product.price) || 0);
       if (basePrice <= 0) return res.status(400).json({ error: 'Precio del producto inválido' });
 
       // Validar cupón si se envió
@@ -241,7 +249,7 @@ export default async function handler(req, res) {
       const product = await ensureProduct(slug);
       if (!product || !product.active) return res.status(404).json({ error: 'Producto no encontrado' });
 
-      const basePrice = Number(product.price) || 0;
+      const basePrice = product.slug === 'runner-principiantes' ? await guidePrice(product.price) : (Number(product.price) || 0);
       if (basePrice <= 0) return res.status(400).json({ error: 'Precio del producto inválido' });
 
       let finalPrice = basePrice;

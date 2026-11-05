@@ -23,6 +23,7 @@ import {
 } from '../../lib/auth.js';
 import { createPaypalOrder, capturePaypalOrder } from '../../lib/paypal.js';
 import { siteUrl, parseGuideRef, deliverGuideFromMpPayment } from '../../lib/guide-sales.js';
+import { quoteService } from '../../lib/pricing.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -75,10 +76,16 @@ async function handleCheckout(req, res) {
   const body = await readJsonBody(req);
   if (!body) return res.status(400).json({ error: 'Body inválido' });
 
-  const { dateKey, time, dateStr, svc, dur, type, modality, name, email, phone, notes, amount } = body;
-  if (!dateKey || !time || !svc || !name || !email || !amount) {
+  const { dateKey, time, dateStr, svc, dur, type, modality, name, email, phone, notes, couponCode } = body;
+  if (!dateKey || !time || !svc || !name || !email) {
     return res.status(400).json({ error: 'Faltan datos obligatorios.' });
   }
+  // El precio lo calcula el servidor (catálogo + cupón). Se ignora el "amount"
+  // que manda el navegador: antes se podía reservar pagando $1.
+  const quote = await quoteService(svc, couponCode);
+  if (!quote.ok) return res.status(400).json({ error: quote.error });
+  if (quote.price <= 0) return res.status(400).json({ error: 'Con ese cupón la consulta es gratis: escribile a Agustina para coordinarla.' });
+  const amount = quote.price;
 
   // 1. Verificar que el slot esté libre
   const bookings = await getBookings();
@@ -103,6 +110,7 @@ async function handleCheckout(req, res) {
     paid: false,
     status: 'pending_payment',
     paymentAmount: Number(amount),
+    coupon: quote.coupon,
     paymentId: null,
     emailsSent: false,
     createdAt: new Date().toISOString(),
@@ -184,10 +192,16 @@ async function handleCheckoutPaypal(req, res) {
   const body = await readJsonBody(req);
   if (!body) return res.status(400).json({ error: 'Body inválido' });
 
-  const { dateKey, time, dateStr, svc, dur, type, modality, name, email, phone, notes, amount } = body;
-  if (!dateKey || !time || !svc || !name || !email || !amount) {
+  const { dateKey, time, dateStr, svc, dur, type, modality, name, email, phone, notes, couponCode } = body;
+  if (!dateKey || !time || !svc || !name || !email) {
     return res.status(400).json({ error: 'Faltan datos obligatorios.' });
   }
+  // El precio lo calcula el servidor (catálogo + cupón). Se ignora el "amount"
+  // que manda el navegador: antes se podía reservar pagando $1.
+  const quote = await quoteService(svc, couponCode);
+  if (!quote.ok) return res.status(400).json({ error: quote.error });
+  if (quote.price <= 0) return res.status(400).json({ error: 'Con ese cupón la consulta es gratis: escribile a Agustina para coordinarla.' });
+  const amount = quote.price;
 
   const bookings = await getBookings();
   if (bookings[dateKey] && bookings[dateKey][time]) {
@@ -207,6 +221,7 @@ async function handleCheckoutPaypal(req, res) {
     paid: false,
     status: 'pending_payment',
     paymentAmount: Number(amount),
+    coupon: quote.coupon,
     paymentId: null,
     emailsSent: false,
     createdAt: new Date().toISOString(),

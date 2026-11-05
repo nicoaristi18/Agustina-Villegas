@@ -6,6 +6,7 @@ import {
   getProductBySlug, getGuidePurchases, saveGuidePurchases,
   generateGuideDownloadToken, sendGuideDeliveryEmail
 } from '../../lib/auth.js';
+import { quotePlanOffer } from '../../lib/pricing.js';
 
 // Cualquier plan cuyo nombre empiece así es un combo "guía + algo" (ver
 // botones en runners.html) — además de activar los créditos, se entrega
@@ -49,7 +50,9 @@ async function handleCheckout(req, res) {
   const SITE_URL = (process.env.SITE_URL || 'https://nutricionistaagustinavillegas.com').replace(/\/$/, '');
   if (!MP_TOKEN) return res.status(500).json({ error: 'MercadoPago no configurado' });
 
-  const plan = user.pendingPlan;
+  // Precio y créditos salen del catálogo del servidor, nunca del link (?price=&credits=)
+  const plan = await quotePlanOffer(user.pendingPlan.name);
+  if (!plan) return res.status(400).json({ error: 'Ese plan ya no está disponible. Escribile a Agustina.' });
   const price = Number(plan.price) || 0;
   if (price <= 0) return res.status(400).json({ error: 'Precio del plan inválido' });
 

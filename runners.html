@@ -244,7 +244,7 @@
       <div class="rn-tier rb-reveal d1">
         <div class="rn-tier-name">Guía sola</div>
         <p class="rn-tier-sub">Para arrancar por tu cuenta, a tu ritmo</p>
-        <div class="rn-tier-price"><span class="amt">$1.500</span><span class="cur">UYU</span></div>
+        <div class="rn-tier-price"><span class="amt" id="tier-guia">$1.500</span><span class="cur">UYU</span></div>
         <ul class="rn-tier-list">
           <li>✓ PDF descargable de inmediato</li>
           <li>✓ Acceso de por vida, sin suscripción</li>
@@ -257,29 +257,29 @@
       <div class="rn-tier rb-reveal d2">
         <div class="rn-tier-name">Guía + consulta</div>
         <p class="rn-tier-sub">Para despejar dudas de cómo aplicarla a tu caso</p>
-        <div class="rn-tier-price"><span class="amt">$2.000</span><span class="cur">UYU</span></div>
-        <div class="rn-tier-save">Ahorrás $300 vs. comprarlo por separado ($2.300)</div>
+        <div class="rn-tier-price"><span class="amt" id="tier-guia-consulta">$2.000</span><span class="cur">UYU</span></div>
+        <div class="rn-tier-save" id="save-guia-consulta">Ahorrás $300 vs. comprarlo por separado ($2.300)</div>
         <ul class="rn-tier-list">
           <li>✓ Todo lo de la guía</li>
           <li>✓ Consulta de control con Agustina (45 min)</li>
           <li>✓ Resolvés tus dudas puntuales</li>
         </ul>
-        <a href="mi-cuenta.html?plan=Gu%C3%ADa%20%2B%20Consulta%20de%20control&credits=1&price=2000" class="rb-btn rb-btn-ghost" style="width:100%;justify-content:center;">Quiero este <span class="arr">→</span></a>
+        <a id="link-guia-consulta" href="mi-cuenta.html?plan=Gu%C3%ADa%20%2B%20Consulta%20de%20control&credits=1&price=2000" class="rb-btn rb-btn-ghost" style="width:100%;justify-content:center;">Quiero este <span class="arr">→</span></a>
       </div>
 
       <div class="rn-tier featured rb-reveal d3">
         <div class="rn-tier-badge">Recomendado</div>
         <div class="rn-tier-name">Guía + seguimiento 4 meses</div>
         <p class="rn-tier-sub">Para ir en serio: plan armado 100% para vos</p>
-        <div class="rn-tier-price"><span class="amt">$6.000</span><span class="cur">UYU</span></div>
-        <div class="rn-tier-save">Ahorrás $800 vs. comprarlo por separado ($6.800)</div>
+        <div class="rn-tier-price"><span class="amt" id="tier-guia-plan4">$6.000</span><span class="cur">UYU</span></div>
+        <div class="rn-tier-save" id="save-guia-plan4">Ahorrás $800 vs. comprarlo por separado ($6.800)</div>
         <ul class="rn-tier-list">
           <li>✓ Todo lo de la guía</li>
           <li>✓ Primera consulta nutricional</li>
           <li>✓ Plan de alimentación de 4 meses</li>
           <li>✓ 5 créditos de consulta de control</li>
         </ul>
-        <a href="mi-cuenta.html?plan=Gu%C3%ADa%20%2B%20Plan%204%20meses&credits=5&price=6000" class="rb-btn rb-btn-primary" style="width:100%;justify-content:center;">Quiero el combo <span class="arr">→</span></a>
+        <a id="link-guia-plan4" href="mi-cuenta.html?plan=Gu%C3%ADa%20%2B%20Plan%204%20meses&credits=5&price=6000" class="rb-btn rb-btn-primary" style="width:100%;justify-content:center;">Quiero el combo <span class="arr">→</span></a>
       </div>
     </div>
   </div>
@@ -441,6 +441,26 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
     }
   } catch(e) { console.warn('[runners]', e); }
+
+  // Precios de las 3 opciones desde la solapa Precios del admin. El cobro real
+  // lo calcula el servidor; esto solo actualiza lo que se muestra.
+  try {
+    const r = await fetch('/api/products/prices', { cache: 'no-store' });
+    if (!r.ok) return;
+    const { prices: p } = await r.json();
+    const fmt = n => '$' + Number(n).toLocaleString('es');
+    const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    set('tier-guia', fmt(p.guia));
+    set('tier-guia-consulta', fmt(p.guia_consulta));
+    set('tier-guia-plan4', fmt(p.guia_plan4));
+    const sep1 = p.guia + p.control, sep2 = p.guia + p.plan3;
+    set('save-guia-consulta', sep1 > p.guia_consulta ? `Ahorrás ${fmt(sep1 - p.guia_consulta)} vs. comprarlo por separado (${fmt(sep1)})` : '');
+    set('save-guia-plan4', sep2 > p.guia_plan4 ? `Ahorrás ${fmt(sep2 - p.guia_plan4)} vs. comprarlo por separado (${fmt(sep2)})` : '');
+    const l1 = document.getElementById('link-guia-consulta');
+    if (l1) l1.href = l1.href.replace(/price=\d+/, 'price=' + p.guia_consulta);
+    const l2 = document.getElementById('link-guia-plan4');
+    if (l2) l2.href = l2.href.replace(/price=\d+/, 'price=' + p.guia_plan4);
+  } catch(e) { console.warn('[runners precios]', e); }
 });
 
 function openPurchaseModal() {

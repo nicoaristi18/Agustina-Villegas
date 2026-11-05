@@ -647,7 +647,8 @@ function renderPaypalButton() {
           dateKey, time: sel.time, dateStr: sel.dateStr,
           svc: sel.svc, dur: sel.dur, type: sel.type, modality: sel.modality,
           name: name + ' ' + last, email, phone, notes,
-          amount: priceNum
+          amount: priceNum,
+          couponCode: appliedCoupon ? appliedCoupon.code : null
         })
       });
       const data = await r.json();
@@ -887,7 +888,8 @@ async function confirmBooking(){
         dateKey, time: sel.time, dateStr: sel.dateStr,
         svc: sel.svc, dur: sel.dur, type: sel.type, modality: sel.modality,
         name: name+' '+last, email, phone, notes,
-        amount: priceNum
+        amount: priceNum,
+        couponCode: appliedCoupon ? appliedCoupon.code : null
       })
     });
     const data = await r.json();

@@ -177,7 +177,7 @@
         <div class="rb-plan-name">Plan 2 meses</div>
         <div class="rb-plan-credits">🎟 3 créditos de consulta</div>
         <div class="rb-plan-sub">Para empezar con base sólida</div>
-        <div class="rb-plan-price"><sup>$</sup>4.100</div>
+        <div class="rb-plan-price"><sup>$</sup><span id="pp-plan2">4.100</span></div>
         <div class="rb-plan-period">Pago único · Sin costos mensuales</div>
         <ul class="rb-plan-features">
           <li>Primera consulta + plan individualizado</li>
@@ -194,7 +194,7 @@
         <div class="rb-plan-name">Plan 4 meses</div>
         <div class="rb-plan-credits">🎟 5 créditos de consulta</div>
         <div class="rb-plan-sub">El proceso de cambio real</div>
-        <div class="rb-plan-price"><sup>$</sup>5.300</div>
+        <div class="rb-plan-price"><sup>$</sup><span id="pp-plan3">5.300</span></div>
         <div class="rb-plan-period">Pago único · Sin costos mensuales</div>
         <ul class="rb-plan-features">
           <li>Primera consulta + plan individualizado</li>
@@ -211,7 +211,7 @@
         <div class="rb-plan-name">Plan 6 meses</div>
         <div class="rb-plan-credits">🎟 8 créditos de consulta</div>
         <div class="rb-plan-sub">Transformación y hábitos duraderos</div>
-        <div class="rb-plan-price"><sup>$</sup>9.700</div>
+        <div class="rb-plan-price"><sup>$</sup><span id="pp-plan6">9.700</span></div>
         <div class="rb-plan-period">Pago único · Sin costos mensuales</div>
         <ul class="rb-plan-features">
           <li>Primera consulta + plan individualizado</li>
@@ -297,6 +297,12 @@
 
 <script src="animations.js"></script>
 <script>
+// Precios vigentes desde la solapa Precios del admin (el cobro real lo calcula el servidor)
+fetch('/api/products/prices',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{
+  if(!d||!d.prices)return;
+  ['plan2','plan3','plan6'].forEach(k=>{const el=document.getElementById('pp-'+k);if(el&&d.prices[k])el.textContent=Number(d.prices[k]).toLocaleString('es');});
+}).catch(()=>{});
+
 function startPlan(planName, credits, price) {
   // Store plan selection and redirect to registration/booking
   sessionStorage.setItem('selectedPlan', JSON.stringify({name:planName, credits, price}));
