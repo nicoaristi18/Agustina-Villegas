@@ -15,13 +15,25 @@ import {
   getProducts, saveProducts, getProductBySlug, scrubProductForPublic,
   getAdminFromRequest, readJsonBody,
   getGuidePurchases, verifyGuideDownloadToken,
-  getCoupons, applyCoupon
+  getCoupons, applyCoupon, sendEmail
 } from '../../lib/auth.js';
 import { createPaypalOrder, capturePaypalOrder } from '../../lib/paypal.js';
 import {
   siteUrl, fetchMpPayment, listMpGuidePayments, deliverGuide, deliverGuideFromMpPayment
 } from '../../lib/guide-sales.js';
 import { getPrices, guidePrice } from '../../lib/pricing.js';
+
+// Comando directo a Upstash (para claves sin helper en lib/auth.js)
+async function kvCmd(...cmd) {
+  const r = await fetch(process.env.KV_REST_API_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(cmd)
+  });
+  const d = await r.json();
+  if (d.error) throw new Error(d.error);
+  return d.result;
+}
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -60,6 +72,80 @@ export default async function handler(req, res) {
       const products = await getProducts();
       const filtered = products.filter(p => p.active && p.category === category).map(scrubProductForPublic);
       return res.status(200).json({ products: filtered });
+    }
+
+    // POST /api/products/habito-order  body { name, email, phone, zone, items:[{prod,qty,variant}] }
+    // Pedido de barritas Hábito. Antes lo guardaba el navegador de la clienta y,
+    // si fallaba, igual mostraba "pedido recibido" y nadie se enteraba. Ahora lo
+    // guarda el servidor, calcula el total y le avisa por mail a Agustina.
+    if (path === 'habito-order' && method === 'POST') {
+      const body = await readJsonBody(req) || {};
+      const name = String(body.name || '').trim().slice(0, 120);
+      const email = String(body.email || '').trim().toLowerCase().slice(0, 160);
+      const phone = String(body.phone || '').trim().slice(0, 40);
+      const zone = String(body.zone || '').trim().slice(0, 120);
+      if (!name || !email || !phone) return res.status(400).json({ error: 'Faltan nombre, email o WhatsApp' });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email inválido' });
+      const raw = Array.isArray(body.items) ? body.items.slice(0, 50) : [];
+      if (!raw.length) return res.status(400).json({ error: 'El pedido está vacío' });
+
+      const prices = await getPrices();
+      const HAB = {
+        ener: { name: 'Barrita energética', 1: prices['hab-ener1'] || 55, 12: prices['hab-ener12'] || 605 },
+        prot: { name: 'Barrita proteica', 1: prices['hab-prot1'] || 70, 12: prices['hab-prot12'] || 770 }
+      };
+      const VARIANTS = { 'vainilla': 'vainilla', 'dulce-de-leche': 'dulce de leche' };
+      const lines = [];
+      for (const it of raw) {
+        const p = HAB[it && it.prod];
+        const qty = Number(it && it.qty) === 12 ? 12 : 1;
+        if (!p) return res.status(400).json({ error: 'Producto desconocido' });
+        const variant = it.prod === 'prot' ? (VARIANTS[it.variant] || 'vainilla') : null;
+        lines.push({ label: p.name + (variant ? ' · ' + variant : '') + (qty === 12 ? ' (caja x12)' : ' (x1)'), price: p[qty] });
+      }
+      const total = lines.reduce((a, l) => a + l.price, 0);
+      const order = {
+        id: Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        name, email, phone, zone,
+        items: lines.map(l => l.label), lines, total,
+        date: new Date().toISOString(), status: 'pending', source: 'web'
+      };
+
+      // Re-leer y agregar justo antes de guardar, para no pisar pedidos simultáneos
+      const current = await kvCmd('GET', 'ag:habito_orders');
+      let orders = [];
+      try { orders = current ? (typeof current === 'string' ? JSON.parse(current) : current) : []; } catch { orders = []; }
+      if (!Array.isArray(orders)) orders = [];
+      orders.push(order);
+      await kvCmd('SET', 'ag:habito_orders', JSON.stringify(orders));
+
+      const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      const rows = lines.map(l => `<tr><td style="padding:4px 12px 4px 0">${esc(l.label)}</td><td style="text-align:right">$${l.price}</td></tr>`).join('');
+      const table = `<table style="border-collapse:collapse;font-size:14px">${rows}<tr><td style="padding-top:8px"><strong>Total</strong></td><td style="text-align:right;padding-top:8px"><strong>$${total}</strong></td></tr></table>`;
+      const notifyTo = process.env.HABITO_NOTIFY_EMAIL || process.env.RESEND_BCC_EMAIL;
+      let notified = false;
+      if (notifyTo) {
+        const r = await sendEmail({
+          to: notifyTo, replyTo: email,
+          subject: `Nuevo pedido Hábito — ${name} ($${total})`,
+          html: `<div style="font-family:sans-serif;color:#2A2118"><h2 style="margin:0 0 12px">Nuevo pedido de Hábito</h2>
+            <p><strong>${esc(name)}</strong><br>WhatsApp: ${esc(phone)}<br>Email: ${esc(email)}<br>Zona: ${esc(zone || '—')}</p>
+            ${table}<p style="color:#8C7E78;font-size:12px">También queda en el admin → Pedidos Hábito.</p></div>`
+        });
+        notified = r.ok;
+        if (!r.ok) console.error('[habito-order] aviso a Agustina falló', r.error);
+      } else {
+        console.error('[habito-order] sin HABITO_NOTIFY_EMAIL ni RESEND_BCC_EMAIL: no se avisó a nadie');
+      }
+      const c = await sendEmail({
+        to: email,
+        subject: 'Recibimos tu pedido de Hábito',
+        html: `<div style="font-family:sans-serif;color:#2A2118"><h2 style="margin:0 0 12px">¡Gracias, ${esc(name.split(' ')[0])}!</h2>
+          <p>Recibimos tu pedido. Te escribimos por WhatsApp en menos de 24 horas para coordinar el envío y el pago.</p>${table}</div>`
+      });
+      if (!c.ok) console.error('[habito-order] confirmación a la clienta falló', c.error);
+
+      return res.status(200).json({ ok: true, id: order.id, total, notified });
     }
 
     // GET /api/products/prices → precios vigentes (públicos) del catálogo
