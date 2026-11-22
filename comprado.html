@@ -39,6 +39,7 @@ h1 em{color:var(--rose-dark);font-style:italic;}
 .state-approved .icon{color:var(--green);}
 </style>
 <script src="/ga4.js"></script>
+<script src="/meta-pixel.js"></script>
 </head>
 <body>
 
@@ -109,20 +110,43 @@ h1 em{color:var(--rose-dark);font-style:italic;}
     if (extraClass) cardEl.classList.add(extraClass);
   };
 
+  // Manda la compra a GA4 y a Meta UNA sola vez por compra.
+  // Antes solo se mandaba si la compra no estaba "ya procesada", pero desde que el
+  // webhook de MP entrega la guía primero, casi siempre llega ya procesada y el evento
+  // se perdía (0 compras en GA4). Ahora se manda siempre; el transaction_id y la marca
+  // en localStorage evitan contarla dos veces si la persona recarga la página.
+  function trackPurchaseOnce(txId, value, currency, itemName) {
+    const key = 'av_tracked_' + txId;
+    try { if (txId && localStorage.getItem(key)) return; } catch (e) {}
+    if (typeof gtag === 'function') {
+      gtag('event', 'purchase', {
+        transaction_id: txId,
+        value: value,
+        currency: currency,
+        items: [{ item_id: 'runner-principiantes', item_name: itemName, item_category: 'guia' }]
+      });
+    }
+    if (typeof window.trackMeta === 'function') {
+      window.trackMeta('Purchase', {
+        value: value, currency: currency, content_type: 'product',
+        content_ids: ['runner-principiantes'], content_name: itemName, content_category: 'guia'
+      }, txId);
+    }
+    try { if (txId) localStorage.setItem(key, '1'); } catch (e) {}
+  }
+
   // ── Pago vía PayPal: ya se confirmó y entregó del lado del servidor
-  // (capture-paypal), acá solo mostramos el éxito y mandamos el evento de GA4. ──
+  // (capture-paypal), acá solo mostramos el éxito y mandamos el evento. ──
   if (params.get('pp') === '1') {
     const email = params.get('payer_email') || '';
     document.getElementById('email-approved').textContent = email || 'tu correo registrado';
     show('content-approved', 'state-approved');
-    if (typeof gtag === 'function') {
-      gtag('event', 'purchase', {
-        transaction_id: params.get('purchase_id') || '',
-        value: Number(params.get('amount')) || 0,
-        currency: params.get('currency') || 'USD',
-        items: [{ item_name: params.get('product') || 'Guía para runners' }]
-      });
-    }
+    trackPurchaseOnce(
+      params.get('purchase_id') || '',
+      Number(params.get('amount')) || 0,
+      params.get('currency') || 'USD',
+      params.get('product') || 'Guía para runners'
+    );
     return;
   }
 
@@ -150,14 +174,12 @@ h1 em{color:var(--rose-dark);font-style:italic;}
       const email = params.get('payer_email') || '';
       document.getElementById('email-approved').textContent = email || 'tu correo registrado';
       show('content-approved', 'state-approved');
-      if (typeof gtag === 'function' && !d.alreadyProcessed) {
-        gtag('event', 'purchase', {
-          transaction_id: d.purchaseId || paymentId,
-          value: Number(d.amount) || 0,
-          currency: d.currency || 'UYU',
-          items: [{ item_name: d.productName || 'Guía para runners' }]
-        });
-      }
+      trackPurchaseOnce(
+        d.purchaseId || paymentId,
+        Number(d.amount) || 0,
+        d.currency || 'UYU',
+        d.productName || 'Guía para runners'
+      );
     } else if (d.status === 'in_process' || d.status === 'pending') {
       show('content-pending', 'state-pending');
     } else {

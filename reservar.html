@@ -113,6 +113,7 @@
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("eF8R0hxnnAPWRxx6i");</script>
 <script src="/ga4.js"></script>
+<script src="/meta-pixel.js"></script>
 </head>
 <body class="rb">
 <div id="rbProg"></div>
@@ -465,6 +466,9 @@ window.addEventListener('DOMContentLoaded', async () => {
               currency: 'UYU'
             });
           }
+          if (typeof window.trackMeta === 'function') {
+            window.trackMeta('Schedule', { value: Number(b.paymentAmount) || 0, currency: 'UYU', content_name: b.svc || '', content_category: b.modality || '' }, 'res_' + paymentId);
+          }
           goStep(4);
         } else {
           document.getElementById('s4-icon').textContent = '⏳';
@@ -680,6 +684,9 @@ function renderPaypalButton() {
           service: b.svc || '', modality: b.modality || '',
           value: Number(b.paymentAmount) || 0, currency: 'UYU', payment_method: 'paypal'
         });
+      }
+      if (typeof window.trackMeta === 'function') {
+        window.trackMeta('Schedule', { value: Number(b.paymentAmount) || 0, currency: 'UYU', content_name: b.svc || '', content_category: b.modality || '' });
       }
       goStep(4);
     },

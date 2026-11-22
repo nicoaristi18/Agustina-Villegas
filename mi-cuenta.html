@@ -51,6 +51,7 @@
 .no-credits{text-align:center;padding:1rem;font-size:.88rem;color:var(--text-muted);}
 </style>
 <script src="/ga4.js"></script>
+<script src="/meta-pixel.js"></script>
 </head>
 <body class="rb">
 <div id="rbProg"></div>
@@ -331,6 +332,21 @@ async function handlePlanPaymentReturn() {
     if (ok && data?.user) {
       currentUser = data.user;
       if (data.status === 'activated') {
+        // Registrar la compra del plan (antes no se medía en ningún lado).
+        const planName = data.plan || currentUser.plan || 'Plan';
+        const txId = 'plan_' + paymentId;
+        if (typeof gtag === 'function') {
+          gtag('event', 'purchase', {
+            transaction_id: txId, value: Number(data.amount) || 0, currency: data.currency || 'UYU',
+            items: [{ item_id: 'plan', item_name: planName, item_category: 'plan' }]
+          });
+        }
+        if (typeof window.trackMeta === 'function') {
+          window.trackMeta('Purchase', {
+            value: Number(data.amount) || 0, currency: data.currency || 'UYU', content_type: 'product',
+            content_ids: ['plan'], content_name: planName, content_category: 'plan'
+          }, txId);
+        }
         alert(`✅ ¡Pago confirmado! Se activaron ${data.added_credits} créditos en tu cuenta.`);
       } else if (data.status === 'already_processed') {
         // Recarga silenciosa — créditos ya estaban activos

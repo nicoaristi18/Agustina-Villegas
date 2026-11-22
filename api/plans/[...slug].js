@@ -171,5 +171,10 @@ async function handleConfirm(req, res) {
     }
   }
 
-  return res.status(200).json({ status: 'activated', added_credits: creditsToAdd, guideDelivered, user: scrubUser(user) });
+  // amount, currency y plan los usa mi-cuenta.html para registrar la compra en GA4 y Meta.
+  return res.status(200).json({
+    status: 'activated', added_credits: creditsToAdd, guideDelivered, user: scrubUser(user),
+    plan: ref.plan, amount: Number(payment.transaction_amount) || Number(ref.price) || 0,
+    currency: payment.currency_id || 'UYU'
+  });
 }

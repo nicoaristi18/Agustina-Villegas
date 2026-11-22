@@ -15,4 +15,10 @@
   window.gtag = function () { dataLayer.push(arguments); };
   gtag('js', new Date());
   gtag('config', GA4_ID);
+
+  // Clic en WhatsApp: muchos pacientes escriben directo en vez de reservar en la web.
+  document.addEventListener('click', function (ev) {
+    var a = ev.target && ev.target.closest ? ev.target.closest('a[href*="wa.me"], a[href*="api.whatsapp.com"]') : null;
+    if (a) gtag('event', 'contacto_whatsapp', { page_path: location.pathname });
+  }, true);
 })();

@@ -143,6 +143,8 @@
 }
 </style>
 <script src="/ga4.js"></script>
+<script src="/meta-pixel.js"></script>
+<script>window.trackMeta("ViewContent",{content_type:"product",content_ids:["runner-principiantes"],content_name:"Guía runners",content_category:"guia"});</script>
 </head>
 <body class="rb">
 <div id="rbProg"></div>
@@ -463,7 +465,28 @@ window.addEventListener('DOMContentLoaded', async () => {
   } catch(e) { console.warn('[runners precios]', e); }
 });
 
+// Inicio de compra (una vez por visita): sirve para ver cuánta gente toca "comprar"
+// y no termina de pagar, y para que Meta optimice los anuncios.
+let _checkoutTracked = false;
+function trackCheckoutStart(name, value) {
+  if (_checkoutTracked) return;
+  _checkoutTracked = true;
+  if (typeof gtag === 'function') {
+    gtag('event', 'begin_checkout', { value: value, currency: 'UYU', items: [{ item_id: 'runner-principiantes', item_name: name, item_category: 'guia' }] });
+  }
+  if (typeof window.trackMeta === 'function') {
+    window.trackMeta('InitiateCheckout', { value: value, currency: 'UYU', content_type: 'product', content_ids: ['runner-principiantes'], content_name: name, content_category: 'guia' });
+  }
+}
+function tierPrice(id, fallback) {
+  const el = document.getElementById(id);
+  return (el && Number(el.textContent.replace(/\D/g, ''))) || fallback;
+}
+document.getElementById('link-guia-consulta')?.addEventListener('click', () => trackCheckoutStart('Guía + Consulta de control', tierPrice('tier-guia-consulta', 2000)));
+document.getElementById('link-guia-plan4')?.addEventListener('click', () => trackCheckoutStart('Guía + Plan 4 meses', tierPrice('tier-guia-plan4', 6000)));
+
 function openPurchaseModal() {
+  trackCheckoutStart('Guía runners', tierPrice('tier-guia', 1500));
   document.getElementById('purchaseModal').classList.add('open');
   setTimeout(() => document.getElementById('buyer-name').focus(), 100);
   initPaypalButton();

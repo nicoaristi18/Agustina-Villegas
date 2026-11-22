@@ -127,6 +127,8 @@
 }
 </style>
 <script src="/ga4.js"></script>
+<script src="/meta-pixel.js"></script>
+<script>window.trackMeta("ViewContent",{content_type:"product",content_ids:["plan"],content_name:"Planes de seguimiento",content_category:"plan"});</script>
 </head>
 <body class="rb">
 <div id="rbProg"></div>
@@ -304,6 +306,13 @@ fetch('/api/products/prices',{cache:'no-store'}).then(r=>r.ok?r.json():null).the
 }).catch(()=>{});
 
 function startPlan(planName, credits, price) {
+  // Inicio de compra del plan (GA4 + Meta)
+  if (typeof gtag === 'function') {
+    gtag('event', 'begin_checkout', { value: Number(price) || 0, currency: 'UYU', items: [{ item_id: 'plan', item_name: planName, item_category: 'plan' }] });
+  }
+  if (typeof window.trackMeta === 'function') {
+    window.trackMeta('InitiateCheckout', { value: Number(price) || 0, currency: 'UYU', content_type: 'product', content_ids: ['plan'], content_name: planName, content_category: 'plan' });
+  }
   // Store plan selection and redirect to registration/booking
   sessionStorage.setItem('selectedPlan', JSON.stringify({name:planName, credits, price}));
   location.href = 'mi-cuenta.html?plan=' + encodeURIComponent(planName) + '&credits=' + credits + '&price=' + price;
